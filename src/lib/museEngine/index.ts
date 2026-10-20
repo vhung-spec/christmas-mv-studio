@@ -27,10 +27,12 @@ export function museDataDir(): string {
   return path.join(/*turbopackIgnore: true*/ path.dirname(root), `${path.basename(root)}-muse-gateway`);
 }
 
-const g = globalThis as unknown as { __mvMuseEngine?: MuseEngine };
+type EngineOptions = { dir?: string; page?: MuseDriver; worker?: Partial<Omit<WorkerOptions, "store" | "page" | "outputDir">> };
+const g = globalThis as unknown as { __mvMuseEngine?: MuseEngine; __mvMuseEngineOpts?: EngineOptions };
 
 /** Tạo (lại) bộ máy Muse. Test truyền Muse giả + thư mục tạm; MUSE_FAKE=1 dùng Muse giả để xem thử (không mở Chrome, không tốn lượt). */
-export function initMuseEngine(opts: { dir?: string; page?: MuseDriver; worker?: Partial<Omit<WorkerOptions, "store" | "page" | "outputDir">> } = {}): MuseEngine {
+export function initMuseEngine(opts: EngineOptions = {}): MuseEngine {
+  g.__mvMuseEngineOpts = opts;
   const dir = opts.dir ?? museDataDir();
   const fake = !opts.page && Boolean(process.env.MUSE_FAKE);
   const page = opts.page ?? (fake ? new FakeMuse() : new MusePage(new Chrome({ profileDir: path.join(/*turbopackIgnore: true*/ dir, "chrome-profile"), url: "https://muse.ai" })));
@@ -44,6 +46,24 @@ export function initMuseEngine(opts: { dir?: string; page?: MuseDriver; worker?:
 
 export function museEngine(): MuseEngine {
   return g.__mvMuseEngine ?? initMuseEngine();
+}
+
+/**
+ * Tắt bộ máy (dừng nhận việc, đóng Chrome, ghi hàng đợi), chạy `between` lúc Chrome đã tắt (vd. đổi hồ sơ đăng nhập), rồi mở lại
+ * với cùng thiết lập. `between` lỗi thì vẫn mở lại (với hồ sơ đang có) rồi báo lỗi.
+ */
+export async function restartMuseEngine(between: (dir: string) => Promise<void>): Promise<MuseEngine> {
+  const e = museEngine();
+  const opts = g.__mvMuseEngineOpts ?? {};
+  await e.worker.stop();
+  g.__mvMuseEngine = undefined;
+  await e.worker.close();
+  try {
+    await between(e.dir);
+  } finally {
+    initMuseEngine(opts);
+  }
+  return museEngine();
 }
 
 /** Tắt bộ máy (đóng Chrome, ghi hàng đợi) — dùng khi test. */

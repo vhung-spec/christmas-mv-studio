@@ -164,6 +164,8 @@ export class Worker {
   private again = false;
   private wakeTimer: ReturnType<typeof setTimeout> | null = null;
   private loginJob: Promise<boolean> | null = null;
+  /** Đã dừng nhận việc (sắp tắt để đổi tài khoản): không gửi thêm lệnh nào. */
+  private stopping = false;
 
   constructor(opts: WorkerOptions) {
     this.o = {
@@ -185,6 +187,7 @@ export class Worker {
 
   /** Chạy hàng đợi (nếu chưa chạy). Gọi khi có task mới, đăng nhập xong, tới giờ đặt lại hạn mức… */
   pump(): void {
+    if (this.stopping) return;
     if (this.loop) {
       this.again = true;
       return;
@@ -212,6 +215,7 @@ export class Worker {
 
   private async run(): Promise<void> {
     for (;;) {
+      if (this.stopping) return;
       this.again = false;
       const task = this.next();
       if (!task) {
@@ -274,7 +278,7 @@ export class Worker {
         if (wait > 0) {
           store.update(id, { step: `Nghỉ ${Math.ceil(wait / 1000)} giây rồi mới gửi (không gửi dồn)` });
           await this.o.sleep(wait);
-          if (store.get(id)?.status !== "queued") return; // bị huỷ trong lúc chờ
+          if (this.stopping || store.get(id)?.status !== "queued") return; // bị huỷ / đang dừng để đổi tài khoản
         }
         store.update(id, { status: "processing", step: "Gửi lệnh", startedAt: now(), finishedAt: 0, attempts: task.attempts + 1, error: "", files: [], sessionId: "", pollErrors: 0 });
       }
@@ -425,6 +429,17 @@ export class Worker {
     const r = this.o.store.update(id, { status: "queued", step: "", error: "", files: [], startedAt: 0, finishedAt: 0, sessionId: "", attempts: 0, pollErrors: 0 });
     this.pump();
     return r;
+  }
+
+  /**
+   * Dừng nhận việc (trước khi đổi tài khoản): không gửi thêm lệnh; vòng chạy thoát sau bước đang làm. Chờ tối đa timeoutMs.
+   * Task đang làm mà bị đưa về hàng chờ thì vòng dò của nó tự thoát ở lần dò kế tiếp.
+   */
+  async stop(timeoutMs = 30000): Promise<void> {
+    this.stopping = true;
+    if (this.wakeTimer) clearTimeout(this.wakeTimer);
+    const loop = this.loop;
+    if (loop) await Promise.race([loop, new Promise((r) => setTimeout(r, timeoutMs))]);
   }
 
   async close(): Promise<void> {

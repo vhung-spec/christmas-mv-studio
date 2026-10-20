@@ -62,6 +62,11 @@ C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm 
    Sau đó app tự đồng bộ mỗi 6 giờ: bài mới bạn đưa lên Drive tự về máy chạy; bản nào bạn ghi "đã dùng" trên Drive
    thì bản ở máy chạy cũng được đổi tên theo.
 4. Kho ý tưởng đã có sẵn trong gói. Nếu trống: dán file ý tưởng ở thẻ "Thêm việc" → "Đọc bảng" → "Đưa vào kho".
+5. Đổi tài khoản Muse khi tài khoản đang dùng bị lỗi / bị khoá: Cài đặt → thẻ "Tài khoản Muse".
+   - "＋ Thêm tài khoản mới" (gõ tên, vd. TK phụ) → app cất tài khoản đang dùng, mở cửa sổ Chrome trống → đăng nhập tài khoản mới.
+   - "Dùng tài khoản này" ở tài khoản đã lưu → đổi về tài khoản đó (không cần đăng nhập lại nếu phiên còn hạn).
+   - Đang có cảnh Muse đang làm thì app hỏi trước: đổi ngay thì các cảnh đó được gửi lại bằng tài khoản mới (tốn lượt).
+   - Không hồ sơ nào bị xoá. App chỉ dùng một tài khoản mỗi lúc; đừng dùng để luân phiên lách hạn mức tuần.
 
 
 D. LƯU Ý QUAN TRỌNG

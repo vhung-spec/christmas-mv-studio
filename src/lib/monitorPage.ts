@@ -108,7 +108,7 @@ function render(s) {
         "</td></tr>").join("") + "</table>"
     : '<span class="muted">Chưa có MV nào xong.</span>';
   const rows = [];
-  if (!m.haohao && m.counts) rows.push("<tr><td>Muse</td><td>" + esc(museState) + " · chờ " + m.counts.queued + " · đang làm " + m.counts.processing + " · xong " + m.counts.succeeded + " · lỗi " + m.counts.failed + (m.fake ? " · (Muse giả)" : "") + "</td></tr>");
+  if (!m.haohao && m.counts) rows.push("<tr><td>Muse" + (m.account ? " · " + esc(m.account) : "") + "</td><td>" + esc(museState) + " · chờ " + m.counts.queued + " · đang làm " + m.counts.processing + " · xong " + m.counts.succeeded + " · lỗi " + m.counts.failed + (m.fake ? " · (Muse giả)" : "") + "</td></tr>");
   rows.push("<tr><td>Dựng video</td><td>" + (s.render ? esc(s.render.title + " — " + s.render.stage) + '<div class="bar"><i style="width:' + Math.round(s.render.progress * 100) + '%"></i></div>' : "Không dựng gì") + "</td></tr>");
   const d = s.drive;
   rows.push("<tr><td>Kho nhạc Drive</td><td>" + (d.running ? esc(d.phase || "Đang đồng bộ…") : d.last ? "Đồng bộ lúc " + esc(time(d.last.at)) + " · " + d.last.unused + " bản chưa dùng trên Drive · tải mới " + d.last.downloaded : "Chưa đồng bộ") + "</td></tr>");

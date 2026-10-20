@@ -1,0 +1,158 @@
+"use client";
+
+// Thẻ "Tài khoản Muse" (Cài đặt): tài khoản đang dùng, các tài khoản đã lưu, đổi bằng một nút, thêm tài khoản mới.
+// Dùng khi tài khoản bị lỗi / bị khoá — không phải để luân phiên lách hạn mức tuần.
+
+import { useCallback, useEffect, useState } from "react";
+import { Card, ErrorBox, Spinner } from "@/components/ui";
+import { api } from "@/lib/client";
+
+interface Account {
+  id: string;
+  name: string;
+  created_at: string;
+  last_used_at: string;
+  folder?: string;
+  last_state?: string;
+}
+interface View {
+  active: Account;
+  others: Account[];
+  inflight: number;
+}
+type PostResult = { ok?: boolean; needsConfirm?: boolean; inflight?: number; requeued?: number; view: View };
+
+const when = (iso: string) => (iso ? new Date(iso).toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "chưa dùng");
+
+export default function MuseAccountsCard({ onChanged }: { onChanged?: () => void }) {
+  const [view, setView] = useState<View | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+
+  const load = useCallback(() => api<View>("/api/muse/accounts").then(setView, (e) => setError((e as Error).message)), []);
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function post(json: Record<string, unknown>, label: string): Promise<void> {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      let r = await api<PostResult>("/api/muse/accounts", { method: "POST", json });
+      if (r.needsConfirm) {
+        const ok = confirm(
+          `Đang có ${r.inflight} cảnh Muse đang làm bằng tài khoản “${view?.active.name}”.\n\n` +
+            `Đổi ngay thì ${r.inflight} cảnh này sẽ được GỬI LẠI bằng ${label} (tốn lượt của tài khoản đó), vì tài khoản mới không đọc được kết quả của tài khoản cũ.\n\n` +
+            "Nếu tài khoản cũ vẫn dùng được, nên bấm Huỷ và đợi các cảnh đó xong rồi mới đổi.\n\nĐổi ngay?",
+        );
+        if (!ok) return;
+        r = await api<PostResult>("/api/muse/accounts", { method: "POST", json: { ...json, force: true } });
+      }
+      setView(r.view);
+      if (json.action === "add") setNotice(`Đã chuyển sang “${r.view.active.name}”. Cửa sổ Chrome của Muse đang mở — đăng nhập tài khoản mới trong đó.`);
+      else if (json.action === "switch") setNotice(`Đã chuyển sang “${r.view.active.name}”${r.requeued ? ` · ${r.requeued} cảnh sẽ được gửi lại bằng tài khoản này` : ""}.`);
+      onChanged?.();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!view) {
+    return (
+      <Card title="Tài khoản Muse" className="lg:col-span-2">
+        {error ? <ErrorBox error={error} /> : <Spinner />}
+      </Card>
+    );
+  }
+  return (
+    <Card title="Tài khoản Muse" className="lg:col-span-2">
+      <div className="space-y-3 text-sm">
+        <p className="text-xs text-muted">
+          Mỗi tài khoản Meta có một hồ sơ Chrome riêng (giữ phiên đăng nhập); app chỉ dùng <b>một</b> tài khoản mỗi lúc. Đổi tài khoản khi tài khoản đang
+          dùng bị lỗi / bị khoá: app dừng gửi, đóng Chrome của Muse, cất hồ sơ cũ (không xoá), mở hồ sơ được chọn rồi chạy tiếp. Đừng dùng để luân phiên
+          lách hạn mức tuần — Meta có thể khoá cả các tài khoản.
+        </p>
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border-2 border-mint-dark/60 bg-mint/20 p-3">
+          <span>
+            Đang dùng: <b>{view.active.name}</b>
+          </span>
+          {renaming?.id === view.active.id ? (
+            <RenameBox value={renaming.name} busy={busy} onChange={(name) => setRenaming({ id: view.active.id, name })} onCancel={() => setRenaming(null)} onSave={() => void post({ action: "rename", id: renaming.id, name: renaming.name }, "").then(() => setRenaming(null))} />
+          ) : (
+            <button className="btn-ghost btn-sm" disabled={busy} onClick={() => setRenaming({ id: view.active.id, name: view.active.name })}>
+              Đổi tên
+            </button>
+          )}
+          {view.inflight > 0 && <span className="text-xs text-amber-800">· {view.inflight} cảnh đang làm</span>}
+        </div>
+
+        {view.others.length > 0 && (
+          <div>
+            <p className="mb-1 font-semibold">Tài khoản đã lưu</p>
+            <ul className="space-y-1">
+              {view.others.map((a) => (
+                <li key={a.id} className="flex flex-wrap items-center gap-2 border-t border-ink/10 py-1.5 first:border-t-0">
+                  <div className="min-w-0 flex-1">
+                    {renaming?.id === a.id ? (
+                      <RenameBox value={renaming.name} busy={busy} onChange={(name) => setRenaming({ id: a.id, name })} onCancel={() => setRenaming(null)} onSave={() => void post({ action: "rename", id: renaming.id, name: renaming.name }, "").then(() => setRenaming(null))} />
+                    ) : (
+                      <b>{a.name}</b>
+                    )}
+                    <div className="text-xs text-muted">
+                      Dùng lần cuối: {when(a.last_used_at)}
+                      {a.last_state ? ` · ${a.last_state}` : ""}
+                    </div>
+                  </div>
+                  {renaming?.id !== a.id && (
+                    <button className="btn-ghost btn-sm" disabled={busy} onClick={() => setRenaming({ id: a.id, name: a.name })}>
+                      Đổi tên
+                    </button>
+                  )}
+                  <button className="btn-primary btn-sm" disabled={busy} onClick={() => void post({ action: "switch", to: a.id }, `“${a.name}”`)}>
+                    {busy && <Spinner />} Dùng tài khoản này
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <input className="input w-56" placeholder="Tên tài khoản mới (vd. TK phụ)" value={newName} onChange={(e) => setNewName(e.target.value)} />
+          <button
+            className="btn-ghost btn-sm"
+            disabled={busy}
+            onClick={() => {
+              if (!confirm(`Thêm tài khoản mới “${newName.trim() || "Tài khoản mới"}” và chuyển sang dùng nó?\n\nTài khoản đang dùng (“${view.active.name}”) được cất lại, đổi về được bất cứ lúc nào.`)) return;
+              void post({ action: "add", name: newName }, "tài khoản mới").then(() => setNewName(""));
+            }}
+          >
+            ＋ Thêm tài khoản mới
+          </button>
+        </div>
+        {notice && <p className="text-xs font-semibold text-mint-dark">{notice}</p>}
+        <ErrorBox error={error} />
+      </div>
+    </Card>
+  );
+}
+
+function RenameBox({ value, busy, onChange, onSave, onCancel }: { value: string; busy: boolean; onChange: (v: string) => void; onSave: () => void; onCancel: () => void }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      <input className="input w-48 px-2 py-0.5" value={value} onChange={(e) => onChange(e.target.value)} onKeyDown={(e) => e.key === "Enter" && onSave()} autoFocus />
+      <button className="btn-ghost btn-sm" disabled={busy || !value.trim()} onClick={onSave}>
+        Lưu
+      </button>
+      <button className="btn-ghost btn-sm" disabled={busy} onClick={onCancel}>
+        Huỷ
+      </button>
+    </span>
+  );
+}

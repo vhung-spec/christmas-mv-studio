@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ApiKeyCard from "@/components/settings/ApiKeyCard";
 import EngineCard from "@/components/settings/EngineCard";
 import MonitorCard from "@/components/settings/MonitorCard";
+import MuseAccountsCard from "@/components/muse/MuseAccountsCard";
 import PricingCard from "@/components/settings/PricingCard";
 import { MuseStatus } from "@/components/muse/MusePanels";
 import { Card, ErrorBox, Field, Spinner } from "@/components/ui";
@@ -253,6 +254,8 @@ export default function SettingsPage() {
             </div>
           )}
         </Card>
+
+        {s.museMode === "gateway" && <MuseAccountsCard onChanged={() => void api<MuseView>("/api/muse").then(setMuse).catch(() => {})} />}
 
         <MonitorCard />
 

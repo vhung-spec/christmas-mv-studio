@@ -15,6 +15,7 @@ import { generationMode } from "./generate";
 import { bankView } from "./ideaBank";
 import { mediaPath } from "./media";
 import { monitorPage } from "./monitorPage";
+import { museAccounts } from "./museEngine/accounts";
 import { museView } from "./museJobs";
 import { pipelineView } from "./pipeline";
 import { readQueue } from "./queue";
@@ -90,6 +91,7 @@ export async function monitorSnapshot() {
   for (const d of await Promise.all([diskFree(process.cwd()), settings.songDir ? diskFree(settings.songDir) : null])) {
     if (d && !disks.some((x) => x.path === d.path)) disks.push(d);
   }
+  const account = muse.gateway ? ((await museAccounts().catch(() => null))?.active.name ?? null) : null;
   const running = queue.items.find((i) => i.status === "running");
   const runningTitle = running ? (pipeline.items.find((i) => i.mv_id === running.mv_id)?.title ?? running.mv_id) : "";
   return {
@@ -119,6 +121,7 @@ export async function monitorSnapshot() {
     render: running ? { title: runningTitle, progress: queue.job?.progress ?? 0, stage: queue.job?.stage ?? "" } : null,
     muse: muse.gateway
       ? {
+          account,
           loggedIn: muse.gateway.loggedIn,
           paused: muse.gateway.paused,
           limitHit: muse.gateway.limitHit,
