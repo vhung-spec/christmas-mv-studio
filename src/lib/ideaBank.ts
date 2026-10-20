@@ -12,6 +12,7 @@ import { mockIdeas } from "./mock";
 import { extractYear, splitThemeCell } from "./parser";
 import { IDEAS_SYSTEM, buildIdeasPrompt } from "./prompts";
 import { readSongLibrary } from "./songLibrary";
+import { listSongs, matchSongForIdea } from "./songs";
 import { IDEAS_FILE, PIPELINE_FILE, listMVs, readJson, readLibraries, readSettings, withLock, writeJson } from "./store";
 import type { IdeaRow } from "./types";
 
@@ -70,26 +71,44 @@ export async function addIdeas(rows: IdeaRow[]): Promise<{ added: number; skippe
   });
 }
 
+/** Xét một ý tưởng trước khi lấy: "take" = lấy · "wait" = để nguyên trong kho (vd. chưa có nhạc) · chuỗi khác = lý do bỏ qua. */
+export type TakeCheck = (idea: IdeaRow) => "take" | "wait" | (string & {});
+
 /**
- * Lấy n ý tưởng chưa dùng (theo thứ tự trong kho) và đánh dấu đã dùng. `skip` trả về lý do thì ý tưởng đó cũng được đánh dấu
- * đã dùng (kèm lý do) nhưng không lấy — vd. nhạc của bài đã dùng hết.
+ * Lấy n ý tưởng chưa dùng (theo thứ tự trong kho) và đánh dấu đã dùng. `check` trả về lý do bỏ qua thì ý tưởng đó cũng được đánh
+ * dấu đã dùng (kèm lý do) nhưng không lấy — vd. nhạc của bài đã dùng hết; trả về "wait" thì ý tưởng vẫn chờ trong kho.
  */
-export async function takeIdeas(n: number, skip?: (idea: IdeaRow) => Promise<string | null>): Promise<IdeaRow[]> {
+export async function takeIdeas(n: number, check?: TakeCheck): Promise<IdeaRow[]> {
   if (n <= 0 || !(await readBank()).ideas.some((x) => x.status === "new")) return [];
-  return updateBank(async (b) => {
+  return updateBank((b) => {
     const now = new Date().toISOString();
     const out: IdeaRow[] = [];
     for (const x of b.ideas) {
       if (out.length >= n) break;
       if (x.status !== "new") continue;
-      const reason = skip ? await skip(x.idea) : null;
+      const verdict = check ? check(x.idea) : "take";
+      if (verdict === "wait") continue;
       x.status = "used";
       x.used_at = now;
-      if (reason) x.note = reason;
-      else out.push(x.idea);
+      if (verdict === "take") out.push(x.idea);
+      else x.note = verdict;
     }
     return out;
   });
+}
+
+/**
+ * Kiểm tra theo Thư mục nhạc: ý tưởng mà mọi bản nhạc cùng số đều ghi "đã dùng" → bỏ qua; `needSong` mà chưa thấy nhạc → chờ.
+ * null khi chưa đặt Thư mục nhạc (hoặc không mở được).
+ */
+export async function songCheck(songDir: string, needSong: boolean): Promise<TakeCheck | null> {
+  const files = songDir.trim() ? await listSongs(songDir.trim()).catch(() => null) : null;
+  if (!files) return null;
+  return (idea) => {
+    const song = matchSongForIdea(files, idea, idea.world_location);
+    if (song?.by === "number" && song.used) return `Bỏ qua: cả ${song.total} bản nhạc bài số ${song.n} đều đã ghi “đã dùng”.`;
+    return needSong && !song ? "wait" : "take";
+  };
 }
 
 /** Duyệt (đề xuất → chưa dùng) hoặc bỏ ý tưởng. keys = "proposed" → mọi ý tưởng đang chờ duyệt. Trả về số ý tưởng đã đổi. */
@@ -116,7 +135,7 @@ const clamp = (v: unknown, [lo, hi]: readonly [number, number], fallback: number
 export function setBankConfig(patch: Partial<Record<keyof BankConfig, unknown>>): Promise<BankConfig> {
   return updateBank((b) => {
     const c = { ...b.config };
-    for (const k of ["feed", "suggest", "autoApprove"] as const) if (typeof patch[k] === "boolean") c[k] = patch[k];
+    for (const k of ["feed", "suggest", "autoApprove", "needSong"] as const) if (typeof patch[k] === "boolean") c[k] = patch[k];
     if (patch.ahead !== undefined) c.ahead = clamp(patch.ahead, BANK_LIMITS.ahead, c.ahead);
     if (patch.batch !== undefined) c.batch = clamp(patch.batch, BANK_LIMITS.batch, c.batch);
     b.config = c;
@@ -299,10 +318,15 @@ export async function bankView(): Promise<BankView> {
   const b = await readBank();
   const counts: Record<BankStatus, number> = { new: 0, proposed: 0, used: 0, rejected: 0 };
   for (const x of b.ideas) counts[x.status]++;
+  // Đang bật "chỉ lấy ý tưởng đã có nhạc": sắp tới lượt = các ý tưởng có nhạc (theo thứ tự kho).
+  const check = b.config.needSong ? await songCheck((await readSettings()).songDir, true) : null;
+  const fresh = b.ideas.filter((x) => x.status === "new");
+  const ready = check ? fresh.filter((x) => check(x.idea) === "take") : null;
   return {
     config: b.config,
     counts,
-    upcoming: b.ideas.filter((x) => x.status === "new").slice(0, 20),
+    ready: ready ? ready.length : null,
+    upcoming: (ready ?? fresh).slice(0, 20),
     proposals: b.ideas.filter((x) => x.status === "proposed"),
     skipped: b.ideas
       .filter((x) => x.note)

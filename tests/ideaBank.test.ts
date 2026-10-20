@@ -171,7 +171,7 @@ describe("kho ý tưởng", () => {
     await expect(bank.suggestIdeas()).rejects.toThrow(/API key/);
   });
 
-  it("kho nhạc đánh số: bỏ qua ý tưởng mà nhạc đã dùng hết, ghép đúng bài theo số, lấy lời từ thư viện", async () => {
+  it("kho nhạc đánh số: bỏ qua ý tưởng nhạc đã dùng hết, ý tưởng chưa có nhạc chờ trong kho, ghép đúng bài, lấy lời từ thư viện", async () => {
     const bank = await import("@/lib/ideaBank");
     const pl = await import("@/lib/pipeline");
     const store = await import("@/lib/store");
@@ -186,8 +186,9 @@ describe("kho ý tưởng", () => {
     const lib = { songs: [{ n: 2, world_location: "Santa Monica Pier Summer 1954", theme_code: "T01", theme_name: "Sét ái tình", outline: "o", hook: "Find You on the Pier", mood: "", lyrics }] };
     writeFileSync(path.join(tmp, "song_library.json"), JSON.stringify(lib));
     setSettings({ songDir: songs });
-    await bank.setBankConfig({ ahead: 1, suggest: false });
-    await bank.addIdeas([idea("1", "Hollywood Boulevard Summer 1954"), idea("2", "Santa Monica Pier Summer 1954")]);
+    await bank.setBankConfig({ ahead: 2, suggest: false });
+    await bank.addIdeas([idea("1", "Hollywood Boulevard Summer 1954"), idea("2", "Santa Monica Pier Summer 1954"), idea("3", "Las Vegas Strip 1955")]);
+    expect((await bank.bankView()).ready).toBe(1);
 
     await pl.pipelineTick();
     await pl.pipelineIdle();
@@ -195,6 +196,9 @@ describe("kho ý tưởng", () => {
     expect(items.map((i) => i.idea?.id)).toEqual(["2"]);
     const v = await bank.bankView();
     expect(v.library).toBe(1);
+    // Ý tưởng 3 chưa có nhạc: vẫn chờ trong kho, chưa vào dây chuyền.
+    expect(v.counts).toMatchObject({ new: 1, used: 2 });
+    expect(v.ready).toBe(0);
     expect(v.skipped.map((x) => [x.idea.id, x.note])).toEqual([["1", expect.stringMatching(/bài số 1 đều đã ghi “đã dùng”/)]]);
     const mv = (await store.loadMV(items[0].mv_id!))!;
     expect(mv.idea.lyrics).toBe(lyrics);
@@ -203,6 +207,11 @@ describe("kho ý tưởng", () => {
     await pl.pipelineTick();
     const song = (await pl.readPipeline()).items[0].steps.song;
     expect(song).toMatchObject({ status: "done", message: expect.stringMatching(/2 \(1\)\.mp3 \(bài số 2\)/) });
+    // Tắt "chỉ lấy ý tưởng đã có nhạc" → ý tưởng 3 được lấy (bước bài hát sẽ chờ).
+    await bank.setBankConfig({ needSong: false });
+    await pl.pipelineTick();
+    await pl.pipelineIdle();
+    expect((await pl.readPipeline()).items.map((i) => i.idea?.id).sort()).toEqual(["2", "3"]);
     rmSync(path.join(tmp, "song_library.json"));
   }, 120000);
 

@@ -13,7 +13,7 @@ import { Readable } from "node:stream";
 import { UserError } from "./errors";
 import { probe } from "./ffmpeg";
 import { generateMV, generationMode } from "./generate";
-import { isSuggesting, readBank, startSuggest, takeIdeas } from "./ideaBank";
+import { isSuggesting, readBank, songCheck, startSuggest, takeIdeas } from "./ideaBank";
 import { addAudio, loadProject } from "./media";
 import { museCounts } from "./muse";
 import { ensureMuseWatch, readMuse, sendToMuse } from "./museJobs";
@@ -268,12 +268,8 @@ async function feedFromBank(): Promise<boolean> {
   const settings = await readSettings();
   if (generationMode(settings) === "manual") return false;
   const busy = (await readPipeline()).items.filter((i) => !finished(i) && (i.steps.script.status !== "done" || i.steps.clips.status !== "done")).length;
-  // Ý tưởng mà mọi bản nhạc cùng số đều đã ghi "đã dùng" (đã làm MV) → bỏ qua, coi như đã dùng.
-  const usedUp = async (idea: IdeaRow) => {
-    const song = await findSongForIdea(settings.songDir, idea).catch(() => null);
-    return song?.by === "number" && song.used ? `Bỏ qua: cả ${song.total} bản nhạc bài số ${song.n} đều đã ghi “đã dùng”.` : null;
-  };
-  const ideas = busy < cfg.ahead ? await takeIdeas(cfg.ahead - busy, usedUp) : [];
+  // Ý tưởng mà mọi bản nhạc cùng số đều đã ghi "đã dùng" (đã làm MV) → bỏ qua; bật "chỉ lấy ý tưởng đã có nhạc" thì ý tưởng chưa có nhạc chờ trong kho.
+  const ideas = busy < cfg.ahead ? await takeIdeas(cfg.ahead - busy, (await songCheck(settings.songDir, cfg.needSong)) ?? undefined) : [];
   if (ideas.length) await addToPipeline({ ideas });
   const left = bank.ideas.filter((x) => x.status === "new").length - ideas.length;
   const waiting = bank.ideas.some((x) => x.status === "proposed");

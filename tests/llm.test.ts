@@ -1,5 +1,5 @@
 // Kiểm tra đường gọi Claude thật (llm.ts + pipeline) bằng một server giả lập API Anthropic (SSE).
-import { cpSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -13,6 +13,9 @@ interface Captured {
 
 const tmp = mkdtempSync(path.join(tmpdir(), "mvps-llm-"));
 for (const f of readdirSync("data").filter((f) => f.endsWith(".json"))) cpSync(path.join("data", f), path.join(tmp, f));
+// Không phụ thuộc cài đặt đang dùng trên máy (vd. đã chọn Meta Muse): test dựa trên hồ sơ Veo (prompt ngắn → có bước rút gọn).
+const settingsFile = path.join(tmp, "settings.json");
+writeFileSync(settingsFile, JSON.stringify({ ...JSON.parse(readFileSync(settingsFile, "utf8")), videoModel: "veo", clipLen: null, songDir: "" }));
 
 let server: Server;
 const requests: Captured[] = [];

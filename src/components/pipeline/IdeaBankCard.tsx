@@ -60,7 +60,7 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
   const c = bank.config;
   const setConfig = (patch: Partial<BankConfig>) => onPost({ action: "config", config: patch });
   const manual = bank.mode === "manual";
-  const more = bank.counts.new - bank.upcoming.length;
+  const more = (bank.ready ?? bank.counts.new) - bank.upcoming.length;
   return (
     <Card
       title="Kho ý tưởng"
@@ -74,6 +74,12 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
         <p>
           Chưa dùng <b>{bank.counts.new}</b> · Đã dùng <b>{bank.counts.used}</b> · Claude đề xuất chờ duyệt <b>{bank.counts.proposed}</b>
           {bank.counts.rejected ? ` · Đã bỏ ${bank.counts.rejected}` : ""}
+          {bank.ready !== null && bank.counts.new > 0 && (
+            <span className="text-muted">
+              {" "}
+              (đã có nhạc <b>{bank.ready}</b>, chờ nhạc {bank.counts.new - bank.ready})
+            </span>
+          )}
         </p>
         {bank.library > 0 && (
           <p className="text-xs text-muted">
@@ -100,6 +106,10 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
             Dây chuyền tự lấy ý tưởng trong kho, mỗi lúc
             <NumberBox value={c.ahead} range={BANK_LIMITS.ahead} disabled={busy} onCommit={(ahead) => setConfig({ ahead })} />
             MV (đang viết kịch bản hoặc chờ clip Muse)
+          </label>
+          <label className="flex flex-wrap items-center gap-2 pl-6">
+            <input type="checkbox" checked={c.needSong} disabled={busy} onChange={(e) => setConfig({ needSong: e.target.checked })} />
+            Chỉ lấy ý tưởng đã có nhạc trong Thư mục nhạc (ý tưởng chưa có nhạc nằm chờ trong kho, có nhạc là tự chạy)
           </label>
           <label className="flex flex-wrap items-center gap-2">
             <input type="checkbox" checked={c.suggest} disabled={busy} onChange={(e) => setConfig({ suggest: e.target.checked })} />
@@ -173,7 +183,7 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
 
         {bank.upcoming.length > 0 ? (
           <details>
-            <summary className="cursor-pointer font-semibold">Sắp tới lượt ({bank.counts.new})</summary>
+            <summary className="cursor-pointer font-semibold">Sắp tới lượt ({bank.ready ?? bank.counts.new})</summary>
             <ul className="mt-1 max-h-80 overflow-auto">
               {bank.upcoming.map((x) => (
                 <IdeaLine key={x.key} x={x}>
@@ -185,6 +195,10 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
             </ul>
             {more > 0 && <p className="text-xs text-muted">… và {more} ý tưởng nữa.</p>}
           </details>
+        ) : bank.counts.new > 0 ? (
+          <p className="text-xs text-amber-800">
+            {bank.counts.new} ý tưởng đang chờ nhạc: thêm file nhạc đặt tên theo số ý tưởng (vd. <code>12.wav</code>) vào Thư mục nhạc là dây chuyền tự lấy.
+          </p>
         ) : (
           !bank.proposals.length && <p className="text-xs text-muted">Kho chưa có ý tưởng chưa dùng — dán bảng ý tưởng ở thẻ “Thêm việc” rồi bấm “Đưa vào kho”.</p>
         )}

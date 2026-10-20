@@ -125,7 +125,11 @@ export type SongMatch = { file: string; by: "title"; ties: number } | ({ by: "nu
  */
 export async function findSongForIdea(dir: string, idea: { id: string; song_title?: string }, fallbackTitle?: string): Promise<SongMatch | null> {
   if (!dir.trim()) return null;
-  const files = await listSongs(dir.trim());
+  return matchSongForIdea(await listSongs(dir.trim()), idea, fallbackTitle);
+}
+
+/** Như findSongForIdea nhưng trên danh sách file đã đọc sẵn (xét nhiều ý tưởng mà chỉ đọc thư mục một lần). */
+export function matchSongForIdea(files: string[], idea: { id: string; song_title?: string }, fallbackTitle?: string): SongMatch | null {
   const byTitle = (t?: string) => (t?.trim() ? pickSong(t, files) : null);
   const hit = byTitle(idea.song_title);
   if (hit) return { file: hit.file, by: "title", ties: hit.ties };

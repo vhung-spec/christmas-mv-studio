@@ -263,6 +263,8 @@ Kênh làm nhạc theo số ý tưởng: ý tưởng số 12 có thư mục bài
 - **Thư mục nhạc** (Cài đặt) trỏ tới thư mục chứa các file này (vd. bản tải về của thư mục *KHO NHẠC* trên Drive). Ý tưởng không ghi tên bài → app lấy file
   theo số ý tưởng, **bản chưa có chữ “đã dùng” trước** (theo thứ tự bản, WAV trước MP3). Mọi bản đều “đã dùng” → kho ý tưởng **bỏ qua** ý tưởng đó (ghi lý
   do trong thẻ Kho ý tưởng), việc đang chạy thì chờ.
+- **Chỉ lấy ý tưởng đã có nhạc** (thẻ Kho ý tưởng, bật sẵn khi đã đặt Thư mục nhạc): ý tưởng chưa có file nhạc cùng số (hoặc trùng tên bài) nằm chờ
+  trong kho, không tốn lượt Muse; thả file nhạc vào thư mục là dây chuyền tự lấy. Thẻ hiện số ý tưởng “đã có nhạc / chờ nhạc”.
 - **Thư viện lời bài hát** `data/song_library.json` (không commit): mỗi số bài một mục — địa điểm, chủ đề, dàn ý, lời. Ý tưởng cùng số **và cùng địa điểm**
   mà chưa có lời thì lúc viết kịch bản app lấy lời ở đây, nên các cảnh bám đúng Intro / Verse / Chorus / Bridge của bài. Nhãn kiểu Suno có mô tả
   (`[Intro - bright, hand claps in]`, `[Sax Solo]`, `[Hand Clap Break - …]`) được hiểu là nhãn đoạn, không lẫn vào lời.

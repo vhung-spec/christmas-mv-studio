@@ -21,6 +21,8 @@ export interface BankConfig {
   feed: boolean;
   /** Số MV làm cùng lúc (đang viết kịch bản hoặc chờ clip Muse). */
   ahead: number;
+  /** Chỉ lấy ý tưởng đã có nhạc trong Thư mục nhạc (ý tưởng chưa có nhạc nằm chờ trong kho). */
+  needSong: boolean;
   /** Kho sắp hết thì nhờ Claude đề xuất thêm. */
   suggest: boolean;
   /** Ý tưởng Claude đề xuất được dùng luôn, không chờ duyệt. */
@@ -34,12 +36,14 @@ export interface IdeaBank {
   config: BankConfig;
 }
 
-export const DEFAULT_BANK_CONFIG: BankConfig = { feed: true, ahead: 2, suggest: true, autoApprove: false, batch: 10 };
+export const DEFAULT_BANK_CONFIG: BankConfig = { feed: true, ahead: 2, needSong: true, suggest: true, autoApprove: false, batch: 10 };
 export const BANK_LIMITS = { ahead: [1, 10], batch: [3, 50] } as const;
 
 export interface BankView {
   config: BankConfig;
   counts: Record<BankStatus, number>;
+  /** Số ý tưởng chưa dùng đã có nhạc trong Thư mục nhạc; null = không lọc theo nhạc (tắt, hoặc chưa đặt Thư mục nhạc). */
+  ready: number | null;
   /** Các ý tưởng chưa dùng sắp tới lượt (tối đa 20). */
   upcoming: BankIdea[];
   proposals: BankIdea[];
