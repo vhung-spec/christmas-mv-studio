@@ -255,6 +255,23 @@ Cách dùng: menu **Tự động** → tab **Từ ý tưởng** (dán bảng nh�
 (chọn MV → **▶ Chạy tự động N MV**). App hỏi lại kèm chi phí ước tính (lượt Muse, tiền Claude API). Mỗi việc hiện 4 ô Kịch bản / Bài hát / Clip Muse / Dựng MP4;
 bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse** để Kiểm tra lại / Gửi lại. Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
 
+### MV hoàn thiện: ảnh bìa, tiêu đề, thư mục kết quả
+
+- **Cảnh đời sống thập niên 50** (Cài đặt → *Cảnh đời sống thập niên 50 (% số cảnh)*, mặc định 30%): cảnh mở đầu và các cảnh rải
+  đều trong bài (không liền nhau, không phải cảnh cuối / signature / cảnh nhảy) là đời sống thường ngày của nơi và năm đó — quầy
+  soda, jukebox, phố chính với xe cổ, gia đình bên TV đen trắng, rạp chiếu ngoài trời… — **không có cặp đôi**, để MV như thước phim
+  kỷ niệm của một thời. Bảng cảnh đánh dấu 📻; cảnh này mà có cặp đôi thì app cảnh báo. 0 = tắt.
+- **Ảnh bìa** (tạo ngay sau khi dựng, không tốn lượt Muse): khung hình đẹp từ chính clip của MV (ưu tiên cảnh có cả cặp đôi ở điệp
+  khúc / signature), cắt 1280×720, màu ấm hơn, nền tối dần ở dưới, **tên bài** to (tên bài, hoặc câu hook điệp khúc trong thư
+  viện lời, hoặc phần đầu tiêu đề YouTube) + dòng “địa điểm · năm”, logo kênh ở góc nếu có. Font như intro (font tải lên, hoặc
+  font hệ thống có dấu tiếng Việt). Kèm file **tiêu đề + mô tả** (tiêu đề YouTube số 1, 2 tiêu đề dự phòng, mô tả + hashtag). Mã:
+  `src/lib/cover.ts`.
+- **Thư mục kết quả** (Cài đặt → *Thư mục kết quả*, mặc định `KET QUA` cạnh thư mục app): mỗi MV xong một thư mục
+  `008 - Santa Monica Moonlight 1959` gồm video (tên file = tiêu đề YouTube), `Ảnh bìa.jpg`, `Tiêu đề - mô tả.txt`. Cùng ổ đĩa
+  thì video là liên kết cứng (không tốn thêm chỗ), khác ổ thì chép; dựng lại MV thì thêm thư mục ` (2)`. Đặt thư mục kết quả trong
+  ổ **Google Drive cho máy tính** (vd. `G:\My Drive\MV hoàn thiện`) thì kết quả tự lên Drive — app không cần đăng nhập Google.
+  Mã: `src/lib/results.ts`. Thẻ Dây chuyền và trang theo dõi hiện ảnh bìa, tiêu đề và nút tải.
+
 ### Kho nhạc đánh số theo ý tưởng
 
 Kênh làm nhạc theo số ý tưởng: ý tưởng số 12 có thư mục bài “12” (tài liệu = địa điểm + chủ đề + dàn ý + lời) và file nhạc `12.wav`, `12 (1).wav`

@@ -157,6 +157,12 @@ export default function SettingsPage() {
                 <input className="input" type="number" min={1} max={200} value={s.maxShots} onChange={(e) => set("maxShots", Number(e.target.value))} />
               </div>
             </Field>
+            <Field
+              label="Cảnh đời sống thập niên 50 (% số cảnh)"
+              hint="Cảnh không có cặp đôi: quán soda, jukebox, phố xá, xe cổ, gia đình bên TV… để MV như thước phim kỷ niệm. 0 = tắt, tối đa 50."
+            >
+              <input className="input" type="number" min={0} max={50} step={5} value={s.eraShare} onChange={(e) => set("eraShare", Number(e.target.value))} />
+            </Field>
             <Field label="Thời lượng mặc định (giây)">
               <input className="input" type="number" min={10} max={1200} value={s.defaultDuration} onChange={(e) => set("defaultDuration", Number(e.target.value))} />
             </Field>
@@ -216,6 +222,12 @@ export default function SettingsPage() {
                 hint="MV chưa có bài hát → app tự tìm file nhạc trùng tên bài (hoặc theo số ý tưởng) trong thư mục này, vd. D:\KHO NHAC. Ghi tên không kèm ổ đĩa (vd. KHO NHAC) = thư mục nằm cạnh thư mục app. Để trống = không tự ghép."
               >
                 <input className="input" value={s.songDir} onChange={(e) => set("songDir", e.target.value)} />
+              </Field>
+              <Field
+                label="Thư mục kết quả (mỗi MV xong một thư mục: video, ảnh bìa, tiêu đề)"
+                hint="Muốn tự lên Google Drive: cài Google Drive cho máy tính, rồi chọn một thư mục trong ổ Google Drive (vd. G:\My Drive\MV hoàn thiện) — Drive tự tải lên. Ghi tên không kèm ổ đĩa (vd. KET QUA) = cạnh thư mục app. Để trống = không tạo."
+              >
+                <input className="input" value={s.resultsDir} onChange={(e) => set("resultsDir", e.target.value)} />
               </Field>
               {s.museMode === "haohao" && (
                 <Field label="Thư mục dữ liệu HaoHao" hint={`Thư mục có file tasks.json. Để trống = tự tìm (${muse?.defaultDir ?? "…"}).`}>

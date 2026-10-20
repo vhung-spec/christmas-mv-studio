@@ -192,3 +192,28 @@ describe("helpers", () => {
     expect(formatTime(75)).toBe("1:15");
   });
 });
+
+describe("cảnh đời sống thập niên 50", () => {
+  const plan = (eraShare: number, shots = 19) =>
+    buildStructure({ durationSec: 180, clipLen: 10, tempo: "mid", minShots: shots, maxShots: shots, signatureShots: ["eye-contact slow motion", "freeze-frame glance"], eraShare });
+
+  it("khoảng 30% số cảnh, có cảnh mở đầu, rải đều, không liền nhau, không phải cảnh cuối / signature / nhảy", () => {
+    const p = plan(0.3);
+    const era = p.shots.filter((s) => s.era_life).map((s) => s.shot_no);
+    expect(era).toHaveLength(6);
+    expect(era[0]).toBe(1);
+    expect(era).not.toContain(19);
+    for (let i = 1; i < era.length; i++) expect(era[i] - era[i - 1]).toBeGreaterThan(1);
+    for (const s of p.shots.filter((x) => x.era_life)) {
+      expect(s.signature_shot).toBeNull();
+      expect(s.must_motion).toBe(false);
+    }
+    // Rải khắp bài: có cảnh ở nửa đầu và nửa sau.
+    expect(era.some((n) => n > 10)).toBe(true);
+  });
+
+  it("0 = tắt; tối đa khoảng một nửa", () => {
+    expect(plan(0).shots.some((s) => s.era_life)).toBe(false);
+    expect(plan(0.5, 6).shots.filter((s) => s.era_life).length).toBeLessThanOrEqual(2);
+  });
+});

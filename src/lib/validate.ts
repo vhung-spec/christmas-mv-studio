@@ -59,6 +59,14 @@ export function validateMV(mv: MVResult, ctx: ValidateContext): Issue[] {
     if (/\{\{|\}\}/.test(shot.prompt_en)) {
       issues.push({ shot_no: n, severity: "error", category: "character", message_vi: "Prompt còn placeholder nhân vật chưa được thay (ví dụ {{HE}})." });
     }
+    if (shot.era_life && shot.characters_in_shot.length) {
+      issues.push({
+        shot_no: n,
+        severity: "warning",
+        category: "structure",
+        message_vi: "Cảnh đời sống thập niên 50 nhưng có cặp đôi trong khung hình — cảnh này nên chỉ có người thường và phố xá thời đó.",
+      });
+    }
     for (const id of shot.characters_in_shot) {
       const ch = mv.character_bible.characters.find((c) => c.id === id);
       if (ch && !shot.prompt_en.includes(ch.description.trim())) {

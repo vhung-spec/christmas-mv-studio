@@ -10,7 +10,7 @@ import type { MVResult } from "@/lib/types";
 const tmp = mkdtempSync(path.join(tmpdir(), "mvps-queue-"));
 for (const f of readdirSync("data").filter((f) => f.endsWith(".json"))) cpSync(path.join("data", f), path.join(tmp, f));
 const settingsFile = path.join(tmp, "settings.json");
-writeFileSync(settingsFile, JSON.stringify({ ...JSON.parse(readFileSync(settingsFile, "utf8")), engine: "demo" }));
+writeFileSync(settingsFile, JSON.stringify({ ...JSON.parse(readFileSync(settingsFile, "utf8")), engine: "demo", resultsDir: path.join(tmp, "ket-qua") }));
 process.env.MV_DATA_DIR = tmp;
 
 let media: typeof import("@/lib/media");

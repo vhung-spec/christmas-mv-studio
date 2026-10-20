@@ -133,6 +133,17 @@ const T: Record<string, Template[]> = {
     { core: (p) => `seen from behind, {{HE}} and {{SHE}} walk side by side past ${p.landmark(0)} at dusk, lights flickering on one by one, camera slowly rising, peaceful happy ending`, vi: "Hai người sánh bước đi xa lúc hoàng hôn, đèn lần lượt bật sáng.", camera: "slow crane up", sizes: ["wide"] },
     { core: (p) => `of ${p.landmark(1)} at night, glowing and nearly empty, a ${p.vehicle(0)} driving off into the distance, slow pull-back, nostalgic farewell`, vi: "Bối cảnh về đêm, chiếc xe cổ chạy xa dần.", camera: "slow pull-back", sizes: ["wide"] },
   ],
+  // Cảnh đời sống thập niên 50 (không có cặp đôi).
+  era: [
+    { core: (p) => `of the main street near ${p.landmark(0)} in ${p.year}, a ${p.vehicle(0)} cruising past shop windows, people in hats and full skirts waving from the sidewalk, neon signs flickering on, ${p.light}, slow crane down, golden-age optimism`, vi: "Đời sống 50s: phố chính đúng năm, xe cổ chạy chậm, người đi đường vẫy tay.", camera: "slow crane down", sizes: ["wide"] },
+    { core: (p) => `of a soda fountain counter near ${p.landmark(1)}, a soda jerk in a white paper cap spinning a milkshake while teenagers laugh on chrome stools, ${p.light}, slow dolly along the counter, warm nostalgia`, vi: "Đời sống 50s: quầy soda, người phục vụ lắc milkshake, thanh niên cười đùa.", camera: "slow dolly", sizes: ["medium", "wide"] },
+    { core: (p) => `of teenagers in letterman jackets and poodle skirts crowding a glowing jukebox, one finger choosing a record, ${p.prop(0)} on the counter, ${p.light}, gentle push-in, carefree youth`, vi: "Đời sống 50s: đám thanh niên quanh máy jukebox chọn bài.", camera: "slow push-in", sizes: ["medium", "close"] },
+    { core: () => `of a family gathered on a sofa watching a small black-and-white television set, the mother bringing lemonade, children on the rug, warm lamplight, slow push-in, cozy suburban warmth`, vi: "Đời sống 50s: cả nhà quây quần xem TV đen trắng.", camera: "slow push-in", sizes: ["medium", "wide"] },
+    { core: (p) => `of kids racing bicycles down a tree-lined street near ${p.landmark(2)}, baseball cards clicking in the spokes, ${p.light}, low tracking shot, innocent summer joy`, vi: "Đời sống 50s: trẻ con đạp xe trên phố rợp cây.", camera: "low tracking shot", sizes: ["wide", "medium"] },
+    { core: (p) => `of a gas station attendant in a cap and bow tie wiping the windshield of a ${p.vehicle(1)}, chrome pumps gleaming, ${p.light}, slow lateral dolly, friendly small-town service`, vi: "Đời sống 50s: nhân viên cây xăng lau kính xe cổ.", camera: "lateral dolly", sizes: ["medium", "wide"] },
+    { core: (p) => `of a drive-in theater at dusk, rows of finned cars like a ${p.vehicle(2)} facing the glowing screen, families sharing popcorn, slow crane up, magical summer evening`, vi: "Đời sống 50s: rạp chiếu phim ngoài trời lúc chạng vạng.", camera: "slow crane up", sizes: ["wide"] },
+    { core: () => `of a crowded dance hall, swing skirts swirling and couples jitterbugging under paper lanterns, a band in matching jackets on stage, warm spotlights, sweeping crane move, joyful energy`, vi: "Đời sống 50s: vũ trường đông người nhảy swing.", camera: "sweeping crane", sizes: ["wide", "medium"] },
+  ],
 };
 
 function groupFor(section: string, motion: boolean): string[] {
@@ -191,12 +202,15 @@ function pools(ctx: GenContext): Pools {
 export function mockShot(ctx: GenContext, slot: PlannedShot, variant = 0, used?: Set<string>): RawShot {
   const r = rng(hashSeed(`${ctx.idea.id}|${ctx.idea.world_location}|${slot.shot_no}|${variant}|${ctx.tone}`));
   const p = pools(ctx);
-  const groups = groupFor(slot.section, slot.must_motion);
+  const groups = slot.era_life ? ["era"] : groupFor(slot.section, slot.must_motion);
   const candidates = groups.flatMap((g) => T[g].map((t, i) => ({ t, key: `${g}:${i}` })));
   const bySize = candidates.filter(({ t }) => !t.sizes || t.sizes.includes(slot.size_hint));
   const pool = (bySize.length ? bySize : candidates).filter(({ key }) => !used?.has(key));
   const list = pool.length ? pool : bySize.length ? bySize : candidates;
-  const { t, key } = list[Math.floor(r() * list.length)];
+  // Cảnh đời sống 50s: lần lượt từng mẫu (theo thứ tự cảnh trong plan) để không lặp cùng một hoạt động.
+  const eraIndex = slot.era_life ? ctx.plan.shots.filter((s) => s.era_life && s.shot_no < slot.shot_no).length : -1;
+  const eraPick = eraIndex >= 0 ? candidates[(eraIndex + hashSeed(ctx.idea.world_location) + variant) % candidates.length] : null;
+  const { t, key } = eraPick ?? list[Math.floor(r() * list.length)];
   used?.add(key);
 
   const offset = Math.floor(r() * 3);

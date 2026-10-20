@@ -24,6 +24,11 @@ export interface PipelineItem {
   render_at?: string;
   /** File MP4 đã dựng (trong data/media/<mv_id>/). */
   output?: string;
+  /** Ảnh bìa, file tiêu đề + mô tả YouTube (cùng thư mục MV), tiêu đề YouTube, thư mục kết quả. */
+  cover?: string;
+  info?: string;
+  yt_title?: string;
+  result_dir?: string;
   done_at?: string;
 }
 

@@ -11,7 +11,7 @@ const tmp = mkdtempSync(path.join(tmpdir(), "mvps-auto-"));
 for (const f of readdirSync("data").filter((f) => f.endsWith(".json"))) cpSync(path.join("data", f), path.join(tmp, f));
 const songs = path.join(tmp, "nhac");
 const settingsFile = path.join(tmp, "settings.json");
-const base = { ...JSON.parse(readFileSync(settingsFile, "utf8")), engine: "demo", museMode: "gateway", songDir: songs, museAutoRender: false, museAvoid: true };
+const base = { ...JSON.parse(readFileSync(settingsFile, "utf8")), engine: "demo", museMode: "gateway", songDir: songs, museAutoRender: false, museAvoid: true, resultsDir: path.join(tmp, "ket-qua") };
 const setSettings = (patch: Record<string, unknown> = {}) => writeFileSync(settingsFile, JSON.stringify({ ...base, ...patch }));
 setSettings();
 process.env.MV_DATA_DIR = tmp;
@@ -142,7 +142,20 @@ describe("dây chuyền: ý tưởng → MP4", () => {
     expect(done.steps.render.status).toBe("done");
     expect(done.done_at).toBeTruthy();
     expect(existsSync(media.mediaPath(mv.id, done.output!))).toBe(true);
-    expect((await media.loadProject(mv.id)).renders[0]).toMatchObject({ file: done.output, verification: { passed: true } });
+    const rendered = (await media.loadProject(mv.id)).renders[0];
+    expect(rendered).toMatchObject({ file: done.output, verification: { passed: true } });
+
+    // Ảnh bìa 1280×720 + tiêu đề / mô tả YouTube cạnh MP4, và thư mục kết quả đủ 3 file.
+    expect(rendered.cover).toMatch(/-cover\.jpg$/);
+    expect(rendered.youtube_info).toMatch(/-youtube\.txt$/);
+    const cover = await (await import("@/lib/ffmpeg")).probe(media.mediaPath(mv.id, rendered.cover!), { still: true });
+    expect([cover.video?.width, cover.video?.height]).toEqual([1280, 720]);
+    const info = readFileSync(media.mediaPath(mv.id, rendered.youtube_info!), "utf8");
+    expect(info).toContain("TIÊU ĐỀ");
+    expect(info).toContain(mv.youtube_titles[0]);
+    expect(rendered.result_dir).toBe(path.join(tmp, "ket-qua", "001 - Santa Monica Pier Summer 1955"));
+    expect(readdirSync(rendered.result_dir!).sort()).toEqual(["Tiêu đề - mô tả.txt", "Ảnh bìa.jpg", rendered.download_name!].sort());
+    if (process.env.KEEP_COVER_TEST) cpSync(media.mediaPath(mv.id, rendered.cover!), path.join(process.env.KEEP_COVER_TEST, "cover.jpg"));
 
     // Việc 2 vẫn chờ bài hát; bỏ khỏi dây chuyền.
     expect((await item(2)).done_at).toBeUndefined();

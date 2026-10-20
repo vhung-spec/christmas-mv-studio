@@ -36,6 +36,8 @@ export interface StructureInput {
   sections?: SongSection[];
   lyrics?: string | null;
   signatureShots?: string[];
+  /** Tỉ lệ cảnh "đời sống thập niên 50" (0–0.5). */
+  eraShare?: number;
 }
 
 export const isChorus = (name: string) => /chorus|điệp khúc/i.test(name) && !/pre/i.test(name);
@@ -320,6 +322,28 @@ function assignSignatureShots(shots: PlannedShot[], signatureShots: string[]) {
   }
 }
 
+/**
+ * Cảnh "đời sống thập niên 50" (không có cặp đôi) để MV như một thước phim kỷ niệm: cảnh mở đầu và các cảnh rải đều trong bài,
+ * không liền nhau, không phải cảnh cuối (dành cho cặp đôi khép chuyện), cảnh signature hay cảnh nhảy của cặp đôi.
+ */
+export function assignEraLife(shots: PlannedShot[], share: number) {
+  const n = shots.length;
+  const k = Math.min(Math.round(n * Math.max(0, share)), Math.floor((n - 1) / 2));
+  if (k <= 0) return;
+  const free = (i: number) =>
+    i >= 0 && i < n - 1 && !shots[i].signature_shot && !shots[i].must_motion && !shots[i].era_life && !shots[i - 1]?.era_life && !shots[i + 1]?.era_life;
+  for (let j = 0; j < k; j++) {
+    const target = Math.round((j * (n - 1)) / k);
+    for (let d = 0; d < n; d++) {
+      const hit = [target + d, target - d].find(free);
+      if (hit !== undefined) {
+        shots[hit].era_life = true;
+        break;
+      }
+    }
+  }
+}
+
 // ---------- Hàm chính ----------
 
 export function buildStructure(input: StructureInput): StructurePlan {
@@ -387,6 +411,7 @@ export function buildStructure(input: StructureInput): StructurePlan {
   markMotion(shots, sections);
   assignSizes(shots);
   assignSignatureShots(shots, input.signatureShots ?? []);
+  assignEraLife(shots, input.eraShare ?? 0);
   if (input.lyrics?.trim()) assignLyrics(shots, sections, input.lyrics);
 
   const notes: string[] = [];

@@ -79,6 +79,8 @@ export const DEFAULT_SETTINGS: Settings = {
   driveAutoSync: true,
   monitorEnabled: false,
   monitorPort: 3300,
+  eraShare: 30,
+  resultsDir: "KET QUA",
 };
 
 // ---------- Khoá theo tên (tránh ghi đè đồng thời trong cùng tiến trình) ----------
@@ -175,9 +177,9 @@ export async function readSettings(): Promise<Settings> {
   // Cài đặt cũ dùng mockMode (true/false) thay cho engine.
   if (!rest.engine && mockMode) merged.engine = "demo";
   if (!merged.songStructure?.length) merged.songStructure = DEFAULT_SONG_STRUCTURE;
-  // Thư mục nhạc ghi dạng tương đối (vd. "KHO NHAC" trong gói chuyển máy) = thư mục cạnh thư mục app, ổ nào cũng chạy được.
-  if (merged.songDir.trim() && !path.isAbsolute(merged.songDir.trim())) {
-    merged.songDir = path.resolve(/*turbopackIgnore: true*/ path.dirname(process.cwd()), merged.songDir.trim());
+  // Thư mục nhạc / kết quả ghi dạng tương đối (vd. "KHO NHAC") = thư mục cạnh thư mục app, ổ nào cũng chạy được.
+  for (const k of ["songDir", "resultsDir"] as const) {
+    if (merged[k].trim() && !path.isAbsolute(merged[k].trim())) merged[k] = path.resolve(/*turbopackIgnore: true*/ path.dirname(process.cwd()), merged[k].trim());
   }
   return merged;
 }

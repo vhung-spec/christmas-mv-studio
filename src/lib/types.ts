@@ -152,6 +152,10 @@ export interface Settings {
   /** Trang theo dõi (chỉ xem) cho máy khác của bạn, chỉ mở trên địa chỉ Tailscale của máy này, cần mật khẩu. */
   monitorEnabled: boolean;
   monitorPort: number;
+  /** Phần trăm số cảnh là "đời sống thập niên 50" (không có cặp đôi), 0 = tắt. */
+  eraShare: number;
+  /** Thư mục kết quả: mỗi MV xong một thư mục con (video, ảnh bìa, tiêu đề). Không kèm ổ đĩa = cạnh thư mục app; "" = không tạo. */
+  resultsDir: string;
 }
 
 export interface Libraries {
@@ -227,6 +231,8 @@ export interface PlannedShot {
   must_motion: boolean;
   signature_shot: string | null;
   lyric_line: string | null;
+  /** Cảnh đời sống thập niên 50 (không có cặp đôi): người thường, phố xá, quán xá… để MV gợi hoài niệm. */
+  era_life?: boolean;
 }
 
 export interface StructurePlan {
@@ -261,6 +267,8 @@ export interface Shot {
   audio: string | null;
   signature_shot: string | null;
   is_motion: boolean;
+  /** Cảnh đời sống thập niên 50 (không có cặp đôi). */
+  era_life?: boolean;
   /** true nếu người dùng đã sửa tay prompt_en. */
   edited?: boolean;
 }
@@ -522,6 +530,12 @@ export interface RenderInfo {
   tags?: Mp4Tags;
   /** Tên file khi tải về (theo tiêu đề YouTube — YouTube lấy tên file làm tiêu đề mặc định khi upload). */
   download_name?: string;
+  /** Ảnh bìa 1280×720 (cùng thư mục MV). */
+  cover?: string;
+  /** File .txt: tiêu đề, tiêu đề khác, mô tả + hashtag cho YouTube. */
+  youtube_info?: string;
+  /** Thư mục kết quả đã tạo (video + ảnh bìa + tiêu đề). */
+  result_dir?: string;
 }
 
 export interface VideoProject {

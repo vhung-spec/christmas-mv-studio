@@ -76,7 +76,7 @@ describe("trang theo dõi", () => {
     expect(await page.text()).toContain("MV Prompt Studio — theo dõi");
 
     const status = await (await fetch(`${url}/api/status`, { headers: auth("matkhau1") })).json();
-    expect(status.pipeline.items[0]).toMatchObject({ title: "Santa Monica Pier Summer 1954", video: `/video/${mvId}/mv-1-test.mp4` });
+    expect(status.pipeline.items[0]).toMatchObject({ title: "Santa Monica Pier Summer 1954", video: `/file/${mvId}/mv-1-test.mp4` });
     expect(status.bank.counts).toBeDefined();
     expect(status.drive).toBeDefined();
 
@@ -86,8 +86,8 @@ describe("trang theo dõi", () => {
     expect(await video.text()).toBe("fake mp4 bytes");
 
     // Không đọc được file ngoài thư mục MV / không phải MP4; không gửi lệnh được.
-    expect((await fetch(`${url}/video/${mvId}/project.json`, { headers: auth("matkhau1") })).status).toBe(404);
-    expect((await fetch(`${url}/video/..%2F..%2Fsettings.json/x.mp4`, { headers: auth("matkhau1") })).status).toBe(404);
+    expect((await fetch(`${url}/file/${mvId}/project.json`, { headers: auth("matkhau1") })).status).toBe(404);
+    expect((await fetch(`${url}/file/..%2F..%2Fsettings.json/x.mp4`, { headers: auth("matkhau1") })).status).toBe(404);
     expect((await fetch(`${url}/api/status`, { method: "POST", headers: auth("matkhau1") })).status).toBe(405);
 
     // Tắt → đóng cổng.

@@ -21,6 +21,7 @@ const TYPES: Record<string, string> = {
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
   ".bmp": "image/bmp",
+  ".txt": "text/plain; charset=utf-8",
 };
 
 type Ctx = { params: Promise<{ id: string; file: string }> };

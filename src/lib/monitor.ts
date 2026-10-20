@@ -71,6 +71,17 @@ async function diskFree(dir: string): Promise<{ path: string; free: number; tota
   }
 }
 
+/** Link tải một file kết quả của MV đã xong (video, ảnh bìa, tiêu đề). */
+const fileUrl = (i: { done_at?: string; mv_id?: string }, file?: string) =>
+  i.done_at && i.mv_id && file && SAFE_ID.test(i.mv_id) ? `/file/${i.mv_id}/${encodeURIComponent(file)}` : null;
+
+/** File được phép mở từ trang theo dõi: video đã dựng, ảnh bìa, tiêu đề + mô tả (đuôi file, kiểu, luôn tải về). */
+const FILE_TYPES: [RegExp, string, boolean][] = [
+  [/\.mp4$/i, "video/mp4", true],
+  [/-cover\.jpg$/i, "image/jpeg", false],
+  [/-youtube\.txt$/i, "text/plain; charset=utf-8", true],
+];
+
 export async function monitorSnapshot() {
   const settings = await readSettings();
   const [pipeline, muse, bank, drive, queue] = await Promise.all([pipelineView(), museView(), bankView(), driveSyncStatus(), readQueue()]);
@@ -98,7 +109,11 @@ export async function monitorSnapshot() {
         done_at: i.done_at ?? null,
         steps: i.steps,
         // Chỉ đưa link tải khi file nằm đúng thư mục MV (tên file an toàn).
-        video: i.done_at && i.mv_id && i.output && SAFE_ID.test(i.mv_id) ? `/video/${i.mv_id}/${encodeURIComponent(i.output)}` : null,
+        video: fileUrl(i, i.output),
+        cover: fileUrl(i, i.cover),
+        info: fileUrl(i, i.info),
+        yt_title: i.yt_title ?? null,
+        result_dir: i.result_dir ?? null,
       })),
     },
     render: running ? { title: runningTitle, progress: queue.job?.progress ?? 0, stage: queue.job?.stage ?? "" } : null,
@@ -159,16 +174,17 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse) {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(monitorPage());
     } else if (url.pathname === "/api/status") {
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" }).end(JSON.stringify(await monitorSnapshot()));
-    } else if (url.pathname.startsWith("/video/")) {
+    } else if (url.pathname.startsWith("/file/")) {
       const [, , mvId, file] = url.pathname.split("/");
       const name = decodeURIComponent(file ?? "");
-      if (!SAFE_ID.test(mvId ?? "") || !/\.mp4$/i.test(name)) throw new Error("không có");
+      const kind = FILE_TYPES.find(([re]) => re.test(name));
+      if (!SAFE_ID.test(mvId ?? "") || !kind) throw new Error("không có");
       const p = mediaPath(mvId, name);
       const st = await fs.stat(p);
       res.writeHead(200, {
-        "Content-Type": "video/mp4",
+        "Content-Type": kind[1],
         "Content-Length": st.size,
-        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
+        "Content-Disposition": `${kind[2] || url.searchParams.has("download") ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(name)}`,
       });
       if (req.method === "HEAD") res.end();
       else createReadStream(p).pipe(res);

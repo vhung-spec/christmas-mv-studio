@@ -100,9 +100,12 @@ function render(s) {
       }).join("") + "</table>"
     : '<span class="muted">Không có việc nào đang làm.</span>';
   $("done").innerHTML = done.length
-    ? "<table><tr><th>MV</th><th>Xong lúc</th><th></th></tr>" + done.slice(0, 15).map((i) =>
-        "<tr><td>" + (i.idea ? "#" + esc(i.idea) + " " : "") + esc(i.title) + "</td><td>" + esc(time(i.done_at)) + "</td><td>" +
-        (i.video ? '<a href="' + esc(i.video) + '">⬇ Tải MP4</a>' : "") + "</td></tr>").join("") + "</table>"
+    ? "<table><tr><th></th><th>MV</th><th>Xong lúc</th><th>Tải về</th></tr>" + done.slice(0, 15).map((i) =>
+        "<tr><td>" + (i.cover ? '<a href="' + esc(i.cover) + '" target="_blank"><img src="' + esc(i.cover) + '" alt="" style="width:120px;border-radius:4px;display:block"></a>' : "") +
+        "</td><td>" + (i.idea ? "#" + esc(i.idea) + " " : "") + esc(i.title) + (i.yt_title ? '<div class="muted">' + esc(i.yt_title) + "</div>" : "") +
+        "</td><td>" + esc(time(i.done_at)) + "</td><td>" +
+        [i.video ? '<a href="' + esc(i.video) + '">⬇ MP4</a>' : "", i.cover ? '<a href="' + esc(i.cover) + '?download=1">⬇ Ảnh bìa</a>' : "", i.info ? '<a href="' + esc(i.info) + '">⬇ Tiêu đề + mô tả</a>' : ""].filter(Boolean).join(" · ") +
+        "</td></tr>").join("") + "</table>"
     : '<span class="muted">Chưa có MV nào xong.</span>';
   const rows = [];
   if (!m.haohao && m.counts) rows.push("<tr><td>Muse</td><td>" + esc(museState) + " · chờ " + m.counts.queued + " · đang làm " + m.counts.processing + " · xong " + m.counts.succeeded + " · lỗi " + m.counts.failed + (m.fake ? " · (Muse giả)" : "") + "</td></tr>");

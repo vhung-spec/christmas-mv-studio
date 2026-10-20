@@ -248,6 +248,12 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
     } else if (q.status === "done") {
       steps.render = { status: "done", message: q.output };
       out.output = q.output;
+      // Ảnh bìa + tiêu đề + thư mục kết quả của lần dựng này (tạo ngay sau khi dựng).
+      const r = project.renders.find((x) => x.file === q.output);
+      if (r?.cover) out.cover = r.cover;
+      if (r?.youtube_info) out.info = r.youtube_info;
+      if (r?.tags?.title) out.yt_title = r.tags.title;
+      if (r?.result_dir) out.result_dir = r.result_dir;
       out.done_at = new Date().toISOString();
     } else {
       steps.render = { status: "error", message: q.message || "Dựng không thành công." };

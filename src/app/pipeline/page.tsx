@@ -373,7 +373,39 @@ export default function PipelinePage() {
                     </span>
                   </div>
                   {it.done_at ? (
-                    <p className="mt-1 text-xs font-semibold text-mint-dark">✓ Xong — {it.output}</p>
+                    <div className="mt-2 flex flex-wrap items-start gap-3">
+                      {it.mv_id && it.cover && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={mediaUrl(it.mv_id, it.cover)} alt="Ảnh bìa" className="w-48 rounded border border-ink/15" />
+                      )}
+                      <div className="min-w-0 flex-1 space-y-1 text-xs">
+                        <p className="font-semibold text-mint-dark">✓ Xong — {it.output}</p>
+                        {it.yt_title && (
+                          <p>
+                            <b>Tiêu đề:</b> {it.yt_title}
+                          </p>
+                        )}
+                        {it.result_dir && (
+                          <p className="text-muted">
+                            Thư mục kết quả: <code>{it.result_dir}</code>
+                          </p>
+                        )}
+                        {it.mv_id && (it.cover || it.info) && (
+                          <p className="flex flex-wrap gap-2">
+                            {it.cover && (
+                              <a className="btn-ghost btn-sm" href={mediaUrl(it.mv_id, it.cover, true)} download>
+                                ⬇ Ảnh bìa
+                              </a>
+                            )}
+                            {it.info && (
+                              <a className="btn-ghost btn-sm" href={mediaUrl(it.mv_id, it.info, true)} download>
+                                ⬇ Tiêu đề + mô tả
+                              </a>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     f?.message && (
                       <p className={`mt-1 text-xs ${f.status === "error" ? "text-cherry-dark" : f.status === "waiting" ? "text-amber-800" : "text-muted"}`}>

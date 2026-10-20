@@ -93,3 +93,23 @@ máy cùng wifi hay người ngoài thì không.
 3. Trên máy chính: mở trình duyệt, dán địa chỉ đó → trình duyệt hỏi tên đăng nhập và mật khẩu:
    tên gõ gì cũng được, mật khẩu là mật khẩu vừa đặt. Lưu trang vào Bookmark (dấu trang) để mở lại nhanh.
    Chấm xanh góc trên = đang nối với máy chạy; chấm đỏ = mất kết nối (máy chạy tắt / ngủ / Tailscale ngắt).
+
+
+F. KẾT QUẢ MỖI MV + TỰ ĐƯA LÊN GOOGLE DRIVE
+--------------------------------------------
+Mỗi MV xong, app tự tạo một thư mục kết quả, ví dụ "008 - Santa Monica Moonlight 1959", gồm:
+   - video MP4 (tên file = tiêu đề YouTube, YouTube tự lấy làm tiêu đề khi tải lên),
+   - Ảnh bìa.jpg (1280×720, lấy từ cảnh đẹp nhất của MV, có tên bài và địa điểm · năm),
+   - Tiêu đề - mô tả.txt (tiêu đề, 2 tiêu đề dự phòng, mô tả + hashtag — dán thẳng lên YouTube).
+Mặc định các thư mục này nằm trong thư mục KET QUA, ngay cạnh thư mục app.
+
+Để kết quả TỰ LÊN GOOGLE DRIVE:
+1. Trên máy chạy, cài "Google Drive cho máy tính": https://www.google.com/drive/download/
+   → đăng nhập tài khoản Google của bạn (tài khoản có thư mục Drive nhận MV).
+2. Trên trang web Google Drive, mở thư mục nhận MV. Nếu thư mục do tài khoản khác chia sẻ cho bạn:
+   chuột phải vào thư mục → Sắp xếp (Organize) → Thêm lối tắt (Add shortcut) → Drive của tôi (My Drive).
+3. Mở File Explorer → ổ "Google Drive (G:)" → "My Drive" (Drive của tôi) → mở thư mục đó
+   → bấm vào thanh địa chỉ ở trên cùng → Ctrl+C (đường dẫn dạng G:\My Drive\Tên thư mục).
+4. Trong app: Cài đặt → "Thư mục kết quả" → dán đường dẫn → Lưu.
+Từ đó mỗi MV xong được chép vào thư mục đó và Google Drive tự tải lên (thời gian tải tuỳ mạng).
+Để Google Drive ở chế độ "Stream files" (mặc định) cho đỡ tốn chỗ ổ C.

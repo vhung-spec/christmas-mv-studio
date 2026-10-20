@@ -11,6 +11,7 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { cleanText, downloadName, focusPull, introAss, introSpan, introText, logoFilters, metadataArgs, mvTags, overlapsIntroText, LOGO_FADE_IN, FADE_FROM_BLACK, type TextMode } from "./branding";
+import { makeCoverAndInfo } from "./cover";
 import { RENDER_SIZES, SHARED_ID, applyShared, buildEdit, editInputFrom } from "./edit";
 import { exportFileBase } from "./exporters";
 import { FfmpegError, ffmpegOrThrow, findFfmpeg, hasFilter, probe, type RunOptions } from "./ffmpeg";
@@ -18,7 +19,9 @@ import { defaultFont, readFontInfo } from "./fonts";
 import { EBUR128_FILTER, MAX_AAC_ATTEMPTS, gainDecision, parseEbur128, retryGain, volumeFilter } from "./loudness";
 import { loadProject, mediaDir, mediaPath, updateProject } from "./media";
 import { AUDIO_BITRATE, videoEncoderArgs } from "./quality";
-import { loadMV } from "./store";
+import { exportResult } from "./results";
+import { librarySongFor } from "./songLibrary";
+import { loadMV, readSettings } from "./store";
 import type { EditOptions, EditPlan, EditSegment, LoudnessReport, LoudnessStats, MVResult, RenderInfo, RenderJob, Verification, VideoProject } from "./types";
 
 const RATE = 48000;
@@ -428,6 +431,13 @@ async function runJob(job: JobState, mv: MVResult, project: VideoProject, plan: 
     const outName = stampName(mv);
     await fs.rename(partial, mediaPath(mv.id, outName));
     const stat = await fs.stat(mediaPath(mv.id, outName));
+    // Ảnh bìa + tiêu đề / mô tả YouTube cạnh file MP4 (lỗi thì bỏ qua — video vẫn xong).
+    job.stage = "Ảnh bìa + tiêu đề YouTube";
+    const hook = (await librarySongFor(mv.idea).catch(() => null))?.hook;
+    const extras = await makeCoverAndInfo(mv, project, outName, tmp, hook).catch((err) => {
+      console.error("[cover]", (err as Error).message);
+      return null;
+    });
     const output: RenderInfo = {
       file: outName,
       created_at: new Date().toISOString(),
@@ -442,7 +452,18 @@ async function runJob(job: JobState, mv: MVResult, project: VideoProject, plan: 
       branding: { logo: Boolean(look.logo), intro: opts.intro.enabled },
       tags,
       download_name: downloadName(tags.title),
+      ...(extras?.cover ? { cover: extras.cover } : {}),
+      ...(extras ? { youtube_info: extras.info } : {}),
     };
+    // Thư mục kết quả (video + ảnh bìa + tiêu đề); nằm trong ổ Google Drive thì tự lên Drive. Lỗi thì bỏ qua.
+    const resultsDir = (await readSettings()).resultsDir;
+    if (resultsDir) {
+      job.stage = "Tạo thư mục kết quả";
+      output.result_dir = await exportResult(mv, output, resultsDir).catch((err) => {
+        console.error("[results]", (err as Error).message);
+        return undefined;
+      });
+    }
     await updateProject(mv.id, (p) => ({ ...p, renders: [output, ...p.renders] }));
     Object.assign(job, { status: "done", progress: 1, stage: "Xong", output, finished_at: new Date().toISOString() });
   } catch (err) {

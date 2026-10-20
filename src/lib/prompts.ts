@@ -94,7 +94,19 @@ SHOTS
 - Rows marked SIGNATURE visibly use that theme signature shot; copy its name into signature_shot
   (otherwise null).
 - When a row has a lyric line, let the image echo it, without writing the words on screen.
-- Spread the outline over the whole song as a story with a beginning, a development and an ending.
+- Rows marked ERA LIFE are nostalgic slices of everyday 1950s American life at this place and year,
+  WITHOUT the main characters: no {{ID}} placeholders, characters_in_shot empty. Show ordinary,
+  unnamed people and period details — for example a soda jerk spinning a milkshake at a chrome
+  counter, teenagers crowding a glowing jukebox, finned cars cruising a neon main street, a family
+  gathered around a small black-and-white television, kids on bicycles with baseball cards, a gas
+  station attendant in a cap wiping a windshield, a drive-in screen glowing at dusk, a dance hall full
+  of swing skirts, a milkman at a picket-fence porch. It must feel like a cherished memory of a golden
+  age — warm, iconic, period-accurate (era rules), clearly tied to this location and year, echoing the
+  section's mood or lyric. Every ERA LIFE row shows a different activity, never repeated; the first
+  shot of the video, when marked, establishes the place and the era. description_vi starts with
+  "Đời sống 50s:".
+- Spread the outline over the whole song as a story with a beginning, a development and an ending
+  (told by the shots with the characters; ERA LIFE shots surround that story with the era).
   Never repeat the same moment; every shot moves the story or the feeling forward.
 - characters_in_shot lists the ids of the placeholders used in prompt_core.
 - description_vi: one natural Vietnamese sentence for the editor.
@@ -162,6 +174,7 @@ function planRow(s: PlannedShot): string {
     `${formatTime(s.start_sec)}–${formatTime(s.start_sec + s.duration_sec)} (${s.duration_sec}s)`,
     `size: ${s.size_hint}`,
   ];
+  if (s.era_life) parts.push("ERA LIFE");
   if (s.must_motion) parts.push("MOTION");
   if (s.signature_shot) parts.push(`SIGNATURE: ${s.signature_shot}`);
   if (s.lyric_line) parts.push(`lyric: ${s.lyric_line}`);

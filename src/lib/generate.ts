@@ -256,6 +256,7 @@ async function buildContext(
     sections: settings.songStructure,
     lyrics: idea.lyrics,
     signatureShots: theme.signature_shots,
+    eraShare: (settings.eraShare ?? 0) / 100,
   });
 
   const fixedBible = settings.fixedCouple ? await ensureSeriesCouple(idea, settings, opts.mode, opts.signal) : null;
@@ -357,6 +358,7 @@ function toShot(raw: RawShot, slot: GenContext["plan"]["shots"][number], ctx: Ge
     audio,
     signature_shot: raw.signature_shot?.trim() || slot.signature_shot,
     is_motion: raw.is_motion || slot.must_motion,
+    ...(slot.era_life ? { era_life: true } : {}),
   };
 }
 
