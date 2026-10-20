@@ -38,6 +38,8 @@ export const MUSE_FILE = () => dataPath("muse.json");
 export const PIPELINE_FILE = () => dataPath("pipeline.json");
 /** Kho ý tưởng (của bạn + Claude đề xuất), đánh dấu đã dùng / chưa dùng. */
 export const IDEAS_FILE = () => dataPath("ideas.json");
+/** Thư viện lời bài hát của kho nhạc (mỗi số bài: địa điểm, chủ đề, dàn ý, lời) — tạo từ thư mục bài hát trên Google Drive. */
+export const SONG_LIBRARY_FILE = () => dataPath("song_library.json");
 
 export const LIBRARY_FILES = {
   themes: "themes.json",

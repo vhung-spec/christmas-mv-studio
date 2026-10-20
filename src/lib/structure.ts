@@ -144,6 +144,10 @@ export interface LyricLine {
 
 const MARKER_RE =
   /^\s*[\[(]?\s*(final chorus|last chorus|pre[- ]?chorus|chorus|refrain|hook|verse|intro|outro|bridge|interlude|solo|instrumental|điệp khúc cuối|điệp khúc|phiên khúc|dạo đầu|đoạn kết|cầu nối|kết)\s*(\d+)?\s*[\])]?\s*:?\s*$/i;
+/** Nhãn kiểu Suno có mô tả: "[Intro - bright, hand claps in]", "[Sax Solo]", "[Hand Clap Break - call and response]". */
+const TAG_RE = /^\s*\[([^\]]+)\]\s*$/;
+const TAG_KIND_RE =
+  /(final chorus|last chorus|pre[- ]?chorus|chorus|refrain|hook|verse|intro|outro|bridge|interlude|solo|instrumental|break|điệp khúc cuối|điệp khúc|phiên khúc|dạo đầu|đoạn kết|cầu nối)\s*(\d+)?/i;
 
 /** Tách lời bài hát thành từng dòng, gán đoạn nếu lời có nhãn [Verse 1], [Chorus]... */
 export function parseLyrics(lyrics: string, sectionNames: string[]): { lines: LyricLine[]; hasMarkers: boolean } {
@@ -157,7 +161,13 @@ export function parseLyrics(lyrics: string, sectionNames: string[]): { lines: Ly
   for (const raw of lyrics.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) continue;
-    const m = line.match(MARKER_RE);
+    const tag = line.match(TAG_RE);
+    const m = line.match(MARKER_RE) ?? (tag ? tag[1].split(/\s+[-–—]\s+|:/)[0].match(TAG_KIND_RE) : null);
+    // Nhãn lạ trong ngoặc vuông (vd. "[Spoken]") không phải lời: bỏ qua, giữ đoạn hiện tại.
+    if (tag && !m) {
+      hasMarkers = true;
+      continue;
+    }
     if (m) {
       hasMarkers = true;
       const kind = m[1].toLowerCase();

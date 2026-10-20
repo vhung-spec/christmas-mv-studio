@@ -12,6 +12,8 @@ export interface BankIdea {
   status: BankStatus;
   added_at: string;
   used_at?: string;
+  /** Lý do bỏ qua khi lấy ý tưởng (vd. nhạc bài này đã dùng hết). */
+  note?: string;
 }
 
 export interface BankConfig {
@@ -41,6 +43,10 @@ export interface BankView {
   /** Các ý tưởng chưa dùng sắp tới lượt (tối đa 20). */
   upcoming: BankIdea[];
   proposals: BankIdea[];
+  /** Ý tưởng bị bỏ qua khi lấy (có lý do), mới nhất trước — tối đa 20. */
+  skipped: BankIdea[];
+  /** Thư viện lời bài hát: số bài có lời. */
+  library: number;
   /** Claude đang nghĩ ý tưởng mới. */
   suggesting: boolean;
   /** Lỗi lần đề xuất gần nhất. */

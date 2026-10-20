@@ -1,6 +1,7 @@
 // Kho ý tưởng: thêm / bỏ trùng / lấy dần vào dây chuyền, Claude (chế độ Demo) đề xuất ý tưởng mới khi kho sắp hết.
 // Không gọi Claude, không gửi Muse (cách gửi "haohao" = chờ dán tay, dây chuyền dừng ở bước clip).
-import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
@@ -169,6 +170,41 @@ describe("kho ý tưởng", () => {
     expect((await pl.readPipeline()).items).toHaveLength(0);
     await expect(bank.suggestIdeas()).rejects.toThrow(/API key/);
   });
+
+  it("kho nhạc đánh số: bỏ qua ý tưởng mà nhạc đã dùng hết, ghép đúng bài theo số, lấy lời từ thư viện", async () => {
+    const bank = await import("@/lib/ideaBank");
+    const pl = await import("@/lib/pipeline");
+    const store = await import("@/lib/store");
+    const songs = path.join(tmp, "kho-nhac");
+    mkdirSync(songs, { recursive: true });
+    // Bài 1: cả hai bản đã dùng. Bài 2: bản đầu đã dùng, bản "(1)" chưa dùng (file nhạc thật 12 giây).
+    for (const f of ["1 đã dùng.wav", "1 (2)đã dùng.wav", "2 đã dùng.wav"]) writeFileSync(path.join(songs, f), "x");
+    const bin = (await import("@/lib/ffmpeg")).findFfmpeg().path!;
+    const r = spawnSync(bin, ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=330:duration=12", "-c:a", "libmp3lame", path.join(songs, "2 (1).mp3")]);
+    expect(r.status).toBe(0);
+    const lyrics = "[Intro - bright, hand claps in]\nSha-la-la\n[Verse 1]\nMet you on the pier\n[Chorus]\nFind you on the pier";
+    const lib = { songs: [{ n: 2, world_location: "Santa Monica Pier Summer 1954", theme_code: "T01", theme_name: "Sét ái tình", outline: "o", hook: "Find You on the Pier", mood: "", lyrics }] };
+    writeFileSync(path.join(tmp, "song_library.json"), JSON.stringify(lib));
+    setSettings({ songDir: songs });
+    await bank.setBankConfig({ ahead: 1, suggest: false });
+    await bank.addIdeas([idea("1", "Hollywood Boulevard Summer 1954"), idea("2", "Santa Monica Pier Summer 1954")]);
+
+    await pl.pipelineTick();
+    await pl.pipelineIdle();
+    const items = (await pl.readPipeline()).items;
+    expect(items.map((i) => i.idea?.id)).toEqual(["2"]);
+    const v = await bank.bankView();
+    expect(v.library).toBe(1);
+    expect(v.skipped.map((x) => [x.idea.id, x.note])).toEqual([["1", expect.stringMatching(/bài số 1 đều đã ghi “đã dùng”/)]]);
+    const mv = (await store.loadMV(items[0].mv_id!))!;
+    expect(mv.idea.lyrics).toBe(lyrics);
+    expect(mv.idea.duration_sec).toBe(12);
+
+    await pl.pipelineTick();
+    const song = (await pl.readPipeline()).items[0].steps.song;
+    expect(song).toMatchObject({ status: "done", message: expect.stringMatching(/2 \(1\)\.mp3 \(bài số 2\)/) });
+    rmSync(path.join(tmp, "song_library.json"));
+  }, 120000);
 
   it("đề xuất lỗi (chưa có key) → không tự gọi lại liên tục; bấm “Nhờ Claude đề xuất ngay” thì thử lại", async () => {
     const bank = await import("@/lib/ideaBank");

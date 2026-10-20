@@ -83,3 +83,56 @@ export async function findSong(dir: string, title: string | undefined): Promise<
   if (!dir.trim() || !title?.trim()) return null;
   return pickSong(title, await listSongs(dir.trim()));
 }
+
+// ---------- Kho nhạc đánh số theo ý tưởng: "12.wav", "12 (1).wav", "76_1.mp3", "8 (1) đã dùng.wav" ----------
+
+/** Tên file có chữ "đã dùng" ("da dung", "dadung") — bạn đánh dấu bản nhạc đã làm MV. */
+export function isUsedSong(fileName: string): boolean {
+  return /\bda ?dung\b|\d(da ?dung)\b/.test(normSong(fileName));
+}
+
+/** Số bài và số bản trong tên file: "12 (1).wav" → { n: 12, version: 1 }; tên không bắt đầu bằng số → null. */
+export function songNumber(fileName: string): { n: number; version: number } | null {
+  const m = path.basename(fileName).match(/^0*(\d{1,4})(?!\d)\s*(?:\((\d+)\)|_(\d+))?/);
+  return m ? { n: Number(m[1]), version: Number(m[2] ?? m[3] ?? 0) } : null;
+}
+
+const extRank = (file: string) => (/\.(wav|flac|aiff?)$/i.test(file) ? 0 : 1);
+
+export interface NumberedSong {
+  file: string;
+  /** Bản được chọn đã có chữ "đã dùng" (mọi bản của bài đều đã dùng). */
+  used: boolean;
+  total: number;
+  free: number;
+}
+
+/** File của bài số n: bản chưa dùng trước (theo thứ tự bản, WAV trước MP3); bài không có file → null. */
+export function pickSongByNumber(n: number, files: string[]): NumberedSong | null {
+  const mine = files
+    .map((file) => ({ file, num: songNumber(file), used: isUsedSong(path.basename(file)) }))
+    .filter((x) => x.num?.n === n)
+    .sort((a, b) => Number(a.used) - Number(b.used) || a.num!.version - b.num!.version || extRank(a.file) - extRank(b.file) || a.file.localeCompare(b.file));
+  if (!mine.length) return null;
+  return { file: mine[0].file, used: mine[0].used, total: mine.length, free: mine.filter((x) => !x.used).length };
+}
+
+export type SongMatch = { file: string; by: "title"; ties: number } | ({ by: "number"; n: number } & NumberedSong);
+
+/**
+ * Bài cho một ý tưởng: trùng tên bài (nếu ý tưởng có tên bài), không thấy thì theo số ý tưởng (ý tưởng 12 → "12.wav", "12 (1).wav"…),
+ * cuối cùng thử tên dự phòng (vd. địa điểm). null nếu không có thư mục nhạc hoặc không thấy.
+ */
+export async function findSongForIdea(dir: string, idea: { id: string; song_title?: string }, fallbackTitle?: string): Promise<SongMatch | null> {
+  if (!dir.trim()) return null;
+  const files = await listSongs(dir.trim());
+  const byTitle = (t?: string) => (t?.trim() ? pickSong(t, files) : null);
+  const hit = byTitle(idea.song_title);
+  if (hit) return { file: hit.file, by: "title", ties: hit.ties };
+  if (/^\d+$/.test(idea.id)) {
+    const num = pickSongByNumber(Number(idea.id), files);
+    if (num) return { by: "number", n: Number(idea.id), ...num };
+  }
+  const fb = byTitle(fallbackTitle);
+  return fb ? { file: fb.file, by: "title", ties: fb.ties } : null;
+}

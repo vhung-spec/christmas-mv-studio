@@ -1,98 +1,392 @@
 {
   "T01": {
     "name": "Sét ái tình",
+    "group": "Tình yêu",
     "mood": "love at first sight, breathless, time stops",
     "pacing": "mid",
-    "signature_shots": ["eye-contact slow motion", "crowd blurs around the couple", "freeze-frame glance"],
+    "signature_shots": [
+      "eye-contact slow motion",
+      "crowd blurs around the couple",
+      "freeze-frame glance"
+    ],
     "description_vi": "Tiếng sét ái tình: một ánh mắt khiến thế giới xung quanh như ngừng lại.",
     "needs_review": false
   },
   "T02": {
-    "name": "Thầm thương trộm nhớ",
-    "mood": "shy longing, secret crush, stolen glances, tender hope",
+    "name": "Tỏ tình thầm lặng",
+    "group": "Tình yêu",
+    "mood": "shy unspoken love, secret crush, stolen glances, tender hope",
     "pacing": "slow",
-    "signature_shots": ["peeking from behind an object", "rack focus from one face to the other", "hand almost touching then pulling back"],
-    "description_vi": "Tên gợi ý — hãy sửa lại cho đúng mã chủ đề của bạn.",
-    "needs_review": true
+    "signature_shots": [
+      "peeking from behind an object",
+      "rack focus from one face to the other",
+      "a small note or gift slipped over quietly"
+    ],
+    "description_vi": "Yêu thầm, chưa dám nói, chỉ dám nhìn và quan tâm từ xa.",
+    "needs_review": false
   },
   "T03": {
-    "name": "Buổi hẹn đầu tiên",
-    "mood": "nervous excitement, sweet awkwardness, giddy smiles",
+    "name": "Cầu xin nhận lời",
+    "group": "Tình yêu",
+    "mood": "earnest pleading, hopeful, heart on the sleeve, sweet persistence",
     "pacing": "mid",
-    "signature_shots": ["doorstep knock with flowers", "two straws in one milkshake", "awkward shy smile close-up"],
-    "description_vi": "Tên gợi ý — hãy sửa lại cho đúng mã chủ đề của bạn.",
-    "needs_review": true
+    "signature_shots": [
+      "serenade under a window",
+      "offering flowers at the doorstep",
+      "hopeful close-up waiting for her answer"
+    ],
+    "description_vi": "Chàng trai tha thiết xin cô gái cho mình một cơ hội.",
+    "needs_review": false
   },
   "T04": {
-    "name": "Tán tỉnh tinh nghịch",
-    "mood": "playful, cheeky, teasing, bouncy fun",
-    "pacing": "fast",
-    "signature_shots": ["wink to camera-side glance", "playful chase around an object", "whip pan between the two faces"],
-    "description_vi": "Tên gợi ý — hãy sửa lại cho đúng mã chủ đề của bạn.",
-    "needs_review": true
-  },
-  "T05": {
-    "name": "Chờ đợi & nhớ nhung",
-    "mood": "wistful, melancholic longing, quiet hope",
-    "pacing": "slow",
-    "signature_shots": ["rain on a window with a silhouette", "empty seat beside the character", "slow dolly back leaving the character alone"],
-    "description_vi": "Tên gợi ý — hãy sửa lại cho đúng mã chủ đề của bạn.",
-    "needs_review": true
-  },
-  "T06": {
-    "name": "Giận hờn & làm lành",
-    "mood": "bittersweet tension turning into warm reconciliation",
-    "pacing": "mid",
-    "signature_shots": ["backs turned to each other in one frame", "slow turn-around reveal", "running reunion embrace"],
-    "description_vi": "Tên gợi ý — hãy sửa lại cho đúng mã chủ đề của bạn.",
-    "needs_review": true
-  },
-  "T07": {
-    "name": "Theo đuổi",
+    "name": "Theo đuổi & chinh phục",
+    "group": "Tình yêu",
     "mood": "determined, energetic courtship, comedic persistence",
     "pacing": "fast",
-    "signature_shots": ["running alongside a moving car or bus", "grand gesture in public", "split-diopter shot of both characters"],
-    "description_vi": "Tên gợi ý — hãy sửa lại cho đúng mã chủ đề của bạn.",
-    "needs_review": true
+    "signature_shots": [
+      "running alongside a moving car or bus",
+      "grand gesture in public",
+      "split-diopter shot of both characters"
+    ],
+    "description_vi": "Kiên trì theo đuổi đến khi cô gái gật đầu.",
+    "needs_review": false
+  },
+  "T05": {
+    "name": "Em là người duy nhất",
+    "group": "Tình yêu",
+    "mood": "devoted, exclusive, everyone else fades away",
+    "pacing": "mid",
+    "signature_shots": [
+      "crowd in soft focus while she stays sharp",
+      "warm light falling only on her",
+      "he ignores every other glance in the room"
+    ],
+    "description_vi": "Giữa bao người, chỉ có em.",
+    "needs_review": false
+  },
+  "T06": {
+    "name": "Trao trọn trái tim",
+    "group": "Tình yêu",
+    "mood": "wholehearted surrender, sincere, warm",
+    "pacing": "mid",
+    "signature_shots": [
+      "hand on heart close-up",
+      "giving a keepsake such as a locket or a letterman jacket",
+      "slow embrace with the camera circling"
+    ],
+    "description_vi": "Trao trọn trái tim, không giữ lại gì.",
+    "needs_review": false
+  },
+  "T07": {
+    "name": "Chỉ cần có em",
+    "group": "Tình yêu",
+    "mood": "simple contentment, you are all I need, cozy and sweet",
+    "pacing": "mid",
+    "signature_shots": [
+      "two straws in one milkshake",
+      "walking together with nothing else in the world",
+      "montage of small everyday moments"
+    ],
+    "description_vi": "Không cần gì hơn, chỉ cần có em bên cạnh.",
+    "needs_review": false
   },
   "T08": {
     "name": "Say đắm & ngây ngất",
+    "group": "Tình yêu",
     "mood": "dreamy, euphoric, intoxicated by love",
     "pacing": "mid",
-    "signature_shots": ["spinning camera", "lens flare", "montage of night adventures"],
+    "signature_shots": [
+      "spinning camera",
+      "lens flare",
+      "montage of night adventures"
+    ],
     "description_vi": "Say đắm, ngây ngất như đang mơ giữa đêm hè.",
     "needs_review": false
   },
   "T09": {
     "name": "Rung động mãnh liệt",
+    "group": "Tình yêu",
     "mood": "electric, heart-pounding, high energy",
     "pacing": "fast",
-    "signature_shots": ["fast cuts on beat", "dance close-ups", "reaction shots"],
-    "description_vi": "Rung động mãnh liệt, tim đập theo từng nhịp trống.",
+    "signature_shots": [
+      "fast cuts on beat",
+      "dance close-ups",
+      "reaction shots"
+    ],
+    "description_vi": "Trái tim rung lên mãnh liệt, không giữ nổi bình tĩnh.",
     "needs_review": false
   },
   "T10": {
-    "name": "Tự do trên đường",
-    "mood": "carefree freedom, wind in the hair, open-road adventure",
-    "pacing": "fast",
-    "signature_shots": ["low tracking shot alongside a convertible", "hair and scarf blowing in the wind", "aerial-style wide of the open road"],
-    "description_vi": "Tên gợi ý — hãy sửa lại cho đúng mã chủ đề của bạn.",
-    "needs_review": true
+    "name": "Tình yêu là phép màu",
+    "group": "Tình yêu",
+    "mood": "magical, wonder, sparkling, dreamlike",
+    "pacing": "mid",
+    "signature_shots": [
+      "fireworks or string lights blooming behind them",
+      "soft glowing halation on the couple",
+      "slow-motion twirl under the lights"
+    ],
+    "description_vi": "Tình yêu như một phép màu làm mọi thứ lấp lánh.",
+    "needs_review": false
   },
   "T11": {
     "name": "Nụ hôn diệu kỳ",
+    "group": "Tình yêu",
     "mood": "tender, magical, intimate",
     "pacing": "slow",
-    "signature_shots": ["slow push-in", "soft backlight", "world fades away"],
-    "description_vi": "Nụ hôn khiến cả thế giới nhạt nhoà, chỉ còn hai người.",
+    "signature_shots": [
+      "slow push-in",
+      "soft backlight",
+      "world fades away"
+    ],
+    "description_vi": "Nụ hôn khiến cả thế giới biến mất.",
     "needs_review": false
   },
   "T12": {
-    "name": "Mãi mãi bên nhau",
-    "mood": "triumphant, heartfelt devotion, happily-ever-after",
+    "name": "Thiên thần",
+    "group": "Tình yêu",
+    "mood": "angelic, awe-struck, heavenly beauty, glowing",
+    "pacing": "slow",
+    "signature_shots": [
+      "backlit halo of sunlight around her",
+      "she appears through haze and light",
+      "reverent low angle on her smile"
+    ],
+    "description_vi": "Cô gái đẹp như thiên thần đi lạc xuống trần gian.",
+    "needs_review": false
+  },
+  "T13": {
+    "name": "Biết ơn vì có em",
+    "group": "Tình yêu",
+    "mood": "grateful, warm, tender appreciation",
+    "pacing": "slow",
+    "signature_shots": [
+      "quiet look of gratitude across a diner table",
+      "hands held over a checkered tablecloth",
+      "soft morning light on both faces"
+    ],
+    "description_vi": "Biết ơn vì cuộc đời có em.",
+    "needs_review": false
+  },
+  "T14": {
+    "name": "Em cứu rỗi đời anh",
+    "group": "Tình yêu",
+    "mood": "redemption, from loneliness to light, hopeful rebirth",
     "pacing": "mid",
-    "signature_shots": ["kneeling proposal with a small ring box", "twirl into an embrace", "silhouette against a sunset or fireworks"],
-    "description_vi": "Tên gợi ý — hãy sửa lại cho đúng mã chủ đề của bạn.",
-    "needs_review": true
+    "signature_shots": [
+      "lonely figure in the rain, then warm light",
+      "she reaches out a hand",
+      "transition from dim tones to bright color"
+    ],
+    "description_vi": "Em đến và kéo anh ra khỏi những ngày cô đơn.",
+    "needs_review": false
+  },
+  "T15": {
+    "name": "Thầm kín & thân mật",
+    "group": "Tình yêu",
+    "mood": "intimate, private, whispered confessions",
+    "pacing": "slow",
+    "signature_shots": [
+      "two silhouettes close together",
+      "whispered secret close-up",
+      "quiet riverside or porch at night"
+    ],
+    "description_vi": "Những khoảnh khắc riêng tư, thì thầm điều chưa từng nói.",
+    "needs_review": false
+  },
+  "T16": {
+    "name": "Tình yêu không phai",
+    "group": "Tình yêu",
+    "mood": "enduring, timeless, constant love",
+    "pacing": "slow",
+    "signature_shots": [
+      "the same place across different seasons",
+      "an old photograph held in the hand",
+      "hands holding steady"
+    ],
+    "description_vi": "Tình yêu không phai theo năm tháng.",
+    "needs_review": false
+  },
+  "T17": {
+    "name": "Yêu tới bạc đầu",
+    "group": "Tình yêu",
+    "mood": "lifelong devotion, promise of growing old together",
+    "pacing": "slow",
+    "signature_shots": [
+      "porch swing at dusk",
+      "promise exchanged face to face",
+      "looking at the horizon side by side"
+    ],
+    "description_vi": "Hứa yêu nhau tới khi tóc bạc.",
+    "needs_review": false
+  },
+  "T18": {
+    "name": "Mối tình đầu mãi mãi",
+    "group": "Tình yêu",
+    "mood": "first love, innocence, nostalgic forever",
+    "pacing": "mid",
+    "signature_shots": [
+      "carving initials on a tree",
+      "first dance at the sock hop",
+      "shy glance down a school hallway"
+    ],
+    "description_vi": "Mối tình đầu ngây thơ, nhớ mãi.",
+    "needs_review": false
+  },
+  "T19": {
+    "name": "Yêu xa",
+    "group": "Thử thách",
+    "mood": "long-distance longing, letters and phone calls, hopeful waiting",
+    "pacing": "slow",
+    "signature_shots": [
+      "writing a letter by lamplight",
+      "a call from a phone booth",
+      "train station farewell or reunion"
+    ],
+    "description_vi": "Xa nhau nhưng vẫn chờ, vẫn nhớ.",
+    "needs_review": false
+  },
+  "T20": {
+    "name": "Ghen dễ thương",
+    "group": "Thử thách",
+    "mood": "playful jealousy, pouting, comedic",
+    "pacing": "fast",
+    "signature_shots": [
+      "side-eye at a rival",
+      "pouty arms-crossed close-up",
+      "playful tug away from the crowd"
+    ],
+    "description_vi": "Ghen một chút cho đáng yêu.",
+    "needs_review": false
+  },
+  "T21": {
+    "name": "Giận rồi làm lành",
+    "group": "Thử thách",
+    "mood": "bittersweet tension turning into warm reconciliation",
+    "pacing": "mid",
+    "signature_shots": [
+      "backs turned to each other in one frame",
+      "slow turn-around reveal",
+      "running reunion embrace"
+    ],
+    "description_vi": "Giận hờn rồi lại làm lành.",
+    "needs_review": false
+  },
+  "T22": {
+    "name": "Gặp lại tình cũ",
+    "group": "Thử thách",
+    "mood": "bittersweet reunion, nostalgia, rekindled spark",
+    "pacing": "slow",
+    "signature_shots": [
+      "recognition across a crowded room",
+      "hesitant approach",
+      "warm-toned flashback of old memories"
+    ],
+    "description_vi": "Tình cờ gặp lại người xưa.",
+    "needs_review": false
+  },
+  "T23": {
+    "name": "Cầu hôn & cưới",
+    "group": "Hôn nhân",
+    "mood": "triumphant devotion, proposal and wedding joy",
+    "pacing": "mid",
+    "signature_shots": [
+      "kneeling proposal with a small ring box",
+      "rice thrown on the church steps",
+      "first dance as newlyweds"
+    ],
+    "description_vi": "Lời cầu hôn và ngày cưới.",
+    "needs_review": false
+  },
+  "T24": {
+    "name": "Hạnh phúc bình dị",
+    "group": "Hôn nhân",
+    "mood": "simple domestic bliss, warm married life",
+    "pacing": "mid",
+    "signature_shots": [
+      "dancing in the kitchen to the radio",
+      "evening on the front porch",
+      "Sunday drive together"
+    ],
+    "description_vi": "Hạnh phúc vợ chồng giản dị mỗi ngày.",
+    "needs_review": false
+  },
+  "T25": {
+    "name": "Nhớ ngày xưa",
+    "group": "Hoài niệm",
+    "mood": "nostalgia, memories of the old days, sepia warmth",
+    "pacing": "slow",
+    "signature_shots": [
+      "an old jukebox glowing",
+      "a faded photograph",
+      "slow dolly through an empty diner"
+    ],
+    "description_vi": "Hoài niệm những ngày xưa cũ.",
+    "needs_review": false
+  },
+  "T26": {
+    "name": "Nhớ tuổi trẻ",
+    "group": "Hoài niệm",
+    "mood": "youthful nostalgia, carefree teenage days",
+    "pacing": "mid",
+    "signature_shots": [
+      "friends piling into a convertible",
+      "crowded sock hop",
+      "laughter at the malt shop counter"
+    ],
+    "description_vi": "Nhớ tuổi trẻ vô tư.",
+    "needs_review": false
+  },
+  "T27": {
+    "name": "Ước quay ngược thời gian",
+    "group": "Hoài niệm",
+    "mood": "wistful yearning to turn back time",
+    "pacing": "slow",
+    "signature_shots": [
+      "clock hands close-up",
+      "double exposure of past and present",
+      "standing alone at the old meeting spot"
+    ],
+    "description_vi": "Ước gì quay lại được ngày ấy.",
+    "needs_review": false
+  },
+  "T28": {
+    "name": "Tự do & rong chơi",
+    "group": "Cuộc sống & tự do",
+    "mood": "carefree freedom, wind in the hair, open-road adventure",
+    "pacing": "fast",
+    "signature_shots": [
+      "low tracking shot alongside a convertible",
+      "hair and scarf blowing in the wind",
+      "wide shot of the open road"
+    ],
+    "description_vi": "Tự do rong chơi trên những cung đường.",
+    "needs_review": false
+  },
+  "T29": {
+    "name": "Tình quê hương",
+    "group": "Cuộc sống & tự do",
+    "mood": "hometown love, small-town warmth, roots",
+    "pacing": "mid",
+    "signature_shots": [
+      "main street of a small town",
+      "county fair at dusk",
+      "front porch with family"
+    ],
+    "description_vi": "Tình yêu quê nhà, phố nhỏ thân quen.",
+    "needs_review": false
+  },
+  "T30": {
+    "name": "Lát cắt đời thường 50s",
+    "group": "Cuộc sống & tự do",
+    "mood": "lively slice of 1950s everyday life, upbeat and joyful",
+    "pacing": "fast",
+    "signature_shots": [
+      "busy diner at rush hour",
+      "dancing in the street",
+      "crowd around a jukebox"
+    ],
+    "description_vi": "Lát cắt đời thường sôi động của thập niên 50.",
+    "needs_review": false
   }
 }

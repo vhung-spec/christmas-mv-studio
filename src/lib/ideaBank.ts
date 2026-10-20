@@ -11,6 +11,7 @@ import { IDEAS_SCHEMA, zIdeaBatch, type RawIdeaBatch } from "./llmSchemas";
 import { mockIdeas } from "./mock";
 import { extractYear, splitThemeCell } from "./parser";
 import { IDEAS_SYSTEM, buildIdeasPrompt } from "./prompts";
+import { readSongLibrary } from "./songLibrary";
 import { IDEAS_FILE, PIPELINE_FILE, listMVs, readJson, readLibraries, readSettings, withLock, writeJson } from "./store";
 import type { IdeaRow } from "./types";
 
@@ -69,17 +70,25 @@ export async function addIdeas(rows: IdeaRow[]): Promise<{ added: number; skippe
   });
 }
 
-/** Lấy n ý tưởng chưa dùng (theo thứ tự trong kho) và đánh dấu đã dùng. */
-export async function takeIdeas(n: number): Promise<IdeaRow[]> {
+/**
+ * Lấy n ý tưởng chưa dùng (theo thứ tự trong kho) và đánh dấu đã dùng. `skip` trả về lý do thì ý tưởng đó cũng được đánh dấu
+ * đã dùng (kèm lý do) nhưng không lấy — vd. nhạc của bài đã dùng hết.
+ */
+export async function takeIdeas(n: number, skip?: (idea: IdeaRow) => Promise<string | null>): Promise<IdeaRow[]> {
   if (n <= 0 || !(await readBank()).ideas.some((x) => x.status === "new")) return [];
-  return updateBank((b) => {
+  return updateBank(async (b) => {
     const now = new Date().toISOString();
-    const picked = b.ideas.filter((x) => x.status === "new").slice(0, n);
-    for (const x of picked) {
+    const out: IdeaRow[] = [];
+    for (const x of b.ideas) {
+      if (out.length >= n) break;
+      if (x.status !== "new") continue;
+      const reason = skip ? await skip(x.idea) : null;
       x.status = "used";
       x.used_at = now;
+      if (reason) x.note = reason;
+      else out.push(x.idea);
     }
-    return picked.map((x) => x.idea);
+    return out;
   });
 }
 
@@ -295,6 +304,11 @@ export async function bankView(): Promise<BankView> {
     counts,
     upcoming: b.ideas.filter((x) => x.status === "new").slice(0, 20),
     proposals: b.ideas.filter((x) => x.status === "proposed"),
+    skipped: b.ideas
+      .filter((x) => x.note)
+      .sort((p, q) => (q.used_at ?? "").localeCompare(p.used_at ?? ""))
+      .slice(0, 20),
+    library: (await readSongLibrary()).songs.filter((s) => s.lyrics?.trim()).length,
     suggesting: isSuggesting(),
     error: mem.error,
     last: mem.last,

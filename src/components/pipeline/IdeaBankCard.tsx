@@ -75,6 +75,24 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
           Chưa dùng <b>{bank.counts.new}</b> · Đã dùng <b>{bank.counts.used}</b> · Claude đề xuất chờ duyệt <b>{bank.counts.proposed}</b>
           {bank.counts.rejected ? ` · Đã bỏ ${bank.counts.rejected}` : ""}
         </p>
+        {bank.library > 0 && (
+          <p className="text-xs text-muted">
+            Thư viện lời bài hát: <b>{bank.library}</b> bài — ý tưởng cùng số và cùng địa điểm tự lấy lời khi viết kịch bản; nhạc lấy theo số trong Thư mục nhạc (bỏ
+            qua bản có chữ “đã dùng”).
+          </p>
+        )}
+        {bank.skipped.length > 0 && (
+          <details className="text-xs">
+            <summary className="cursor-pointer text-muted">Đã bỏ qua {bank.skipped.length} ý tưởng (nhạc đã dùng hết)</summary>
+            <ul className="mt-1">
+              {bank.skipped.map((x) => (
+                <li key={x.key}>
+                  <b>#{x.idea.id}</b> {x.idea.world_location} — {x.note}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
 
         <div className="space-y-1.5">
           <label className="flex flex-wrap items-center gap-2">

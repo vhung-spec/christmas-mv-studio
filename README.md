@@ -255,6 +255,20 @@ Cách dùng: menu **Tự động** → tab **Từ ý tưởng** (dán bảng nh�
 (chọn MV → **▶ Chạy tự động N MV**). App hỏi lại kèm chi phí ước tính (lượt Muse, tiền Claude API). Mỗi việc hiện 4 ô Kịch bản / Bài hát / Clip Muse / Dựng MP4;
 bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse** để Kiểm tra lại / Gửi lại. Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
 
+### Kho nhạc đánh số theo ý tưởng
+
+Kênh làm nhạc theo số ý tưởng: ý tưởng số 12 có thư mục bài “12” (tài liệu = địa điểm + chủ đề + dàn ý + lời) và file nhạc `12.wav`, `12 (1).wav`
+(hoặc `12.mp3`, `12_1.mp3`) — mỗi lần tạo nhạc ra 2 bản. Bản đã làm MV thì đổi tên thêm chữ **“đã dùng”** (vd. `12 đã dùng.wav`).
+
+- **Thư mục nhạc** (Cài đặt) trỏ tới thư mục chứa các file này (vd. bản tải về của thư mục *KHO NHẠC* trên Drive). Ý tưởng không ghi tên bài → app lấy file
+  theo số ý tưởng, **bản chưa có chữ “đã dùng” trước** (theo thứ tự bản, WAV trước MP3). Mọi bản đều “đã dùng” → kho ý tưởng **bỏ qua** ý tưởng đó (ghi lý
+  do trong thẻ Kho ý tưởng), việc đang chạy thì chờ.
+- **Thư viện lời bài hát** `data/song_library.json` (không commit): mỗi số bài một mục — địa điểm, chủ đề, dàn ý, lời. Ý tưởng cùng số **và cùng địa điểm**
+  mà chưa có lời thì lúc viết kịch bản app lấy lời ở đây, nên các cảnh bám đúng Intro / Verse / Chorus / Bridge của bài. Nhãn kiểu Suno có mô tả
+  (`[Intro - bright, hand claps in]`, `[Sax Solo]`, `[Hand Clap Break - …]`) được hiểu là nhãn đoạn, không lẫn vào lời.
+- **Thư viện chủ đề** (`data/themes.json`) theo đúng bảng mã của kênh: T01–T18 tình yêu · T19–T22 thử thách · T23–T24 hôn nhân · T25–T27 hoài niệm ·
+  T28–T30 cuộc sống & tự do (mỗi mã có tên, nhóm, không khí, nhịp, cảnh đặc trưng).
+
 ### Kho ý tưởng: chạy liên tục, hết ý tưởng thì Claude đề xuất thêm
 
 Thẻ **Kho ý tưởng** (trang Tự động) giữ mọi ý tưởng của bạn và đánh dấu **chưa dùng / đã dùng** (lưu ở `data/ideas.json`):

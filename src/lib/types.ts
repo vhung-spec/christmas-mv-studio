@@ -27,6 +27,8 @@ export interface Theme {
   pacing: Tempo;
   signature_shots: string[];
   description_vi?: string;
+  /** Nhóm chủ đề của kênh: Tình yêu, Thử thách, Hôn nhân, Hoài niệm, Cuộc sống & tự do. */
+  group?: string;
   needs_review?: boolean;
 }
 export type ThemeLibrary = Record<string, Theme>;

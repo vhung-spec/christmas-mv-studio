@@ -1,6 +1,7 @@
 // DÂY CHUYỀN TỰ ĐỘNG — mỗi việc là một MV (có sẵn, hoặc viết từ một dòng ý tưởng) chạy qua 4 bước:
 //   1. Kịch bản: Claude viết (cần API key; chế độ Demo cũng chạy được) — làm lần lượt từng MV.
-//   2. Bài hát: MV chưa có bài → tìm file trùng tên bài trong Thư mục nhạc (Cài đặt) và đưa vào MV.
+//   2. Bài hát: MV chưa có bài → tìm file trùng tên bài trong Thư mục nhạc (Cài đặt), không có tên bài thì theo số ý tưởng
+//      (kho nhạc đánh số: ý tưởng 12 → "12.wav", "12 (1).wav"; bỏ qua bản có chữ "đã dùng") và đưa vào MV.
 //   3. Clip: gửi các cảnh chưa có clip sang Muse (Muse trong app), clip xong tự vào đúng cảnh (museJobs).
 //   4. Dựng: đủ clip + có bài hát → thêm vào hàng chờ dựng, chạy, chờ ra MP4.
 // Kho ý tưởng (ideaBank.ts): dây chuyền tự lấy dần ý tưởng chưa dùng, kho sắp hết thì nhờ Claude đề xuất thêm.
@@ -18,7 +19,8 @@ import { museCounts } from "./muse";
 import { ensureMuseWatch, readMuse, sendToMuse } from "./museJobs";
 import { addToQueue, readQueue, startQueue } from "./queue";
 import { isRendering } from "./render";
-import { findSong } from "./songs";
+import { librarySongFor } from "./songLibrary";
+import { findSongForIdea } from "./songs";
 import type { PipelineItem, PipelineState, PipelineStep, PipelineView, StepName } from "./pipelineSteps";
 import { PIPELINE_FILE, loadMV, readJson, readSettings, withLock, writeJson } from "./store";
 import type { IdeaRow } from "./types";
@@ -103,14 +105,21 @@ export async function retryPipeline(id: string): Promise<void> {
   ensurePipelineWatch();
 }
 
-/** Viết kịch bản cho một việc (chạy nền, mỗi lúc một MV). Có bài hát trong Thư mục nhạc → lấy luôn độ dài bài. */
+/**
+ * Viết kịch bản cho một việc (chạy nền, mỗi lúc một MV). Ý tưởng chưa có lời mà thư viện lời bài hát có bài cùng số + địa điểm → lấy lời đó
+ * (kịch bản bám đúng các đoạn của bài). Có bài hát trong Thư mục nhạc → lấy luôn độ dài bài.
+ */
 function startScript(item: PipelineItem, songDir: string) {
   mem.generating = item.id;
   void (async () => {
     try {
       const idea = { ...item.idea! };
+      if (!idea.lyrics?.trim()) {
+        const lib = await librarySongFor(idea).catch(() => null);
+        if (lib) idea.lyrics = lib.lyrics;
+      }
       if (!idea.duration_sec) {
-        const song = await findSong(songDir, idea.song_title).catch(() => null);
+        const song = await findSongForIdea(songDir, idea).catch(() => null);
         if (song) {
           const d = (await probe(song.file).catch(() => null))?.duration;
           if (d && d >= 10) idea.duration_sec = Math.min(1200, Math.round(d));
@@ -170,13 +179,22 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
   } else if (!isRendering(mv.id)) {
     const title = mv.idea.song_title || item.title;
     try {
-      const song = await findSong(settings.songDir, title);
+      const song = await findSongForIdea(settings.songDir, mv.idea, item.title);
       if (!song) {
-        steps.song = { status: "waiting", message: `Chưa thấy bài “${title}” trong thư mục nhạc — thêm file vào thư mục, hoặc tải lên ở trang Ghép video.` };
+        const num = /^d+$/.test(mv.idea.id) ? ` (hoặc file số ${mv.idea.id})` : "";
+        steps.song = { status: "waiting", message: `Chưa thấy bài “${title}”${num} trong thư mục nhạc — thêm file vào thư mục, hoặc tải lên ở trang Ghép video.` };
+      } else if (song.by === "number" && song.used) {
+        steps.song = { status: "waiting", message: `Bài số ${song.n}: cả ${song.total} bản trong thư mục nhạc đều đã ghi “đã dùng” — thêm bản mới, hoặc tải bài lên ở trang Ghép video.` };
       } else {
         const name = path.basename(song.file);
         await addAudio(mv.id, name, Readable.toWeb(createReadStream(song.file)) as ReadableStream<Uint8Array>);
-        steps.song = { status: "done", message: `Tự ghép: ${name}${song.ties ? ` (có ${song.ties + 1} file trùng tên, đã chọn file này)` : ""}` };
+        const note =
+          song.by === "number"
+            ? ` (bài số ${song.n}${song.free > 1 ? `, còn ${song.free - 1} bản chưa dùng khác` : ""})`
+            : song.ties
+              ? ` (có ${song.ties + 1} file trùng tên, đã chọn file này)`
+              : "";
+        steps.song = { status: "done", message: `Tự ghép: ${name}${note}` };
       }
     } catch (err) {
       steps.song = { status: "error", message: (err as Error).message };
@@ -247,9 +265,15 @@ async function feedFromBank(): Promise<boolean> {
   const bank = await readBank();
   const cfg = bank.config;
   if (!cfg.feed || !bank.ideas.length) return false;
-  if (generationMode(await readSettings()) === "manual") return false;
+  const settings = await readSettings();
+  if (generationMode(settings) === "manual") return false;
   const busy = (await readPipeline()).items.filter((i) => !finished(i) && (i.steps.script.status !== "done" || i.steps.clips.status !== "done")).length;
-  const ideas = busy < cfg.ahead ? await takeIdeas(cfg.ahead - busy) : [];
+  // Ý tưởng mà mọi bản nhạc cùng số đều đã ghi "đã dùng" (đã làm MV) → bỏ qua, coi như đã dùng.
+  const usedUp = async (idea: IdeaRow) => {
+    const song = await findSongForIdea(settings.songDir, idea).catch(() => null);
+    return song?.by === "number" && song.used ? `Bỏ qua: cả ${song.total} bản nhạc bài số ${song.n} đều đã ghi “đã dùng”.` : null;
+  };
+  const ideas = busy < cfg.ahead ? await takeIdeas(cfg.ahead - busy, usedUp) : [];
   if (ideas.length) await addToPipeline({ ideas });
   const left = bank.ideas.filter((x) => x.status === "new").length - ideas.length;
   const waiting = bank.ideas.some((x) => x.status === "proposed");
