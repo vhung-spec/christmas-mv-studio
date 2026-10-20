@@ -149,6 +149,9 @@ export interface Settings {
   driveFolder: string;
   /** Tự đồng bộ kho nhạc từ Drive mỗi 6 giờ (chỉ tải bản nhạc mới). */
   driveAutoSync: boolean;
+  /** Trang theo dõi (chỉ xem) cho máy khác của bạn, chỉ mở trên địa chỉ Tailscale của máy này, cần mật khẩu. */
+  monitorEnabled: boolean;
+  monitorPort: number;
 }
 
 export interface Libraries {

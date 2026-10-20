@@ -19,6 +19,21 @@ async function readEnvFile(): Promise<string> {
   }
 }
 
+/** Ghi (value) hoặc xoá (null) một dòng NAME=... trong .env.local và áp dụng ngay cho tiến trình đang chạy. */
+export async function setEnvLine(name: string, value: string | null) {
+  const re = new RegExp(`^\\s*${name}\\s*=.*$`, "m");
+  const current = await readEnvFile();
+  const next =
+    value === null
+      ? current.replace(re, "").replace(/\n{2,}/g, "\n")
+      : re.test(current)
+        ? current.replace(re, () => `${name}=${value}`)
+        : `${current}${current && !current.endsWith("\n") ? "\n" : ""}${name}=${value}\n`;
+  await fs.writeFile(ENV_FILE(), next, { encoding: "utf8", mode: 0o600 });
+  if (value === null) delete process.env[name];
+  else process.env[name] = value;
+}
+
 export async function saveApiKey(key: string) {
   const clean = key.trim();
   if (!/^[A-Za-z0-9_\-]{20,300}$/.test(clean)) throw new Error("API key không hợp lệ (thường bắt đầu bằng sk-ant-…).");

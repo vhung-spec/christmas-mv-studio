@@ -70,3 +70,22 @@ D. LƯU Ý QUAN TRỌNG
 - Cập nhật app sau này: trên máy có mã nguồn chạy Dong-goi-cap-nhat.bat → được MV-Prompt-Studio-cap-nhat.zip
   → chép sang máy chạy → tắt app → giải nén vào C:\ (chọn "Replace" / Thay thế các file) → chạy lại app.
   Dữ liệu ở máy chạy (cài đặt, kho ý tưởng, MV, nhạc) được giữ nguyên.
+
+
+E. THEO DÕI TIẾN ĐỘ TỪ MÁY CHÍNH (không cần điều khiển từ xa)
+--------------------------------------------------------------
+Trang theo dõi CHỈ XEM: MV nào đang ở bước nào, MV đã xong (tải MP4 về máy chính), Muse có đang chạy / hết lượt không,
+kho ý tưởng, dung lượng ổ C, các lỗi cần chú ý. Tự cập nhật 5 giây một lần. Không bấm điều khiển được gì.
+Trang chỉ mở trên mạng riêng Tailscale: chỉ các máy đăng nhập cùng tài khoản Tailscale của bạn mới vào được,
+máy cùng wifi hay người ngoài thì không.
+
+1. Cài Tailscale trên CẢ HAI máy: https://tailscale.com/download → cài → đăng nhập (dùng cùng một tài khoản,
+   vd. tài khoản Google của bạn). Miễn phí cho cá nhân.
+2. Trên máy chạy, trong app: Cài đặt → thẻ "Theo dõi từ máy khác (Tailscale)":
+   - gõ mật khẩu trang theo dõi (ít nhất 6 ký tự, chỉ dùng cho trang này) → "Lưu mật khẩu";
+   - tick "Bật trang theo dõi".
+   Thẻ hiện địa chỉ cần mở, dạng http://100.x.y.z:3300 → bấm Copy.
+   Lần đầu Windows có thể hỏi cho Node.js dùng mạng → bấm "Allow access" (Cho phép).
+3. Trên máy chính: mở trình duyệt, dán địa chỉ đó → trình duyệt hỏi tên đăng nhập và mật khẩu:
+   tên gõ gì cũng được, mật khẩu là mật khẩu vừa đặt. Lưu trang vào Bookmark (dấu trang) để mở lại nhanh.
+   Chấm xanh góc trên = đang nối với máy chạy; chấm đỏ = mất kết nối (máy chạy tắt / ngủ / Tailscale ngắt).

@@ -7,9 +7,14 @@ export async function GET() {
   return NextResponse.json(await readSettings());
 }
 
+/** Các mục do thẻ riêng quản lý (Kho nhạc trên Google Drive, Theo dõi từ máy khác): nút Lưu của trang Cài đặt không ghi đè. */
+const OWN_CARDS = ["driveFolder", "driveAutoSync", "monitorEnabled", "monitorPort"] as const;
+
 export async function PUT(req: Request) {
   try {
-    const settings = zSettings.parse(await readJsonBody(req));
+    const body = (await readJsonBody(req)) as Record<string, unknown>;
+    const current = await readSettings();
+    const settings = zSettings.parse({ ...body, ...Object.fromEntries(OWN_CARDS.map((k) => [k, current[k]])) });
     await writeSettings(settings);
     return NextResponse.json(await readSettings());
   } catch (err) {

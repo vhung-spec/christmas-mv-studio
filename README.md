@@ -304,6 +304,13 @@ App vẫn chỉ mở trong chính máy đó (127.0.0.1). Hướng dẫn từng b
   dây chuyền, Muse và tự đồng bộ khi đến hạn — không cần ai mở trình duyệt. `Bat-tu-chay-khi-mo-may.bat` tạo lối tắt trong
   thư mục Startup để app tự mở mỗi lần đăng nhập Windows (`Tat-tu-chay-khi-mo-may.bat` để thôi). `NO_AUTOSTART=1` để tắt.
 - **Một tài khoản Muse chỉ chạy ở một máy**: chuyển sang máy chạy rồi thì tắt app ở máy cũ.
+- **Máy chỉ có ổ C**: Thư mục nhạc ghi không kèm ổ đĩa (gói cài ghi `KHO NHAC`) = thư mục cạnh thư mục app, vd. app ở
+  `C:\MV-Prompt-Studio` → nhạc ở `C:\KHO NHAC`.
+- **Theo dõi từ máy chính** (Cài đặt → *Theo dõi từ máy khác (Tailscale)*): trang **chỉ xem** — dây chuyền, MV đã xong (tải MP4),
+  Muse, kho ý tưởng, dung lượng ổ, lỗi cần chú ý; tự cập nhật 5 giây/lần. Đây là một cổng riêng (mặc định 3300) **chỉ mở trên
+  địa chỉ Tailscale** của máy chạy (100.64.0.0/10) nên máy cùng wifi / người ngoài không vào được, và cần mật khẩu (HTTP Basic;
+  lưu dạng băm scrypt trong `.env.local` = `MONITOR_PASSWORD_HASH`, không commit). App chính vẫn chỉ ở 127.0.0.1. Chưa đặt
+  mật khẩu thì không mở. Mã: `src/lib/monitor.ts`, `src/lib/monitorPage.ts`.
 
 ## 3. Logic sinh MV
 

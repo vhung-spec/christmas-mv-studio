@@ -77,6 +77,8 @@ export const DEFAULT_SETTINGS: Settings = {
   museAvoid: true,
   driveFolder: "",
   driveAutoSync: true,
+  monitorEnabled: false,
+  monitorPort: 3300,
 };
 
 // ---------- Khoá theo tên (tránh ghi đè đồng thời trong cùng tiến trình) ----------
