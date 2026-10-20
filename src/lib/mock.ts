@@ -2,7 +2,7 @@
 // Dùng khi chưa có ANTHROPIC_API_KEY hoặc bật "Chế độ demo" trong Cài đặt.
 
 import { placeholdersIn } from "./assemble";
-import type { RawGeneration, RawLocation, RawShot } from "./llmSchemas";
+import type { RawGeneration, RawIdeaBatch, RawLocation, RawShot } from "./llmSchemas";
 import type { GenContext } from "./prompts";
 import type { Character, EraYear, PlannedShot, ShotClass, StructurePlan, Tone } from "./types";
 
@@ -298,4 +298,50 @@ export function mockLocation(name: string, year: number, eraYear: EraYear): RawL
     notes: `Địa điểm tự sinh (chế độ demo) cho năm ${year} — hãy bổ sung chi tiết thật.`,
     forbidden: [],
   };
+}
+
+// ---------- Ý tưởng mới (kho ý tưởng sắp hết) ----------
+
+const IDEA_PLACES = [
+  "Santa Monica Pier",
+  "Palm Springs",
+  "San Francisco Cable Car",
+  "Las Vegas Strip",
+  "Route 66 Diner",
+  "Grand Canyon Lookout",
+  "Times Square",
+  "Coney Island Boardwalk",
+  "Central Park Lake",
+  "Miami Beach",
+  "New Orleans French Quarter",
+  "Chicago Navy Pier",
+];
+const IDEA_MOMENTS = ["Summer", "Winter Night", "Autumn Evening", "Spring Morning", "Moonlight", "Sunset Drive"];
+const IDEA_STORIES = [
+  (p: string) => `Hai người tình cờ đứng cạnh nhau ở ${p}; một câu đùa vụng về mở đầu cả buổi tối không muốn kết thúc.`,
+  (p: string) => `Chàng trai lấy hết can đảm mời cô gái nhảy giữa ${p}, và bản nhạc trên radio như viết riêng cho hai người.`,
+  (p: string) => `Cô gái để quên chiếc khăn ở ${p}; chàng trai giữ lại và đi tìm cô suốt mùa hè.`,
+  (p: string) => `Hai người hẹn gặp lại ở ${p} sau một năm xa cách, không ai chắc người kia còn nhớ.`,
+];
+
+/** Ý tưởng mẫu cho chế độ demo: ghép địa điểm + thời điểm + năm chưa có trong kho, chủ đề ít dùng nhất. */
+export function mockIdeas(count: number, existing: { world_location: string }[], themes: { code: string; used: number }[]): RawIdeaBatch {
+  const taken = new Set(existing.map((i) => i.world_location.toLowerCase()));
+  const used = new Map(themes.map((t) => [t.code, t.used]));
+  const ideas: RawIdeaBatch["ideas"] = [];
+  let n = 0;
+  for (let year = 1950; year <= 1959 && ideas.length < count; year++) {
+    for (const place of IDEA_PLACES) {
+      for (const moment of IDEA_MOMENTS) {
+        if (ideas.length >= count) break;
+        const world_location = `${place} ${moment} ${year}`;
+        if (taken.has(world_location.toLowerCase())) continue;
+        const code = [...used.entries()].sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? "T01";
+        used.set(code, (used.get(code) ?? 0) + 1);
+        ideas.push({ world_location, theme_code: code, outline: IDEA_STORIES[n++ % IDEA_STORIES.length](place) });
+        break; // mỗi địa điểm một ý tưởng cho mỗi năm → đa dạng hơn
+      }
+    }
+  }
+  return { series_name: "Demo – California – New York – Miami", ideas };
 }

@@ -149,7 +149,8 @@ API key cũng có thể đặt trong file `.env` (xem `.env.example`). App chỉ
 ### Định dạng bảng đầu vào
 
 Mỗi dòng: `id | world_location | theme | outline | [tên bài] | [thời lượng] | [nhịp] | [lời] | [series]`
-(tách bằng **tab** khi copy từ Sheets, hoặc bằng `|`). Có thể có dòng tiêu đề, tiếng Việt hay tiếng Anh đều được:
+(tách bằng **tab** khi copy từ Sheets, hoặc bằng `|`). Có thể có dòng tiêu đề, tiếng Việt hay tiếng Anh đều được. Bảng copy (hoặc tải về dạng .txt) từ
+**Google Docs** — mỗi ô nằm trên một dòng riêng — app cũng tự nhận ra; tiêu đề bảng kiểu `1–50 · California – …` được dùng làm series:
 
 | Trường | Bắt buộc | Ví dụ |
 |---|---|---|
@@ -249,9 +250,26 @@ Menu **Tự động**: mỗi việc là một MV chạy qua 4 bước, không c�
 3. **Clip Muse** — gửi các cảnh chưa có clip sang Muse trong app (mục 2c), clip xong tự vào đúng cảnh.
 4. **Dựng MP4** — đủ clip + có bài hát → thêm vào **Hàng chờ dựng** (thiết lập dựng chung), dựng xong có nút **⬇ Tải MP4**.
 
-Cách dùng: menu **Tự động** → tab **Từ ý tưởng** (dán bảng như trang Nhập ý tưởng → **Đọc bảng** → **▶ Chạy tự động N ý tưởng**) hoặc tab **Từ MV có sẵn**
+Cách dùng: menu **Tự động** → tab **Từ ý tưởng** (dán bảng như trang Nhập ý tưởng → **Đọc bảng** → **＋ Đưa N ý tưởng vào kho**, hoặc **▶ Chạy ngay cả N
+ý tưởng** để đưa cả bảng vào dây chuyền một lúc) hoặc tab **Từ MV có sẵn**
 (chọn MV → **▶ Chạy tự động N MV**). App hỏi lại kèm chi phí ước tính (lượt Muse, tiền Claude API). Mỗi việc hiện 4 ô Kịch bản / Bài hát / Clip Muse / Dựng MP4;
 bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse** để Kiểm tra lại / Gửi lại. Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
+
+### Kho ý tưởng: chạy liên tục, hết ý tưởng thì Claude đề xuất thêm
+
+Thẻ **Kho ý tưởng** (trang Tự động) giữ mọi ý tưởng của bạn và đánh dấu **chưa dùng / đã dùng** (lưu ở `data/ideas.json`):
+
+- **Dây chuyền tự lấy ý tưởng trong kho, mỗi lúc N MV** (mặc định 2): chỉ lấy ý tưởng mới khi số MV đang viết kịch bản hoặc chờ clip Muse ít hơn N — nên
+  dây chuyền tự đi theo tốc độ của Muse (kể cả khi Muse báo hết hạn mức tuần), không viết dồn 200 kịch bản một lúc. MV đang lỗi vẫn giữ chỗ, để khi API key
+  hay Muse hỏng thì app không lấy dồn cả kho. MV chỉ còn chờ bài hát thì không giữ chỗ.
+- **Kho sắp hết thì nhờ Claude đề xuất M ý tưởng mới** (mặc định 10): khi số ý tưởng chưa dùng còn ≤ N, Claude đọc các ý tưởng đã có (của bạn, trong dây
+  chuyền và các MV đã viết, cả ý tưởng đã bỏ) rồi viết ý tưởng mới **cùng kiểu**: địa điểm + thời điểm + năm 1950–1959 (tiếng Anh), mã chủ đề có trong
+  thư viện hoặc trong bảng của bạn (ưu tiên chủ đề ít dùng), dàn ý tiếng Việt. App bỏ ý tưởng trùng địa điểm hoặc sai định dạng, đánh số tiếp (201, 202…),
+  mỗi 50 ý tưởng là một series (“201–250 · …”). Mỗi lần đề xuất tốn vài cent tiền Claude API.
+- **Chờ tôi duyệt** (mặc định): ý tưởng Claude đề xuất nằm trong khung vàng, bấm **✓ Dùng / ✗ Bỏ** từng cái hoặc **Duyệt tất cả**; chưa duyệt thì dây chuyền
+  không dùng và Claude không đề xuất thêm. **Dùng luôn, không cần duyệt**: chạy liên tục không cần bạn (vẫn theo tốc độ của Muse).
+- **✨ Nhờ Claude đề xuất ngay**: đề xuất bất cứ lúc nào. Lần đề xuất tự động bị lỗi (vd. chưa có API key) thì 30 phút sau app mới tự thử lại.
+- Cần **Claude API key** (Cài đặt → *API key của Claude*); chế độ **Demo** cho ý tưởng mẫu để thử, không tốn phí.
 
 ## 3. Logic sinh MV
 

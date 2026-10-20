@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MuseStatus, useMuse } from "@/components/muse/MusePanels";
+import { type BankData, IdeaBankCard } from "@/components/pipeline/IdeaBankCard";
 import { Card, ErrorBox, Spinner } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/client";
 import type { ParseResult } from "@/lib/parser";
@@ -44,6 +45,7 @@ function focus(it: PipelineItem): { name: StepName; status: StepStatus; message?
 
 export default function PipelinePage() {
   const [view, setView] = useState<View | null>(null);
+  const [bank, setBank] = useState<BankData | null>(null);
   const [mvs, setMvs] = useState<Candidate[] | null>(null);
   const [tab, setTab] = useState<"ideas" | "mvs">("ideas");
   const [text, setText] = useState("");
@@ -56,16 +58,22 @@ export default function PipelinePage() {
 
   const reload = useCallback(() => api<View>("/api/pipeline").then(setView, (e) => setError((e as Error).message)), []);
   const loadMvs = useCallback(() => api<{ mvs: Candidate[] }>("/api/render-queue").then((r) => setMvs(r.mvs), () => {}), []);
+  const loadBank = useCallback(() => api<BankData>("/api/ideas").then(setBank, () => {}), []);
   useEffect(() => {
     void reload();
     void loadMvs();
-  }, [reload, loadMvs]);
+    void loadBank();
+  }, [reload, loadMvs, loadBank]);
   const open = view?.items.some((i) => !i.done_at) ?? false;
+  const watchBank = Boolean(bank?.suggesting || (bank?.config.feed && bank.counts.new));
   useEffect(() => {
-    if (!open) return;
-    const t = setInterval(() => void reload(), 4000);
+    if (!open && !watchBank) return;
+    const t = setInterval(() => {
+      void reload();
+      void loadBank();
+    }, 4000);
     return () => clearInterval(t);
-  }, [open, reload]);
+  }, [open, watchBank, reload, loadBank]);
 
   const busyMvs = useMemo(() => new Set((view?.items ?? []).filter((i) => !i.done_at && i.mv_id).map((i) => i.mv_id!)), [view]);
 
@@ -105,6 +113,35 @@ export default function PipelinePage() {
       setNotice(`Đã thêm ${r.added} việc vào dây chuyền.`);
       setParsed(null);
       setSelected(new Set());
+      await reload();
+    });
+  }
+
+  async function addToBank(ideas: IdeaRow[]) {
+    const c = bank?.config;
+    const cfg = view?.settings;
+    const range = cfg ? (cfg.minShots === cfg.maxShots ? `${cfg.minShots}` : `${cfg.minShots}–${cfg.maxShots}`) : "15–20";
+    const lines = [
+      c?.feed
+        ? `• Dây chuyền tự lấy lần lượt, mỗi lúc ${c.ahead} MV.`
+        : "• “Tự lấy ý tưởng” đang tắt: ý tưởng nằm chờ trong kho cho tới khi bạn bật.",
+      cfg?.mode === "mock" ? "• Chế độ Demo: kịch bản ghép từ mẫu (không tốn phí)." : "• Mỗi MV: Claude viết kịch bản (khoảng 0,10–0,20 USD qua API).",
+      `• Mỗi MV ${range} cảnh = ${range} lượt Muse.`,
+      c?.suggest ? `• Kho sắp hết: Claude đề xuất thêm ${c.batch} ý tưởng (${c.autoApprove ? "dùng luôn" : "chờ bạn duyệt"}).` : "",
+    ].filter(Boolean);
+    if (!confirm(`Đưa ${ideas.length} ý tưởng vào kho?\n\n${lines.join("\n")}`)) return;
+    await run(async () => {
+      const r = await api<BankData & { added: number; skipped: number }>("/api/ideas", { method: "POST", json: { action: "add", ideas } });
+      setBank(r);
+      setNotice(`Đã thêm ${r.added} ý tưởng vào kho${r.skipped ? ` (bỏ qua ${r.skipped} ý tưởng đã có)` : ""}.`);
+      setParsed(null);
+      await reload();
+    });
+  }
+
+  async function postBank(json: Record<string, unknown>) {
+    await run(async () => {
+      setBank(await api<BankData>("/api/ideas", { method: "POST", json }));
       await reload();
     });
   }
@@ -189,8 +226,9 @@ export default function PipelinePage() {
         {tab === "ideas" ? (
           <div className="space-y-3">
             <p className="text-xs text-muted">
-              Dán bảng ý tưởng như ở trang Nhập ý tưởng (mỗi dòng: id | địa điểm + năm | chủ đề | dàn ý | tên bài | …). Ghi đúng <b>tên bài</b> để app tự tìm bài
-              hát trong thư mục nhạc; không ghi thời lượng thì app lấy độ dài của bài.
+              Dán bảng ý tưởng như ở trang Nhập ý tưởng (mỗi dòng: id | địa điểm + năm | chủ đề | dàn ý | tên bài | …; copy thẳng từ Google Docs / Sheets cũng được).
+              Ghi đúng <b>tên bài</b> để app tự tìm bài hát trong thư mục nhạc; không ghi thời lượng thì app lấy độ dài của bài. <b>Đưa vào kho</b>: dây chuyền lấy dần
+              từng ít một, kho sắp hết thì Claude đề xuất thêm. <b>Chạy ngay</b>: đưa cả bảng vào dây chuyền một lúc.
             </p>
             <textarea className="input min-h-28 font-mono text-xs" value={text} onChange={(e) => setText(e.target.value)} placeholder="1 | Santa Monica Pier Summer 1955 | T01 | Hai người gặp nhau bên vòng đu quay | Đèn Khuya" />
             <div className="flex flex-wrap items-center gap-2">
@@ -198,9 +236,14 @@ export default function PipelinePage() {
                 Đọc bảng
               </button>
               {parsed && (
-                <button className="btn-primary" disabled={busy || !parsed.rows.length} onClick={() => void start({ ideas: parsed.rows })} data-testid="pipeline-start-ideas">
-                  {busy && <Spinner />} ▶ Chạy tự động {parsed.rows.length} ý tưởng
-                </button>
+                <>
+                  <button className="btn-primary" disabled={busy || !parsed.rows.length} onClick={() => void addToBank(parsed.rows)} data-testid="pipeline-bank-ideas">
+                    {busy && <Spinner />} ＋ Đưa {parsed.rows.length} ý tưởng vào kho
+                  </button>
+                  <button className="btn-ghost" disabled={busy || !parsed.rows.length} onClick={() => void start({ ideas: parsed.rows })} data-testid="pipeline-start-ideas">
+                    ▶ Chạy ngay cả {parsed.rows.length} ý tưởng
+                  </button>
+                </>
               )}
             </div>
             {parsed && (
@@ -273,6 +316,8 @@ export default function PipelinePage() {
           </div>
         )}
       </Card>
+
+      <IdeaBankCard bank={bank} busy={busy} onPost={(json) => void postBank(json)} />
 
       <Card
         title="2. Dây chuyền"

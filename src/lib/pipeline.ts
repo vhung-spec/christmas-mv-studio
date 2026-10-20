@@ -3,6 +3,7 @@
 //   2. Bài hát: MV chưa có bài → tìm file trùng tên bài trong Thư mục nhạc (Cài đặt) và đưa vào MV.
 //   3. Clip: gửi các cảnh chưa có clip sang Muse (Muse trong app), clip xong tự vào đúng cảnh (museJobs).
 //   4. Dựng: đủ clip + có bài hát → thêm vào hàng chờ dựng, chạy, chờ ra MP4.
+// Kho ý tưởng (ideaBank.ts): dây chuyền tự lấy dần ý tưởng chưa dùng, kho sắp hết thì nhờ Claude đề xuất thêm.
 // Lưu ở data/pipeline.json; tắt app giữa chừng thì mở lại chạy tiếp. Chỉ dùng phía server.
 
 import { createReadStream } from "node:fs";
@@ -11,6 +12,7 @@ import { Readable } from "node:stream";
 import { UserError } from "./errors";
 import { probe } from "./ffmpeg";
 import { generateMV, generationMode } from "./generate";
+import { isSuggesting, readBank, startSuggest, takeIdeas } from "./ideaBank";
 import { addAudio, loadProject } from "./media";
 import { museCounts } from "./muse";
 import { ensureMuseWatch, readMuse, sendToMuse } from "./museJobs";
@@ -236,9 +238,32 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
   return { ...out, steps };
 }
 
-/** Một lượt chạy: đẩy từng việc chưa xong qua bước kế tiếp. Trả về nhịp chạy tiếp (null = không còn gì để chạy). */
+/**
+ * Kho ý tưởng → dây chuyền: luôn giữ đủ `ahead` MV đang làm (chưa xong kịch bản hoặc chưa đủ clip — kể cả việc đang lỗi,
+ * để khi API key / Muse hỏng thì không lấy dồn cả kho). Kho sắp hết → nhờ Claude đề xuất thêm (chạy nền).
+ * Trả về true khi còn việc cần theo dõi (vừa thêm việc, hoặc Claude đang đề xuất).
+ */
+async function feedFromBank(): Promise<boolean> {
+  const bank = await readBank();
+  const cfg = bank.config;
+  if (!cfg.feed || !bank.ideas.length) return false;
+  if (generationMode(await readSettings()) === "manual") return false;
+  const busy = (await readPipeline()).items.filter((i) => !finished(i) && (i.steps.script.status !== "done" || i.steps.clips.status !== "done")).length;
+  const ideas = busy < cfg.ahead ? await takeIdeas(cfg.ahead - busy) : [];
+  if (ideas.length) await addToPipeline({ ideas });
+  const left = bank.ideas.filter((x) => x.status === "new").length - ideas.length;
+  const waiting = bank.ideas.some((x) => x.status === "proposed");
+  if (cfg.suggest && left <= cfg.ahead && !waiting) startSuggest(() => ensurePipelineWatch());
+  return ideas.length > 0 || isSuggesting();
+}
+
+/** Một lượt chạy: lấy thêm ý tưởng từ kho, đẩy từng việc chưa xong qua bước kế tiếp. Trả về nhịp chạy tiếp (null = không còn gì để chạy). */
 export function pipelineTick(): Promise<"fast" | "slow" | null> {
   return withLock("pipeline-tick", async () => {
+    const feeding = await feedFromBank().catch((err) => {
+      mem.error = (err as Error).message;
+      return false;
+    });
     const state = await readPipeline();
     for (const item of state.items.filter((i) => !finished(i))) {
       try {
@@ -250,7 +275,7 @@ export function pipelineTick(): Promise<"fast" | "slow" | null> {
     }
     const open = (await readPipeline()).items.filter((i) => !finished(i));
     const active = open.some((i) => Object.values(i.steps).some((s) => s.status === "running" || s.status === "pending"));
-    if (active || mem.generating) return "fast";
+    if (active || mem.generating || feeding) return "fast";
     // Chỉ còn việc chờ bài hát / chờ người dùng xử lý lỗi → dò thưa.
     return open.some((i) => Object.values(i.steps).some((s) => s.status === "waiting")) ? "slow" : null;
   });
@@ -295,7 +320,8 @@ export function ensurePipelineWatch(wake = true): void {
 
 export async function pipelineView(): Promise<PipelineView> {
   const state = await readPipeline();
-  if (state.items.some((i) => !finished(i))) ensurePipelineWatch(false);
+  const bank = await readBank();
+  if (state.items.some((i) => !finished(i)) || (bank.config.feed && bank.ideas.some((x) => x.status === "new"))) ensurePipelineWatch(false);
   return { items: state.items, error: mem.error, generating: mem.generating };
 }
 

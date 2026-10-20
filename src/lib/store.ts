@@ -36,6 +36,8 @@ export const QUEUE_FILE = () => dataPath("render_queue.json");
 export const MUSE_FILE = () => dataPath("muse.json");
 /** Dây chuyền tự động (kịch bản → bài hát → clip Muse → MP4). */
 export const PIPELINE_FILE = () => dataPath("pipeline.json");
+/** Kho ý tưởng (của bạn + Claude đề xuất), đánh dấu đã dùng / chưa dùng. */
+export const IDEAS_FILE = () => dataPath("ideas.json");
 
 export const LIBRARY_FILES = {
   themes: "themes.json",

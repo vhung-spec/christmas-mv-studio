@@ -318,3 +318,44 @@ export function buildCouplePrompt(series: string, sampleIdea: IdeaRow | null): s
 }
 
 export const COUPLE_SYSTEM = "You are a costume designer and casting director for 1950s-style music videos. Answer only with JSON matching the schema.";
+
+// ---------- Đề xuất ý tưởng mới (kho ý tưởng sắp hết) ----------
+
+export interface IdeasPromptInput {
+  count: number;
+  /** Các chủ đề được dùng, kèm số lần đã dùng (để Claude ưu tiên chủ đề ít dùng). */
+  themes: { code: string; name: string; used: number }[];
+  /** Vài ý tưởng mẫu của kênh. */
+  examples: IdeaRow[];
+  /** Mọi ý tưởng đã có (kể cả đã bỏ) — không được lặp lại. */
+  existing: IdeaRow[];
+  /** Series đang dở (ý tưởng mới nối tiếp series này), nếu có. */
+  series: string | null;
+}
+
+export const IDEAS_SYSTEM =
+  "You are the creative lead of a YouTube channel of 1950s American Doo-Wop / Rock & Roll love-song music videos. You invent fresh, specific, period-accurate video ideas. Answer only with JSON matching the schema.";
+
+export function buildIdeasPrompt(input: IdeasPromptInput): string {
+  const line = (i: IdeaRow) => `${i.world_location} | ${i.theme_code} | ${i.outline.replace(/\s+/g, " ").slice(0, 160)}`;
+  return [
+    `Write ${input.count} NEW music-video ideas for the channel, in the same format and spirit as the examples.`,
+    "Each idea:",
+    '- world_location: English, "<real American place> <moment or season> <year>", year between 1950 and 1959 (e.g. "Santa Monica Pier Summer 1954"). The place must have existed in that year.',
+    "- theme_code: one code from the theme list. Prefer the least-used themes so the channel stays varied.",
+    "- outline: Vietnamese, one or two sentences — the specific little love story of this video (where they are, what happens, the emotional moment), like the examples.",
+    "Rules: every world_location must be new (not a place + moment already listed below) and every story different from the listed ones; vary regions, seasons, years and situations; no brand names, no real people.",
+    input.series
+      ? `These ideas continue the series "${input.series}": stay with these regions, return series_name as the regions part of that label.`
+      : 'series_name: a short label of the regions these ideas cover, like "California – Las Vegas – Route 66 – New York".',
+    "",
+    "Themes (code · name · times used):",
+    ...input.themes.map((t) => `${t.code} · ${t.name} · ${t.used}`),
+    "",
+    "Examples of the channel's ideas:",
+    ...input.examples.map(line),
+    "",
+    "Ideas that already exist — do not repeat them:",
+    ...input.existing.slice(-400).map(line),
+  ].join("\n");
+}

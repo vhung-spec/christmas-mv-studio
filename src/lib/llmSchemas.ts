@@ -74,6 +74,17 @@ export const LOCATION_SCHEMA = obj({
 });
 
 export const COUPLE_SCHEMA = obj({ characters: { type: "array", items: CHARACTER_SCHEMA } });
+export const IDEAS_SCHEMA = obj({
+  series_name: str("Short label of the regions these ideas cover, e.g. 'Pacific Coast – Oregon – Washington'"),
+  ideas: {
+    type: "array",
+    items: obj({
+      world_location: str("English: real American place + moment or season + year 1950-1959, e.g. 'Santa Monica Pier Summer 1954'"),
+      theme_code: str("One code from the theme list, e.g. T01"),
+      outline: str("Vietnamese, 1-2 sentences: the specific love story of this video"),
+    }),
+  },
+});
 
 // ---------- zod: kiểm tra lại dữ liệu trả về ----------
 
@@ -115,7 +126,12 @@ export const zLocation = z.object({
   forbidden: z.array(z.object({ term: z.string(), reason_vi: z.string() })),
 });
 export const zCouple = z.object({ characters: z.array(zCharacter).min(1) });
+export const zIdeaBatch = z.object({
+  series_name: z.string(),
+  ideas: z.array(z.object({ world_location: z.string().min(3), theme_code: z.string().min(1), outline: z.string() })).min(1),
+});
 
 export type RawShot = z.infer<typeof zShot>;
 export type RawGeneration = z.infer<typeof zGeneration>;
 export type RawLocation = z.infer<typeof zLocation>;
+export type RawIdeaBatch = z.infer<typeof zIdeaBatch>;
