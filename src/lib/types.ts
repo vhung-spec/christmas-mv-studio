@@ -138,7 +138,8 @@ export interface Settings {
   museMode: "gateway" | "haohao";
   /** Thư mục dữ liệu của tool HaoHao (chứa tasks.json); "" = tự tìm. */
   museDataDir: string;
-  /** Thư mục nhạc: MV chưa có bài hát thì app tự tìm bài trùng tên trong đây; "" = không tự ghép. */
+  /** Thư mục nhạc: MV chưa có bài hát thì app tự tìm bài trùng tên / theo số ý tưởng trong đây; "" = không tự ghép.
+   *  Ghi không kèm ổ đĩa (vd. "KHO NHAC") = thư mục cạnh thư mục app. */
   songDir: string;
   /** MV đủ clip Muse + có bài hát → tự thêm vào hàng chờ dựng và chạy. */
   museAutoRender: boolean;

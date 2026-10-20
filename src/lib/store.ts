@@ -173,6 +173,10 @@ export async function readSettings(): Promise<Settings> {
   // Cài đặt cũ dùng mockMode (true/false) thay cho engine.
   if (!rest.engine && mockMode) merged.engine = "demo";
   if (!merged.songStructure?.length) merged.songStructure = DEFAULT_SONG_STRUCTURE;
+  // Thư mục nhạc ghi dạng tương đối (vd. "KHO NHAC" trong gói chuyển máy) = thư mục cạnh thư mục app, ổ nào cũng chạy được.
+  if (merged.songDir.trim() && !path.isAbsolute(merged.songDir.trim())) {
+    merged.songDir = path.resolve(/*turbopackIgnore: true*/ path.dirname(process.cwd()), merged.songDir.trim());
+  }
   return merged;
 }
 

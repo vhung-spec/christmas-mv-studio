@@ -7,7 +7,7 @@
 // hàng đợi Muse / dựng của máy này, hay profile Chrome có phiên đăng nhập Muse.
 
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -63,6 +63,16 @@ if (!update) {
     if (existsSync(p)) {
       copy(path.join("data", f), p);
       data.push(f);
+    }
+  }
+  // Thư mục nhạc: máy kia có thể không có cùng ổ đĩa (vd. chỉ có ổ C) → ghi tên thư mục không kèm ổ đĩa,
+  // app hiểu là thư mục nằm cạnh thư mục app (vd. app ở C:\MV-Prompt-Studio → nhạc ở C:\KHO NHAC).
+  const sp = path.join(app, "data", "settings.json");
+  if (existsSync(sp)) {
+    const s = JSON.parse(readFileSync(sp, "utf8"));
+    if (typeof s.songDir === "string" && path.isAbsolute(s.songDir.trim())) {
+      s.songDir = path.basename(s.songDir.trim().replace(/[\\/]+$/, "")) || "KHO NHAC";
+      writeFileSync(sp, JSON.stringify(s, null, 2) + "\n");
     }
   }
 }

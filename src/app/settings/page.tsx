@@ -212,7 +212,7 @@ export default function SettingsPage() {
             <div className="space-y-3">
               <Field
                 label="Thư mục nhạc (tự ghép bài hát)"
-                hint="MV chưa có bài hát → app tự tìm file nhạc trùng tên bài trong thư mục này (vd. D:\Downloads\Nhạc kênh khúc nhạc thời gian). Để trống = không tự ghép."
+                hint="MV chưa có bài hát → app tự tìm file nhạc trùng tên bài (hoặc theo số ý tưởng) trong thư mục này, vd. D:\KHO NHAC. Ghi tên không kèm ổ đĩa (vd. KHO NHAC) = thư mục nằm cạnh thư mục app. Để trống = không tự ghép."
               >
                 <input className="input" value={s.songDir} onChange={(e) => set("songDir", e.target.value)} />
               </Field>

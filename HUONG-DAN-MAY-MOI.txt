@@ -3,11 +3,15 @@
 
 "Máy chạy" là một máy Windows 10/11 để mở suốt cho app tự làm MV. Bạn điều khiển nó từ xa bằng phần mềm xem màn hình.
 App chỉ mở trong chính máy chạy (địa chỉ 127.0.0.1): không ai trên mạng vào được app.
+Hướng dẫn này viết cho máy chỉ có ổ C. Máy có ổ D thì làm y hệt, chỉ thay C:\ bằng D:\ (nhạc và video sẽ nằm trên ổ D).
 
 
 A. CHUẨN BỊ MÁY CHẠY (làm một lần)
 -----------------------------------
-1. Ổ đĩa: ổ D còn trống ít nhất 15 GB (nhạc khoảng 4 GB, clip và video MV tăng dần theo thời gian).
+1. Dung lượng ổ C: còn trống ít nhất 40 GB.
+   - Nhạc khoảng 4 GB, thư viện của app khoảng 1 GB.
+   - Mỗi MV thêm khoảng 0,3–0,5 GB (clip Muse + video MP4). 100 MV ≈ 30–50 GB.
+   - Khi ổ C sắp đầy: chép video đã đăng YouTube ra ổ khác / Google Drive rồi xoá bớt (xem mục D).
 2. Cài Google Chrome: https://www.google.com/chrome  (app dùng Chrome để làm việc với Muse).
 3. Cài Node.js bản LTS: https://nodejs.org  → bấm nút tải bản "LTS" → mở file tải về → Next đến hết.
 4. Không cho máy ngủ: Settings → System → Power (Nguồn và pin) → Screen and sleep →
@@ -28,21 +32,29 @@ A. CHUẨN BỊ MÁY CHẠY (làm một lần)
 B. CÀI APP
 ----------
 1. Chép file MV-Prompt-Studio-cai-moi.zip sang máy chạy (USB, Google Drive, Zalo…).
-2. Chuột phải vào file → Extract All (Giải nén tất cả) → chọn ổ D:\ → được thư mục D:\MV-Prompt-Studio
-3. Mở thư mục đó, bấm đúp Chay-MV-Prompt-Studio.bat
+2. Chuột phải vào file → Extract All (Giải nén tất cả) → ô đường dẫn gõ  C:\  → Extract
+   → được thư mục C:\MV-Prompt-Studio
+   - KHÔNG giải nén vào Desktop, Documents (Tài liệu) hay thư mục OneDrive: OneDrive sẽ cố đồng bộ hàng chục GB nhạc và video.
+   - Nếu Windows báo không có quyền tạo thư mục ở C:\ thì giải nén vào thư mục người dùng C:\Users\<tên bạn>\
+     (app chạy y hệt; nhạc sẽ nằm ở C:\Users\<tên bạn>\KHO NHAC).
+3. Mở thư mục C:\MV-Prompt-Studio, bấm đúp Chay-MV-Prompt-Studio.bat
    Lần đầu app tự cài thư viện và chuẩn bị, mất 5–10 phút (cần mạng). Xong thì trình duyệt tự mở app.
    Giữ cửa sổ đen mở (thu nhỏ được). Đóng cửa sổ đen là tắt app.
 4. Bấm đúp Bat-tu-chay-khi-mo-may.bat → từ nay mỗi lần đăng nhập Windows, app tự chạy (cửa sổ thu nhỏ)
    và tự làm tiếp việc đang dở. Muốn thôi: bấm đúp Tat-tu-chay-khi-mo-may.bat
+
+App tự tạo thêm hai thư mục nằm cạnh thư mục app — đừng xoá:
+   C:\KHO NHAC                        nhạc tải từ Google Drive
+   C:\MV-Prompt-Studio-muse-gateway   Chrome riêng của Muse (có phiên đăng nhập Muse) và video Muse tải về
 
 
 C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm trong gói cài)
 ---------------------------------------------------------------------------
 1. Cài đặt → "API key của Claude" → dán key → Lưu.
 2. Cài đặt → "Tạo clip bằng Muse" → bấm "Đăng nhập Muse" → cửa sổ Chrome hiện ra → bạn tự đăng nhập tài khoản Meta.
-3. Trang Tự động → thẻ "Kho nhạc trên Google Drive" → dán link thư mục KHO NHẠC ROCK → "Lưu link" → "Đồng bộ ngay".
-   Lần đầu app tải khoảng 3,8 GB nhạc (các bản chưa dùng) về D:\KHO NHAC — chờ thanh tiến độ chạy xong.
-   (Máy chạy không có ổ D: đổi "Thư mục nhạc" trong Cài đặt trước khi đồng bộ.)
+3. Trang Tự động → thẻ "Kho nhạc trên Google Drive": link thư mục KHO NHẠC ROCK đã điền sẵn → bấm "Đồng bộ ngay".
+   (App cũng tự đồng bộ vài giây sau khi mở lần đầu.) Lần đầu app tải khoảng 3,8 GB nhạc (các bản chưa dùng) về
+   C:\KHO NHAC — dòng "Lưu nhạc vào" trên thẻ cho biết chính xác thư mục. Chờ thanh tiến độ chạy xong.
    Sau đó app tự đồng bộ mỗi 6 giờ: bài mới bạn đưa lên Drive tự về máy chạy; bản nào bạn ghi "đã dùng" trên Drive
    thì bản ở máy chạy cũng được đổi tên theo.
 4. Kho ý tưởng đã có sẵn trong gói. Nếu trống: dán file ý tưởng ở thẻ "Thêm việc" → "Đọc bảng" → "Đưa vào kho".
@@ -52,8 +64,9 @@ D. LƯU Ý QUAN TRỌNG
 -------------------
 - Mỗi tài khoản Muse chỉ chạy app ở MỘT máy. Khi máy chạy đã chạy ổn, tắt app trên máy cũ (đóng cửa sổ đen) để hai máy
   không cùng gửi cảnh lên một tài khoản Muse và không làm trùng ý tưởng.
-- Video MV dựng xong nằm trong D:\MV-Prompt-Studio\data\media\ trên máy chạy. Lấy ra bằng nút "Tải MP4" trong app
+- Video MV dựng xong nằm trong C:\MV-Prompt-Studio\data\media\<mã MV>\ trên máy chạy. Lấy ra bằng nút "Tải MP4" trong app
   (khi đang điều khiển từ xa), hoặc chép lên Google Drive / tải thẳng lên YouTube từ máy chạy.
+  Đăng xong thì có thể chép thư mục MV đó ra chỗ khác để giải phóng ổ C.
 - Cập nhật app sau này: trên máy có mã nguồn chạy Dong-goi-cap-nhat.bat → được MV-Prompt-Studio-cap-nhat.zip
-  → chép sang máy chạy → tắt app → giải nén vào D:\ (chọn "Replace" / Thay thế các file) → chạy lại app.
-  Dữ liệu ở máy chạy (cài đặt, kho ý tưởng, MV) được giữ nguyên.
+  → chép sang máy chạy → tắt app → giải nén vào C:\ (chọn "Replace" / Thay thế các file) → chạy lại app.
+  Dữ liệu ở máy chạy (cài đặt, kho ý tưởng, MV, nhạc) được giữ nguyên.
