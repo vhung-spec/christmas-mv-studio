@@ -32,6 +32,10 @@ A. CHUẨN BỊ MÁY CHẠY (làm một lần)
 B. CÀI APP
 ----------
 1. Chép file MV-Prompt-Studio-cai-moi.zip sang máy chạy (USB, Google Drive, Zalo…).
+   TRƯỚC KHI GIẢI NÉN: chuột phải vào file zip → Properties (Thuộc tính) → ở dưới cùng tick ô "Unblock" (Bỏ chặn) → OK.
+   (File tải từ mạng bị Windows đánh dấu; không bỏ chặn thì Windows 11 "Smart App Control" sẽ chặn các file .bat.)
+   Lỡ giải nén rồi: mở PowerShell (bấm Start, gõ PowerShell, Enter) và chạy lệnh
+       Get-ChildItem -Path "C:\MV-Prompt-Studio" -Recurse | Unblock-File
 2. Chuột phải vào file → Extract All (Giải nén tất cả) → ô đường dẫn gõ  C:\  → Extract
    → được thư mục C:\MV-Prompt-Studio
    - KHÔNG giải nén vào Desktop, Documents (Tài liệu) hay thư mục OneDrive: OneDrive sẽ cố đồng bộ hàng chục GB nhạc và video.
