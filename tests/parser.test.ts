@@ -71,6 +71,76 @@ describe("parseIdeaTable", () => {
     const r = parseIdeaTable("1 | Hollywood 1954 | T01 |");
     expect(r.warnings.join(" ")).toMatch(/thiếu outline/);
   });
+
+  // Bảng copy/tải từ Google Docs: mỗi ô nằm trên một dòng riêng, có tiêu đề bảng "1–50 · …" và ghi chú trước/sau.
+  const DOC_CELLS = [
+    "Quy ước mã",
+    "T01–T18: tình yêu · T19–T22: thể thao",
+    "________________",
+    "",
+    "1–50 · California – Las Vegas – Route 66 – New York",
+    "#",
+    "World / Location",
+    "Chủ đề bài hát",
+    "Khung sườn",
+    "1",
+    "Hollywood Boulevard Summer 1954",
+    "T01 Sét ái tình",
+    "Chàng trai bắt gặp cô gái bước ra khỏi rạp phim.",
+    "2",
+    "Hollywood Drive-In Night 1956",
+    "T11 Nụ hôn diệu kỳ",
+    "Buổi hẹn đầu ở drive-in; nụ hôn đầu dưới ánh sáng màn chiếu.",
+    "3",
+    "Sunset Boulevard Rock & Roll 1957",
+    "T09 Rung động mãnh liệt",
+    "Một cô gái nhảy Rock & Roll trong club.",
+    "51–100 · Midwest – South – Florida – Hawaii – Northeast",
+    "#",
+    "World / Location",
+    "Chủ đề bài hát",
+    "Khung sườn",
+    "51",
+    "Chicago Jazz Club 1955",
+    "T08 Say đắm & ngây ngất",
+    "Hai người lạc nhau giữa tiếng kèn rồi tìm lại nhau lúc rạng sáng.",
+    "52.",
+    "Lake Michigan Summer 1957",
+    "T01",
+    "Gặp nhau trên bãi biển hồ; dành cả buổi chiều tìm cách gặp lại.",
+    "SONG THEME",
+    "T08 – Say đắm & ngây ngất",
+  ];
+
+  it("đọc bảng Google Docs mỗi ô một dòng, lấy tiêu đề bảng làm series", () => {
+    const r = parseIdeaTable(DOC_CELLS.join("\r\n"));
+    expect(r.delimiter).toBe("lines");
+    expect(r.warnings).toEqual([]);
+    expect(r.rows.map((x) => x.id)).toEqual(["1", "2", "3", "51", "52"]);
+    expect(r.rows[0]).toMatchObject({
+      world_location: "Hollywood Boulevard Summer 1954",
+      theme_code: "T01",
+      theme_name: "Sét ái tình",
+      outline: "Chàng trai bắt gặp cô gái bước ra khỏi rạp phim.",
+      series: "1–50 · California – Las Vegas – Route 66 – New York",
+    });
+    expect(r.rows[2].theme_name).toBe("Rung động mãnh liệt");
+    expect(r.rows[3]).toMatchObject({ theme_code: "T08", series: "51–100 · Midwest – South – Florida – Hawaii – Northeast" });
+    expect(r.rows[4]).toMatchObject({ id: "52", theme_code: "T01", outline: expect.stringContaining("bãi biển hồ") });
+  });
+
+  it("bản tải về (.txt) có tab đầu dòng và BOM vẫn đọc được", () => {
+    const text = "﻿" + DOC_CELLS.map((l, i) => (i > 5 ? `\t${l}` : l)).join("\r\n");
+    const r = parseIdeaTable(text);
+    expect(r.delimiter).toBe("lines");
+    expect(r.rows).toHaveLength(5);
+    expect(r.rows[1]).toMatchObject({ id: "2", theme_code: "T11", theme_name: "Nụ hôn diệu kỳ" });
+  });
+
+  it("danh sách số lẻ tẻ không bị coi là bảng Google Docs", () => {
+    const r = parseIdeaTable("1\nHollywood 1954\nT01\nGặp nhau\n\nghi chú\nghi chú\nghi chú\nghi chú\nghi chú");
+    expect(r.delimiter).not.toBe("lines");
+  });
 });
 
 describe("parseCsv", () => {

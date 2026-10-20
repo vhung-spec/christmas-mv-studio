@@ -7,7 +7,8 @@ export interface ParseResult {
   rows: IdeaRow[];
   warnings: string[];
   headerDetected: boolean;
-  delimiter: "tab" | "pipe" | "comma" | "matrix";
+  /** lines = bảng Google Docs copy ra thành mỗi ô một dòng. */
+  delimiter: "tab" | "pipe" | "comma" | "matrix" | "lines";
 }
 
 type Field = keyof IdeaRow | "tempo_or_bpm";
@@ -218,7 +219,43 @@ export function matrixToIdeas(
   return { rows, warnings, headerDetected: Boolean(header), delimiter };
 }
 
+/** Tiêu đề bảng kiểu "1–50 · California – Las Vegas – Route 66 – New York" → series của các ý tưởng sau nó. */
+const SERIES_HEADING_RE = /^\d{1,4}\s*[–-]\s*\d{1,4}\s*·\s*\S/;
+
+/**
+ * Bảng Google Docs copy ra thành MỖI Ô MỘT DÒNG: số thứ tự / địa điểm / chủ đề (T01…) / dàn ý, rồi tới ý tưởng sau.
+ * Nhận ra theo cụm 4 dòng: dòng chỉ có số → một dòng → dòng bắt đầu bằng mã chủ đề → dàn ý. Dòng tiêu đề cột (#, World / Location…)
+ * và ghi chú ngoài bảng bị bỏ qua. Trả null nếu văn bản không phải kiểu này (vd. bảng tách bằng tab / dấu |).
+ */
+export function cellLinesToMatrix(text: string): string[][] | null {
+  const lines = text
+    .replace(/^﻿/, "")
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const isId = (s: string) => /^\d{1,4}\.?$/.test(s);
+  const isTheme = (s: string) => /^T\s*\d{1,3}\b/i.test(s);
+  const rows: string[][] = [];
+  let series = "";
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (SERIES_HEADING_RE.test(line)) {
+      series = line;
+      continue;
+    }
+    if (isId(line) && i + 3 < lines.length && !isId(lines[i + 1]) && isTheme(lines[i + 2]) && !isId(lines[i + 3])) {
+      // id | world_location | chủ đề | dàn ý | tên bài | thời lượng | nhịp | lời | series
+      rows.push([line.replace(/\.$/, ""), lines[i + 1], lines[i + 2], lines[i + 3], "", "", "", "", series]);
+      i += 3;
+    }
+  }
+  // Phần lớn văn bản phải là các cụm ý tưởng (ghi chú ngoài bảng chỉ là phần nhỏ).
+  return rows.length >= 2 && rows.length * 4 >= lines.length * 0.5 ? rows : null;
+}
+
 export function parseIdeaTable(text: string, defaults: { series?: string } = {}): ParseResult {
+  const cells = cellLinesToMatrix(text);
+  if (cells) return matrixToIdeas(cells, "lines", defaults);
   const { matrix, delimiter } = textToMatrix(text);
   return matrixToIdeas(matrix, delimiter, defaults);
 }

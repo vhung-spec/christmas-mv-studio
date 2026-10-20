@@ -323,8 +323,14 @@ export default function HomePage() {
             <CostEstimate ideas={validRows} themes={themes} status={status} />
           </div>
           <p className="mb-3 text-xs text-muted">
-            Đã nhận diện {parsed.headerDetected ? "dòng tiêu đề" : "cột theo vị trí"} · tách bằng{" "}
-            {{ tab: "tab", pipe: "dấu |", comma: "dấu phẩy", matrix: "ô Excel" }[parsed.delimiter]}.
+            {parsed.delimiter === "lines" ? (
+              <>Đã nhận diện bảng Google Docs (mỗi ô một dòng) · tiêu đề bảng kiểu “1–50 · …” được dùng làm series.</>
+            ) : (
+              <>
+                Đã nhận diện {parsed.headerDetected ? "dòng tiêu đề" : "cột theo vị trí"} · tách bằng{" "}
+                {{ tab: "tab", pipe: "dấu |", comma: "dấu phẩy", matrix: "ô Excel" }[parsed.delimiter]}.
+              </>
+            )}
           </p>
           {parsed.warnings.length > 0 && (
             <ul className="mb-3 list-disc space-y-0.5 pl-5 text-sm text-amber-800">
