@@ -91,7 +91,10 @@ export async function monitorSnapshot() {
   for (const d of await Promise.all([diskFree(process.cwd()), settings.songDir ? diskFree(settings.songDir) : null])) {
     if (d && !disks.some((x) => x.path === d.path)) disks.push(d);
   }
-  const account = muse.gateway ? ((await museAccounts().catch(() => null))?.active.name ?? null) : null;
+  const accounts = muse.gateway ? await museAccounts().catch(() => null) : null;
+  const account = accounts?.active.name ?? null;
+  // Tự đổi tài khoản / hết dự phòng trong 24 giờ qua → báo trên trang theo dõi.
+  const failoverEvents = (accounts?.events ?? []).filter((ev) => ev.kind !== "reopen" && Date.now() - Date.parse(ev.at) < 24 * 3600e3);
   const running = queue.items.find((i) => i.status === "running");
   const runningTitle = running ? (pipeline.items.find((i) => i.mv_id === running.mv_id)?.title ?? running.mv_id) : "";
   return {
@@ -122,6 +125,7 @@ export async function monitorSnapshot() {
     muse: muse.gateway
       ? {
           account,
+          failover: failoverEvents,
           loggedIn: muse.gateway.loggedIn,
           paused: muse.gateway.paused,
           limitHit: muse.gateway.limitHit,

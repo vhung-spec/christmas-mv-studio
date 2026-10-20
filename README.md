@@ -203,6 +203,13 @@ Phần này chạy ngay trong app (mã ở `src/lib/museEngine/`), không có se
   không đọc được phiên chat của tài khoản cũ — đóng Chrome, đổi tên thư mục, mở lại. Không xoá hồ sơ nào; chỉ một tài khoản mỗi lúc,
   đổi bằng tay (app không tự xoay vòng khi hết hạn mức). Danh sách: `accounts.json` trong thư mục dữ liệu Muse. Mã:
   `src/lib/museEngine/accounts.ts`.
+- **Tự đổi khi tài khoản lỗi** (cùng thẻ, tắt sẵn): bật lên và tick *Dự phòng* ở các tài khoản đã đăng nhập sẵn. Mỗi 2 phút app
+  kiểm tra (`failoverTick`): tài khoản đang dùng **bị đăng xuất quá 10 phút** mà kiểm tra lại vẫn chưa đăng nhập, hoặc **3 cảnh
+  kết thúc gần nhất đều bị Muse từ chối nhận lệnh** (không phải vì hết lượt) → đổi sang tài khoản dự phòng đầu tiên chưa bị đánh
+  dấu lỗi; cảnh đang làm và các cảnh bị từ chối được gửi lại bằng tài khoản mới. Chỉ **hết lượt tuần** thì **không** đổi (chờ như
+  thường). Tài khoản bị đổi khỏi được đánh dấu ⚠ (không tự dùng lại cho tới khi bạn tự chọn lại); hai lần tự đổi cách nhau ≥ 30
+  phút; hết dự phòng thì ghi "hết tài khoản dự phòng" và dừng chờ. Chrome của Muse bị tắt bất thường → sau 5 phút tự mở lại (cùng
+  tài khoản). Mọi lần tự đổi ghi vào nhật ký (thẻ Tài khoản Muse) và báo đỏ trên trang theo dõi trong 24 giờ.
 
 ### Chuẩn bị (một lần)
 

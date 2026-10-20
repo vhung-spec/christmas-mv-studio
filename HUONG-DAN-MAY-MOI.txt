@@ -67,6 +67,13 @@ C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm 
    - "Dùng tài khoản này" ở tài khoản đã lưu → đổi về tài khoản đó (không cần đăng nhập lại nếu phiên còn hạn).
    - Đang có cảnh Muse đang làm thì app hỏi trước: đổi ngay thì các cảnh đó được gửi lại bằng tài khoản mới (tốn lượt).
    - Không hồ sơ nào bị xoá. App chỉ dùng một tài khoản mỗi lúc; đừng dùng để luân phiên lách hạn mức tuần.
+6. Tự đổi tài khoản khi bạn không ở máy (cùng thẻ "Tài khoản Muse"):
+   - Thêm sẵn 1–2 tài khoản dự phòng và ĐĂNG NHẬP SẴN từng cái (Thêm tài khoản mới → đăng nhập → "Dùng tài khoản này" để quay
+     về tài khoản chính), rồi tick "Dự phòng" ở các tài khoản đó và tick "Tự đổi sang tài khoản dự phòng…".
+   - App tự đổi khi tài khoản đang dùng bị đăng xuất quá 10 phút (kiểm tra lại vẫn không vào được — thường do bị khoá), hoặc Muse
+     từ chối nhận lệnh 3 lần liên tiếp. Chỉ HẾT LƯỢT tuần thì KHÔNG đổi, app chờ như thường.
+   - Tài khoản lỗi được đánh dấu ⚠ và không được tự dùng lại; hết tài khoản dự phòng thì app dừng chờ bạn.
+   - Mỗi lần tự đổi được ghi ở "Nhật ký tự đổi" và hiện dòng đỏ trên trang theo dõi ở máy chính.
 
 
 D. LƯU Ý QUAN TRỌNG

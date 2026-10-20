@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { UserError } from "@/lib/errors";
 import { errorResponse, readJsonBody } from "@/lib/http";
-import { museAccounts, renameMuseAccount, switchMuseAccount } from "@/lib/museEngine/accounts";
+import { museAccounts, renameMuseAccount, setMuseBackup, setMuseFailover, switchMuseAccount } from "@/lib/museEngine/accounts";
 import { ensureMuseWatch } from "@/lib/museJobs";
 import { readSettings } from "@/lib/store";
 
@@ -16,13 +16,14 @@ export async function GET() {
 }
 
 /**
- * { action: "switch", to, force? } · { action: "add", name, force? } (hồ sơ trống → mở cửa sổ đăng nhập) · { action: "rename", id, name }.
+ * { action: "switch", to, force? } · { action: "add", name, force? } (hồ sơ trống → mở cửa sổ đăng nhập) · { action: "rename", id, name }
+ * · { action: "failover", enabled } (tự đổi khi tài khoản lỗi) · { action: "backup", id, on } (dùng làm dự phòng).
  * Có cảnh đang làm mà chưa force → { needsConfirm, inflight } để hỏi lại người dùng.
  */
 export async function POST(req: Request) {
   try {
     if ((await readSettings()).museMode !== "gateway") throw new UserError("Chỉ dùng khi tạo clip bằng Muse trong app.");
-    const body = await readJsonBody<{ action: string; to?: unknown; name?: unknown; id?: unknown; force?: unknown }>(req);
+    const body = await readJsonBody<{ action: string; to?: unknown; name?: unknown; id?: unknown; force?: unknown; enabled?: unknown; on?: unknown }>(req);
     const force = body.force === true;
     let result: Record<string, unknown> = {};
     if (body.action === "switch") {
@@ -35,6 +36,12 @@ export async function POST(req: Request) {
       });
     } else if (body.action === "rename") {
       await renameMuseAccount(String(body.id ?? ""), String(body.name ?? ""));
+    } else if (body.action === "failover") {
+      await setMuseFailover(body.enabled === true);
+    } else if (body.action === "backup") {
+      await setMuseBackup(String(body.id ?? ""), body.on === true).catch((err) => {
+        throw new UserError((err as Error).message);
+      });
     } else {
       throw new UserError("action không hợp lệ.");
     }
