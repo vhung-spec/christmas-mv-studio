@@ -287,6 +287,24 @@ Thẻ **Kho ý tưởng** (trang Tự động) giữ mọi ý tưởng của b�
 - **✨ Nhờ Claude đề xuất ngay**: đề xuất bất cứ lúc nào. Lần đề xuất tự động bị lỗi (vd. chưa có API key) thì 30 phút sau app mới tự thử lại.
 - Cần **Claude API key** (Cài đặt → *API key của Claude*); chế độ **Demo** cho ý tưởng mẫu để thử, không tốn phí.
 
+## 2e. Chạy trên máy khác (máy chạy riêng, điều khiển từ xa)
+
+App có thể chạy suốt trên một máy Windows khác; bạn điều khiển bằng phần mềm xem màn hình (UltraViewer, Chrome Remote Desktop).
+App vẫn chỉ mở trong chính máy đó (127.0.0.1). Hướng dẫn từng bước cho người không rành máy: **`HUONG-DAN-MAY-MOI.txt`**.
+
+- **Đóng gói**: bấm đúp `Dong-goi-cai-moi.bat` → `MV-Prompt-Studio-cai-moi.zip` (thư mục `MV-Prompt-Studio-goi` cạnh thư mục app):
+  mã nguồn + dữ liệu của bạn (cài đặt, chủ đề, địa điểm, cặp đôi, thư viện lời, kho ý tưởng). **Không** có API key (`.env*`),
+  phiên đăng nhập Muse, nhạc, video hay lịch sử MV. `Dong-goi-cap-nhat.bat` → bản chỉ có mã nguồn, giải nén đè để cập nhật app
+  ở máy kia mà giữ nguyên dữ liệu ở đó. Thêm `--ra <thư mục>` để đổi nơi để file zip.
+- **Kho nhạc trên Google Drive** (trang Tự động): dán link thư mục kho nhạc (chia sẻ “Bất kỳ ai có đường liên kết”) → **Đồng bộ
+  ngay**. App đọc lời từ các thư mục bài đánh số vào `data/song_library.json`, tải các bản nhạc **chưa dùng** còn thiếu về
+  Thư mục nhạc, bản nào trên Drive đổi tên (vd. vừa ghi “đã dùng”) thì đổi tên bản ở máy cho khớp; không xoá file nào.
+  **Tự đồng bộ mỗi 6 giờ** (bật sẵn) — chỉ tải bản mới. Mã: `src/lib/driveSync.ts`.
+- **Tự chạy tiếp khi mở lại**: lúc server khởi động (`src/instrumentation.ts` → `src/lib/autostart.ts`), app tự chạy tiếp
+  dây chuyền, Muse và tự đồng bộ khi đến hạn — không cần ai mở trình duyệt. `Bat-tu-chay-khi-mo-may.bat` tạo lối tắt trong
+  thư mục Startup để app tự mở mỗi lần đăng nhập Windows (`Tat-tu-chay-khi-mo-may.bat` để thôi). `NO_AUTOSTART=1` để tắt.
+- **Một tài khoản Muse chỉ chạy ở một máy**: chuyển sang máy chạy rồi thì tắt app ở máy cũ.
+
 ## 3. Logic sinh MV
 
 1. **Character Bible** — Claude tạo cặp đôi HE/SHE (hoặc dùng **cặp đôi cố định cho cả series** nếu bật trong Cài đặt).

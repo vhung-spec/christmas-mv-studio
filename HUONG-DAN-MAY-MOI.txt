@@ -1,0 +1,59 @@
+﻿HƯỚNG DẪN CHẠY MV PROMPT STUDIO TRÊN MÁY KHÁC
+=============================================
+
+"Máy chạy" là một máy Windows 10/11 để mở suốt cho app tự làm MV. Bạn điều khiển nó từ xa bằng phần mềm xem màn hình.
+App chỉ mở trong chính máy chạy (địa chỉ 127.0.0.1): không ai trên mạng vào được app.
+
+
+A. CHUẨN BỊ MÁY CHẠY (làm một lần)
+-----------------------------------
+1. Ổ đĩa: ổ D còn trống ít nhất 15 GB (nhạc khoảng 4 GB, clip và video MV tăng dần theo thời gian).
+2. Cài Google Chrome: https://www.google.com/chrome  (app dùng Chrome để làm việc với Muse).
+3. Cài Node.js bản LTS: https://nodejs.org  → bấm nút tải bản "LTS" → mở file tải về → Next đến hết.
+4. Không cho máy ngủ: Settings → System → Power (Nguồn và pin) → Screen and sleep →
+   "When plugged in, put my device to sleep after" = Never (Không bao giờ). Màn hình tắt thì không sao.
+5. Điều khiển từ xa: cài CÙNG một phần mềm trên máy chạy và trên máy của bạn, ví dụ
+   - UltraViewer: https://ultraviewer.net
+   - hoặc Chrome Remote Desktop: https://remotedesktop.google.com
+   Hai phần mềm này dùng đúng màn hình thật của máy chạy, nên app và cửa sổ Chrome của Muse vẫn chạy khi bạn ngắt kết nối.
+   KHÔNG nên dùng "Remote Desktop Connection" có sẵn của Windows (mstsc): khi ngắt kết nối, phiên làm việc bị khoá
+   và cửa sổ Chrome của Muse có thể ngừng chạy.
+6. (Nên làm, nếu máy để ở nơi an toàn) Cho Windows tự đăng nhập khi bật máy, để sau khi máy khởi động lại
+   (vd. cập nhật Windows, mất điện) app tự chạy tiếp mà không cần ai gõ mật khẩu:
+   bấm Windows + R → gõ netplwiz → Enter → bỏ chọn "Users must enter a user name and password to use this computer" → OK
+   → nhập mật khẩu Windows hai lần. (Windows 11 không thấy ô này: Settings → Accounts → Sign-in options →
+   tắt "For improved security, only allow Windows Hello sign-in for Microsoft accounts on this device", rồi làm lại.)
+
+
+B. CÀI APP
+----------
+1. Chép file MV-Prompt-Studio-cai-moi.zip sang máy chạy (USB, Google Drive, Zalo…).
+2. Chuột phải vào file → Extract All (Giải nén tất cả) → chọn ổ D:\ → được thư mục D:\MV-Prompt-Studio
+3. Mở thư mục đó, bấm đúp Chay-MV-Prompt-Studio.bat
+   Lần đầu app tự cài thư viện và chuẩn bị, mất 5–10 phút (cần mạng). Xong thì trình duyệt tự mở app.
+   Giữ cửa sổ đen mở (thu nhỏ được). Đóng cửa sổ đen là tắt app.
+4. Bấm đúp Bat-tu-chay-khi-mo-may.bat → từ nay mỗi lần đăng nhập Windows, app tự chạy (cửa sổ thu nhỏ)
+   và tự làm tiếp việc đang dở. Muốn thôi: bấm đúp Tat-tu-chay-khi-mo-may.bat
+
+
+C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm trong gói cài)
+---------------------------------------------------------------------------
+1. Cài đặt → "API key của Claude" → dán key → Lưu.
+2. Cài đặt → "Tạo clip bằng Muse" → bấm "Đăng nhập Muse" → cửa sổ Chrome hiện ra → bạn tự đăng nhập tài khoản Meta.
+3. Trang Tự động → thẻ "Kho nhạc trên Google Drive" → dán link thư mục KHO NHẠC ROCK → "Lưu link" → "Đồng bộ ngay".
+   Lần đầu app tải khoảng 3,8 GB nhạc (các bản chưa dùng) về D:\KHO NHAC — chờ thanh tiến độ chạy xong.
+   (Máy chạy không có ổ D: đổi "Thư mục nhạc" trong Cài đặt trước khi đồng bộ.)
+   Sau đó app tự đồng bộ mỗi 6 giờ: bài mới bạn đưa lên Drive tự về máy chạy; bản nào bạn ghi "đã dùng" trên Drive
+   thì bản ở máy chạy cũng được đổi tên theo.
+4. Kho ý tưởng đã có sẵn trong gói. Nếu trống: dán file ý tưởng ở thẻ "Thêm việc" → "Đọc bảng" → "Đưa vào kho".
+
+
+D. LƯU Ý QUAN TRỌNG
+-------------------
+- Mỗi tài khoản Muse chỉ chạy app ở MỘT máy. Khi máy chạy đã chạy ổn, tắt app trên máy cũ (đóng cửa sổ đen) để hai máy
+  không cùng gửi cảnh lên một tài khoản Muse và không làm trùng ý tưởng.
+- Video MV dựng xong nằm trong D:\MV-Prompt-Studio\data\media\ trên máy chạy. Lấy ra bằng nút "Tải MP4" trong app
+  (khi đang điều khiển từ xa), hoặc chép lên Google Drive / tải thẳng lên YouTube từ máy chạy.
+- Cập nhật app sau này: trên máy có mã nguồn chạy Dong-goi-cap-nhat.bat → được MV-Prompt-Studio-cap-nhat.zip
+  → chép sang máy chạy → tắt app → giải nén vào D:\ (chọn "Replace" / Thay thế các file) → chạy lại app.
+  Dữ liệu ở máy chạy (cài đặt, kho ý tưởng, MV) được giữ nguyên.

@@ -40,6 +40,8 @@ export const PIPELINE_FILE = () => dataPath("pipeline.json");
 export const IDEAS_FILE = () => dataPath("ideas.json");
 /** Thư viện lời bài hát của kho nhạc (mỗi số bài: địa điểm, chủ đề, dàn ý, lời) — tạo từ thư mục bài hát trên Google Drive. */
 export const SONG_LIBRARY_FILE = () => dataPath("song_library.json");
+/** Kết quả lần đồng bộ kho nhạc từ Google Drive gần nhất. */
+export const DRIVE_SYNC_FILE = () => dataPath("drive_sync.json");
 
 export const LIBRARY_FILES = {
   themes: "themes.json",
@@ -73,6 +75,8 @@ export const DEFAULT_SETTINGS: Settings = {
   songDir: "",
   museAutoRender: true,
   museAvoid: true,
+  driveFolder: "",
+  driveAutoSync: true,
 };
 
 // ---------- Khoá theo tên (tránh ghi đè đồng thời trong cùng tiến trình) ----------

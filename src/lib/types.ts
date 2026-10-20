@@ -144,6 +144,10 @@ export interface Settings {
   museAutoRender: boolean;
   /** Ghép negative prompt vào cuối chữ gửi Muse ("Avoid: …") vì Muse không có ô negative riêng. */
   museAvoid: boolean;
+  /** Link thư mục kho nhạc trên Google Drive (chia sẻ "Ai có đường liên kết"): thư mục bài đánh số + thư mục file nhạc. "" = không đồng bộ. */
+  driveFolder: string;
+  /** Tự đồng bộ kho nhạc từ Drive mỗi 6 giờ (chỉ tải bản nhạc mới). */
+  driveAutoSync: boolean;
 }
 
 export interface Libraries {

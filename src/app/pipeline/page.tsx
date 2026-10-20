@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MuseStatus, useMuse } from "@/components/muse/MusePanels";
+import { DriveSyncCard } from "@/components/pipeline/DriveSyncCard";
 import { type BankData, IdeaBankCard } from "@/components/pipeline/IdeaBankCard";
 import { Card, ErrorBox, Spinner } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/client";
@@ -209,6 +210,8 @@ export default function PipelinePage() {
           </div>
         )}
       </Card>
+
+      <DriveSyncCard onSynced={() => void loadBank()} />
 
       <Card
         title="1. Thêm việc"

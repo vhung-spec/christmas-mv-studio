@@ -44,6 +44,8 @@ export const zSettings = z.object({
   songDir: z.string().trim().max(500),
   museAutoRender: z.boolean(),
   museAvoid: z.boolean(),
+  driveFolder: z.string().trim().max(500),
+  driveAutoSync: z.boolean(),
 }).refine((s) => s.minShots <= s.maxShots, { message: "Số cảnh tối thiểu phải ≤ số cảnh tối đa", path: ["minShots"] });
 
 export const zEditOptions = z.object({
