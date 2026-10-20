@@ -70,10 +70,14 @@ if (!update) {
 // 3. Nén.
 const zip = path.join(OUT, zipName);
 rmSync(zip, { force: true });
+// Windows 10/11 có sẵn tar.exe tạo được zip chuẩn (đường dẫn dùng "/"); Compress-Archive của PowerShell 5 ghi "\" nên chỉ dùng khi thiếu tar.
+const winTar = path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe");
 const res =
-  process.platform === "win32"
-    ? spawnSync("powershell", ["-NoProfile", "-Command", `Compress-Archive -Path '${app.replace(/'/g, "''")}' -DestinationPath '${zip.replace(/'/g, "''")}' -Force`], { stdio: "inherit" })
-    : spawnSync("zip", ["-rq", zip, NAME], { cwd: stage, stdio: "inherit" });
+  process.platform !== "win32"
+    ? spawnSync("zip", ["-rq", zip, NAME], { cwd: stage, stdio: "inherit" })
+    : existsSync(winTar)
+      ? spawnSync(winTar, ["-a", "-c", "-f", zip, NAME], { cwd: stage, stdio: "inherit" })
+      : spawnSync("powershell", ["-NoProfile", "-Command", `Compress-Archive -Path '${app.replace(/'/g, "''")}' -DestinationPath '${zip.replace(/'/g, "''")}' -Force`], { stdio: "inherit" });
 rmSync(stage, { recursive: true, force: true });
 if (res.status !== 0 || !existsSync(zip)) fail("Không nén được file zip.");
 
