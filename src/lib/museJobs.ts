@@ -13,6 +13,7 @@ import {
   advanceJob,
   finishedTask,
   isFinal,
+  museCounts,
   museText,
   pasteText,
   pickTask,
@@ -326,6 +327,86 @@ export async function reimportMuse(mvId: string, shots?: number[]): Promise<numb
   return n;
 }
 
+const SKIPPED_MSG = "Đã bỏ qua — MV được dựng bằng các cảnh khác (đoạn của cảnh này mượn / lặp cảnh khác). Muốn có clip riêng thì gửi lại cảnh này.";
+
+/**
+ * Bỏ qua các cảnh lỗi (không làm lại): MV vẫn được dựng bằng các cảnh đã có clip — đoạn của cảnh bị bỏ qua mượn / lặp cảnh khác.
+ * Muốn có clip riêng thì gửi lại cảnh đó (thay bản theo dõi cũ). Trả về số cảnh đã bỏ qua.
+ */
+export async function skipMuse(mvId: string, shots?: number[]): Promise<number> {
+  const mv = await loadMV(mvId);
+  if (!mv) throw new UserError(`Không tìm thấy MV ${mvId}.`, 404);
+  const project = await loadProject(mvId);
+  const n = await updateMuse((st) => {
+    const m = st.mvs.find((x) => x.mv_id === mvId);
+    const jobs = (m?.shots ?? []).filter((j) => j.status === "error" && (!shots || shots.includes(j.shot_no)));
+    if (!m || !jobs.length) return 0;
+    // Chưa cảnh nào có clip → không có gì để dựng.
+    if (!mv.shots.some((s) => project.clips[String(s.shot_no)])) throw new UserError("MV chưa có clip nào — chưa dựng được, hãy gửi lại các cảnh lỗi.");
+    for (const j of jobs) Object.assign(j, { status: "skipped", step: undefined, message: SKIPPED_MSG, import_error_task: undefined });
+    // MV được xét tự dựng lại.
+    Object.assign(m, { queued_at: undefined, note: undefined });
+    return jobs.length;
+  });
+  if (!n) throw new UserError("Không có cảnh lỗi nào để bỏ qua.");
+  return n;
+}
+
+/** Số cảnh lỗi tối đa app tự bỏ qua trong một MV (theo % số cảnh, ít nhất 1). */
+export const skipLimit = (total: number, pct: number) => Math.max(1, Math.floor((total * pct) / 100));
+
+/**
+ * Tự bỏ qua cảnh lỗi (Cài đặt → museSkipFailed, chỉ khi gửi qua Muse trong app): Muse đã làm xong cả MV mà chỉ còn ít cảnh lỗi
+ * (≤ museSkipFailed % số cảnh) → lượt đầu tự kiểm tra lại / nhận lại các cảnh đó (không gửi lại — không tốn lượt), lượt sau
+ * vẫn lỗi thì bỏ qua để MV vẫn được dựng. MV lỗi nhiều cảnh hơn thì chờ bạn quyết định.
+ */
+async function autoSkip(pct: number): Promise<void> {
+  if (!(await readMuse()).mvs.some((m) => m.shots.some((s) => s.status === "error"))) return;
+  const rechecks = await updateMuse((st) => {
+    const out: { mvId: string; shotNo: number; taskId: string }[] = [];
+    for (const mv of st.mvs) {
+      const c = museCounts(mv);
+      if (!c.error || c.active || c.waiting || c.error > skipLimit(c.total, pct)) continue;
+      // Chưa có cảnh nào có clip → không tự bỏ qua (để bạn gửi lại).
+      if (!mv.shots.some((s) => s.status === "done" || s.status === "kept")) continue;
+      const failed = mv.shots.filter((s) => s.status === "error");
+      if (failed.every((s) => s.auto_rechecked)) {
+        for (const j of failed) Object.assign(j, { status: "skipped", step: undefined, message: `Tự bỏ qua sau khi kiểm tra lại vẫn lỗi (${j.message ?? "lỗi"}). ${SKIPPED_MSG}`, import_error_task: undefined });
+        Object.assign(mv, { queued_at: undefined, note: undefined });
+        continue;
+      }
+      for (const j of failed) {
+        if (j.auto_rechecked) continue;
+        j.auto_rechecked = true;
+        // Muse đã làm xong nhưng đưa clip vào MV bị lỗi → lấy lại file.
+        if (j.import_error_task) Object.assign(j, { import_error_task: undefined, status: "running", step: "Tự nhận lại clip", message: undefined });
+        else if (j.submitted && j.task_id) out.push({ mvId: mv.mv_id, shotNo: j.shot_no, taskId: j.task_id });
+      }
+    }
+    return out;
+  });
+  if (!rechecks.length) return;
+  const { worker } = museEngine();
+  const ok = new Set<string>();
+  for (const id of new Set(rechecks.map((r) => r.taskId))) {
+    try {
+      worker.recheck(id);
+      ok.add(id);
+    } catch {
+      // Không kiểm tra lại được (vd. chưa gửi lên Muse) → lượt sau bỏ qua luôn.
+    }
+  }
+  if (!ok.size) return;
+  await updateMuse((st) => {
+    for (const r of rechecks) {
+      const job = findJob(st, r.mvId, r.shotNo);
+      if (job && job.status === "error" && job.task_id === r.taskId && ok.has(r.taskId)) {
+        Object.assign(job, { status: "running", step: "Tự kiểm tra lại kết quả trước khi bỏ qua", message: undefined });
+      }
+    }
+  });
+}
+
 export interface TickDeps {
   /** Thêm MV vào hàng chờ dựng và chạy (đổi được khi test). */
   enqueue?: (mvIds: string[]) => Promise<void>;
@@ -397,14 +478,17 @@ export function museTick(deps: TickDeps = {}): Promise<"fast" | "slow" | null> {
       }
     }
 
-    // Tự dựng: MV đủ clip cho mọi cảnh + có bài hát.
+    if (gatewayMode && settings.museSkipFailed > 0) await autoSkip(settings.museSkipFailed);
+
+    // Tự dựng: MV đủ clip cho mọi cảnh (trừ cảnh lỗi đã bỏ qua) + có bài hát.
     state = await readMuse();
     if (settings.museAutoRender) {
       for (const mv of state.mvs.filter(awaitingRender)) {
         const full = await loadMV(mv.mv_id);
         if (!full) continue;
         const project = await loadProject(mv.mv_id);
-        const missing = full.shots.filter((s) => !project.clips[String(s.shot_no)]).length;
+        const skipped = new Set(mv.shots.filter((s) => s.status === "skipped").map((s) => s.shot_no));
+        const missing = full.shots.filter((s) => !project.clips[String(s.shot_no)] && !skipped.has(s.shot_no)).length;
         let note = !project.audio
           ? "Đủ clip — thêm bài hát là app tự đưa MV vào hàng chờ dựng."
           : missing
@@ -414,7 +498,7 @@ export function museTick(deps: TickDeps = {}): Promise<"fast" | "slow" | null> {
         if (!note) {
           await (deps.enqueue ?? defaultEnqueue)([mv.mv_id]);
           queuedAt = new Date().toISOString();
-          note = "Đã tự thêm vào hàng chờ dựng.";
+          note = `Đã tự thêm vào hàng chờ dựng${skipped.size ? ` (bỏ qua ${skipped.size} cảnh lỗi: ${[...skipped].map((n) => `#${n}`).join(", ")})` : ""}.`;
         }
         await updateMuse((st) => {
           const cur = st.mvs.find((m) => m.mv_id === mv.mv_id);
@@ -428,7 +512,9 @@ export function museTick(deps: TickDeps = {}): Promise<"fast" | "slow" | null> {
     if (shots.some((s) => s.status === "waiting" || s.status === "queued" || s.status === "running")) return "fast";
     // Chỉ còn cảnh lỗi (có thể được chạy lại bên HaoHao / Muse) hoặc MV chờ bài hát để tự dựng → dò thưa.
     const retryable = shots.some((s) => s.status === "error" && !(s.submitted && !s.task_id));
-    return retryable || (settings.museAutoRender && state.mvs.some(awaitingRender)) ? "slow" : null;
+    // Cảnh đã tự kiểm tra lại mà vẫn lỗi → lượt sau tự bỏ qua.
+    const toSkip = gatewayMode && settings.museSkipFailed > 0 && shots.some((s) => s.status === "error" && s.auto_rechecked);
+    return retryable || toSkip || (settings.museAutoRender && state.mvs.some(awaitingRender)) ? "slow" : null;
   });
 }
 

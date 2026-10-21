@@ -74,6 +74,11 @@ C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm 
      từ chối nhận lệnh 3 lần liên tiếp. Chỉ HẾT LƯỢT tuần thì KHÔNG đổi, app chờ như thường.
    - Tài khoản lỗi được đánh dấu ⚠ và không được tự dùng lại; hết tài khoản dự phòng thì app dừng chờ bạn.
    - Mỗi lần tự đổi được ghi ở "Nhật ký tự đổi" và hiện dòng đỏ trên trang theo dõi ở máy chính.
+7. Cảnh Muse bị lỗi (vd. Muse trả lời "Mình không tạo được video đó"):
+   - Tự động: Muse làm xong các cảnh khác mà chỉ còn ít cảnh lỗi (Cài đặt → "Tự bỏ qua cảnh lỗi", mặc định tối đa 20% số
+     cảnh, luôn được ít nhất 1 cảnh) → app tự Kiểm tra lại một lần (không tốn lượt), vẫn lỗi thì BỎ QUA cảnh đó và vẫn dựng MV
+     (đoạn của cảnh lỗi mượn / lặp cảnh khác). Lỗi nhiều cảnh hơn thì app chờ bạn.
+   - Bằng tay: trang Clip Muse → "⤼ Bỏ qua N cảnh lỗi & dựng". Muốn làm lại cảnh đó sau: "↻ Gửi lại N cảnh đã bỏ qua" (tốn lượt).
 
 
 D. LƯU Ý QUAN TRỌNG

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { UserError } from "@/lib/errors";
 import { errorResponse, readJsonBody } from "@/lib/http";
 import { museEngine } from "@/lib/museEngine";
-import { ensureMuseWatch, forgetMuse, museTick, museView, recheckMuse, reimportMuse, sendToMuse } from "@/lib/museJobs";
+import { ensureMuseWatch, forgetMuse, museTick, museView, recheckMuse, reimportMuse, sendToMuse, skipMuse } from "@/lib/museJobs";
 import { readSettings } from "@/lib/store";
 
 // ?mv=<id> (GET và POST): chỉ trả tiến độ của MV đó (trang Ghép video của MV); không có = mọi MV.
@@ -30,6 +30,7 @@ async function engineMode() {
  * { action: "send", ids, shots?, onlyMissing? } → { sent, text, count, reused, …, view }
  * { action: "forget", id, shots? } · { action: "reimport", id, shots? } (nhận lại clip đã xong mà đưa vào MV lỗi)
  * { action: "recheck", id, shots? } (đọc lại phiên cũ của cảnh lỗi, không gửi lại)
+ * { action: "skip", id, shots? } (bỏ qua cảnh lỗi, MV vẫn dựng bằng các cảnh khác)
  * { action: "check" } (dò ngay; Muse trong app: kiểm tra lại đăng nhập, chạy tiếp nếu đang dừng vì hết hạn mức)
  * { action: "login" } (mở Chrome của Muse để đăng nhập) → view
  */
@@ -51,6 +52,11 @@ export async function POST(req: Request) {
         break;
       case "recheck":
         await recheckMuse(String(body.id ?? ""), shotList(body.shots));
+        break;
+      case "skip":
+        await skipMuse(String(body.id ?? ""), shotList(body.shots));
+        // Dò ngay: MV đủ clip (trừ cảnh bỏ qua) + có nhạc thì tự vào hàng chờ dựng.
+        await museTick();
         break;
       case "login":
         void (await engineMode()).worker.login();

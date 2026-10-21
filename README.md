@@ -243,6 +243,10 @@ Chi tiết:
 - **Cảnh báo lỗi mà có thể Muse đã làm xong** (vd. Muse trả lời “Muốn mình làm thêm bản biến tấu khác…”): bấm **↻ Kiểm tra lại N cảnh (không tốn lượt)** —
   app đọc lại đúng cuộc chat cũ và tải video nếu có. App cũng tự tìm video Muse ghi trong câu trả lời khi không có “thẻ video” riêng (gặp khi thử thật).
   Chỉ khi kiểm tra lại vẫn lỗi mới cần **↻ Gửi lại** (tốn thêm lượt).
+- **Bỏ qua cảnh lỗi mà vẫn dựng MV** (vd. Muse từ chối một cảnh): khi Muse đã làm xong các cảnh khác, bấm **⤼ Bỏ qua N cảnh lỗi & dựng** — cảnh đó
+  không có clip riêng, khi dựng đoạn của nó mượn / lặp cảnh khác; MV đủ clip còn lại + có bài hát thì tự vào hàng chờ dựng. Muốn có clip riêng sau này:
+  **↻ Gửi lại N cảnh đã bỏ qua**. Tự động khi bạn vắng mặt (Cài đặt → **Tự bỏ qua cảnh lỗi**, mặc định 20% số cảnh, luôn được ít nhất 1 cảnh):
+  app tự Kiểm tra lại cảnh lỗi một lần (không tốn lượt), vẫn lỗi thì bỏ qua và dựng; lỗi nhiều cảnh hơn mức đó thì chờ bạn. 0 = tắt.
 - Video gốc vẫn nằm trong thư mục `videos/` của Muse (hoặc thư mục lưu của HaoHao); app chép một bản vào `data/media/<mã MV>/`.
 
 ### Cách dán tay vào HaoHao (dự phòng)
@@ -270,7 +274,7 @@ Menu **Tự động**: mỗi việc là một MV chạy qua 4 bước, không c�
 Cách dùng: menu **Tự động** → tab **Từ ý tưởng** (dán bảng như trang Nhập ý tưởng → **Đọc bảng** → **＋ Đưa N ý tưởng vào kho**, hoặc **▶ Chạy ngay cả N
 ý tưởng** để đưa cả bảng vào dây chuyền một lúc) hoặc tab **Từ MV có sẵn**
 (chọn MV → **▶ Chạy tự động N MV**). App hỏi lại kèm chi phí ước tính (lượt Muse, tiền Claude API). Mỗi việc hiện 4 ô Kịch bản / Bài hát / Clip Muse / Dựng MP4;
-bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse** để Kiểm tra lại / Gửi lại. Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
+bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse** để Kiểm tra lại / Gửi lại / Bỏ qua cảnh lỗi & dựng (ít cảnh lỗi thì app tự bỏ qua, xem trên). Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
 
 ### MV hoàn thiện: ảnh bìa, tiêu đề, thư mục kết quả
 

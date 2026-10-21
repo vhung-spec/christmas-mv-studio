@@ -191,7 +191,7 @@ export default function MusePage() {
                       <td className="px-2 py-1.5 text-xs">
                         {c ? (
                           <>
-                            {c.done}/{c.total} xong{c.error > 0 && <span className="text-cherry-dark"> · {c.error} lỗi</span>}
+                            {c.done}/{c.total} xong{c.error > 0 && <span className="text-cherry-dark"> · {c.error} lỗi</span>}{c.skipped > 0 && ` · ${c.skipped} bỏ qua`}
                           </>
                         ) : (
                           "—"
@@ -248,6 +248,7 @@ export default function MusePage() {
                   onResend={(s) => void resend(m.mv_id, s)}
                   onReimport={(s) => void post({ action: "reimport", id: m.mv_id, shots: s })}
                   onRecheck={(s) => void post({ action: "recheck", id: m.mv_id, shots: s })}
+                  onSkip={(s) => void post({ action: "skip", id: m.mv_id, shots: s })}
                   onForget={() => void post({ action: "forget", id: m.mv_id })}
                 />
               </div>

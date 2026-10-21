@@ -311,7 +311,7 @@ describe("Muse trong app (gửi tự động) → clip vào đúng cảnh", () =
     const fake = new FakeMuse(readFileSync(clip));
     const gw = initMuseEngine({ dir: path.join(tmp, "muse-engine"), page: fake, worker: FAST });
     try {
-      setSettings({ museMode: "gateway" });
+      setSettings({ museMode: "gateway", museSkipFailed: 0 }); // cảnh lỗi chờ bấm "Kiểm tra lại" (không tự bỏ qua)
       const m = await gen.generateMV({ id: "4", world_location: "Route 66 Summer 1957", theme_code: "T01", outline: "Đi xe dọc đường 66" });
       // Ảnh tham chiếu của nhân vật có trong cảnh đầu tiên.
       const s1 = m.shots[0];
@@ -367,6 +367,83 @@ describe("Muse trong app (gửi tự động) → clip vào đúng cảnh", () =
       const rest = await jobs.sendToMuse([m.id], { onlyMissing: true });
       expect(rest.count).toBe(new Set(m.shots.slice(3).map((s) => muse.museText(s, { avoid: true }))).size);
       expect(gw.store.list().filter((t) => t.prompt === muse.museText(s1, { avoid: true }))).toHaveLength(1);
+    } finally {
+      await closeMuseEngine();
+      setSettings();
+    }
+  }, 60000);
+
+  it("cảnh lỗi: tự kiểm tra lại một lần, vẫn lỗi thì tự bỏ qua và vẫn dựng; tắt tự bỏ qua thì bấm “Bỏ qua”", async () => {
+    const { initMuseEngine, closeMuseEngine } = await import("@/lib/museEngine");
+    const { FakeMuse, FAST } = await import("./fakeMuse");
+    const gen = await import("@/lib/generate");
+    const fake = new FakeMuse(readFileSync(clip));
+    const gw = initMuseEngine({ dir: path.join(tmp, "muse-engine-skip"), page: fake, worker: FAST });
+    const jobOf = async (mvId: string, shot: number) => (await jobs.readMuse()).mvs.find((x) => x.mv_id === mvId)!.shots.find((s) => s.shot_no === shot)!;
+    try {
+      setSettings({ museMode: "gateway", museSkipFailed: 50 });
+      const m = await gen.generateMV({ id: "5", world_location: "Malibu Summer Romance 1959", theme_code: "T01", outline: "Hẹn hò trên bãi biển" });
+      const [a, b, ...others] = m.shots;
+      // Các cảnh khác đã có clip, MV có bài hát; chỉ còn 2 cảnh gửi Muse.
+      for (const s of others) await media.addClip(m.id, s.shot_no, "clip.mp4", stream(clip));
+      await media.addAudio(m.id, "song.mp3", stream(song));
+      await jobs.sendToMuse([m.id], { shots: [a.shot_no, b.shot_no] });
+      await waitFor(() => fake.sent.length === 1, 5000, "gửi cảnh đầu");
+      fake.finish(1);
+      await waitFor(() => fake.sent.length === 2, 5000, "gửi cảnh hai");
+      fake.finish(2, false); // Muse trả lời bằng chữ, không có video
+      await waitFor(async () => gw.store.list("failed").length === 1, 5000, "Muse báo lỗi");
+
+      // Lượt dò đầu: cảnh lỗi được tự kiểm tra lại (đọc lại phiên cũ, không gửi lại), chưa dựng.
+      enqueued.length = 0;
+      await tick();
+      expect(await jobOf(m.id, a.shot_no)).toMatchObject({ status: "done" });
+      expect(await jobOf(m.id, b.shot_no)).toMatchObject({ status: "running", auto_rechecked: true });
+      expect(enqueued).toEqual([]);
+      await waitFor(async () => gw.store.list("failed").length === 1 && !gw.store.list("processing").length, 5000, "kiểm tra lại xong");
+
+      // Vẫn lỗi → tự bỏ qua; MV đủ clip (trừ cảnh bỏ qua) + có nhạc → tự vào hàng chờ dựng.
+      await tick();
+      expect(await jobOf(m.id, b.shot_no)).toMatchObject({ status: "skipped" });
+      expect(enqueued).toEqual([[m.id]]);
+      const tracked = (await jobs.readMuse()).mvs.find((x) => x.mv_id === m.id)!;
+      expect(tracked.note).toContain(`bỏ qua 1 cảnh lỗi: #${b.shot_no}`);
+      expect(muse.museCounts(tracked)).toMatchObject({ done: 1, skipped: 1, error: 0 });
+      expect(fake.sent).toHaveLength(2); // không gửi lại, không tốn lượt
+      await expect(jobs.skipMuse(m.id)).rejects.toThrow(/Không có cảnh lỗi/);
+
+      // Tắt tự bỏ qua: gửi lại cảnh đã bỏ qua mà vẫn lỗi → chờ bạn; bấm "Bỏ qua" thì MV vẫn dựng.
+      setSettings({ museMode: "gateway", museSkipFailed: 0 });
+      await jobs.sendToMuse([m.id], { shots: [b.shot_no] });
+      await waitFor(() => fake.sent.length === 3, 5000, "gửi lại cảnh hai");
+      fake.finish(3, false);
+      await waitFor(async () => gw.store.list("failed").length === 2, 5000, "Muse lại báo lỗi");
+      enqueued.length = 0;
+      await tick();
+      await tick();
+      expect(await jobOf(m.id, b.shot_no)).toMatchObject({ status: "error" });
+      expect(enqueued).toEqual([]);
+      expect(await jobs.skipMuse(m.id, [b.shot_no])).toBe(1);
+      await tick();
+      expect(await jobOf(m.id, b.shot_no)).toMatchObject({ status: "skipped" });
+      expect(enqueued).toEqual([[m.id]]);
+
+      // Quá giới hạn (2/2 cảnh lỗi, giới hạn 1) thì không tự bỏ qua; MV chưa có clip nào thì không bỏ qua được.
+      setSettings({ museMode: "gateway", museSkipFailed: 20 });
+      const n = await gen.generateMV({ id: "6", world_location: "Palm Springs Night 1958", theme_code: "T01", outline: "Khiêu vũ bên hồ bơi" });
+      await jobs.sendToMuse([n.id], { shots: [n.shots[0].shot_no, n.shots[1].shot_no] });
+      await waitFor(() => fake.sent.length === 4, 5000, "gửi cảnh MV 6");
+      fake.finish(4, false);
+      await waitFor(() => fake.sent.length === 5, 5000, "gửi cảnh hai MV 6");
+      fake.finish(5, false);
+      await waitFor(async () => gw.store.list("failed").length === 4, 5000, "MV 6 lỗi hết");
+      await tick();
+      await tick();
+      expect((await jobs.readMuse()).mvs.find((x) => x.mv_id === n.id)!.shots.map((s) => [s.status, Boolean(s.auto_rechecked)])).toEqual([
+        ["error", false],
+        ["error", false],
+      ]);
+      await expect(jobs.skipMuse(n.id)).rejects.toThrow(/chưa có clip nào/);
     } finally {
       await closeMuseEngine();
       setSettings();

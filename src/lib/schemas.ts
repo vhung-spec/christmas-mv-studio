@@ -44,6 +44,7 @@ export const zSettings = z.object({
   songDir: z.string().trim().max(500),
   museAutoRender: z.boolean(),
   museAvoid: z.boolean(),
+  museSkipFailed: z.number().int().min(0).max(50),
   driveFolder: z.string().trim().max(500),
   driveAutoSync: z.boolean(),
   monitorEnabled: z.boolean(),

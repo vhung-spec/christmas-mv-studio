@@ -38,7 +38,8 @@ export interface MuseSource {
  * Trạng thái một cảnh: waiting = đã copy prompt, chưa thấy bên HaoHao · queued = HaoHao đã nhận, đang xếp hàng ·
  * running = Muse đang làm · done = clip đã vào MV · error = Muse / HaoHao báo lỗi · kept = cảnh đã có clip bạn tự thêm, không đè.
  */
-export type MuseShotStatus = "waiting" | "queued" | "running" | "done" | "error" | "kept";
+/** skipped = cảnh lỗi được bỏ qua để vẫn dựng MV (không có clip Muse; khi dựng, đoạn của cảnh này mượn / lặp cảnh khác). */
+export type MuseShotStatus = "waiting" | "queued" | "running" | "done" | "error" | "kept" | "skipped";
 
 export interface MuseShotJob {
   shot_no: number;
@@ -58,6 +59,8 @@ export interface MuseShotJob {
   /** Task đã xong nhưng đưa clip vào MV bị lỗi — không thử lại liên tục (chạy lại task trong HaoHao hoặc gửi lại cảnh). */
   import_error_task?: string;
   done_at?: string;
+  /** App đã tự "Kiểm tra lại" cảnh lỗi này một lần (trước khi tự bỏ qua). */
+  auto_rechecked?: boolean;
 }
 
 export interface MuseMV {
@@ -81,10 +84,11 @@ export const MUSE_STATUS_LABEL: Record<MuseShotStatus, string> = {
   done: "Đã vào MV",
   error: "Lỗi",
   kept: "Giữ clip của bạn",
+  skipped: "Đã bỏ qua (dựng bằng các cảnh khác)",
 };
 
 /** Trạng thái đã xong, không theo dõi nữa. */
-export const isFinal = (s: MuseShotStatus) => s === "done" || s === "kept";
+export const isFinal = (s: MuseShotStatus) => s === "done" || s === "kept" || s === "skipped";
 
 /** Gom về một dòng (HaoHao tách prompt bằng dòng trống nên mỗi prompt không được có dòng trống bên trong). */
 export const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
@@ -203,12 +207,15 @@ export interface MuseCounts {
   active: number;
   waiting: number;
   error: number;
+  /** Cảnh lỗi đã bỏ qua (không có clip Muse, MV vẫn dựng). */
+  skipped: number;
 }
 
 export function museCounts(mv: Pick<MuseMV, "shots">): MuseCounts {
-  const c = { total: mv.shots.length, done: 0, active: 0, waiting: 0, error: 0 };
+  const c = { total: mv.shots.length, done: 0, active: 0, waiting: 0, error: 0, skipped: 0 };
   for (const s of mv.shots) {
-    if (isFinal(s.status)) c.done++;
+    if (s.status === "skipped") c.skipped++;
+    else if (isFinal(s.status)) c.done++;
     else if (s.status === "error") c.error++;
     else if (s.status === "waiting") c.waiting++;
     else c.active++;

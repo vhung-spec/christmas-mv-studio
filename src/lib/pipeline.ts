@@ -201,13 +201,19 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
     }
   }
 
-  // 3. Clip Muse
-  const missing = mv.shots.filter((s) => !project.clips[String(s.shot_no)]).length;
+  // 3. Clip Muse (cảnh lỗi đã bỏ qua không tính là thiếu: khi dựng, đoạn của cảnh đó mượn / lặp cảnh khác)
+  const tracked = (await readMuse()).mvs.find((x) => x.mv_id === mv.id);
+  const skipped = new Set((tracked?.shots ?? []).filter((s) => s.status === "skipped").map((s) => s.shot_no));
+  const lacking = mv.shots.filter((s) => !project.clips[String(s.shot_no)]);
+  const missing = lacking.filter((s) => !skipped.has(s.shot_no)).length;
   if (!missing) {
-    steps.clips = { status: "done", message: `Đủ ${mv.shots.length} clip` };
+    const gaps = lacking.map((s) => `#${s.shot_no}`);
+    steps.clips = { status: "done", message: gaps.length ? `Đủ clip (bỏ qua ${gaps.length} cảnh lỗi: ${gaps.join(", ")})` : `Đủ ${mv.shots.length} clip` };
   } else if (settings.museMode !== "gateway") {
     steps.clips = { status: "waiting", message: `Thiếu ${missing} clip — đang dùng cách dán tay vào HaoHao: vào trang Clip Muse để copy prompt.` };
-  } else if (steps.clips.status !== "error") {
+  } else if (steps.clips.status !== "error" || item.clips_sent) {
+    // Gửi không được (chưa gửi) thì giữ lỗi, không tự gửi lại; cảnh lỗi bên Muse thì cập nhật theo tiến độ
+    // (app có thể đang tự kiểm tra lại / tự bỏ qua).
     if (!item.clips_sent) {
       try {
         const r = await sendToMuse([mv.id], { onlyMissing: true });
@@ -219,10 +225,9 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
         else steps.clips = { status: "error", message: (err as Error).message };
       }
     } else {
-      const m = (await readMuse()).mvs.find((x) => x.mv_id === mv.id);
-      const c = m ? museCounts(m) : null;
+      const c = tracked ? museCounts(tracked) : null;
       if (c && c.error && !c.active && !c.waiting) {
-        steps.clips = { status: "error", message: `${c.error} cảnh lỗi — vào trang Clip Muse để “Kiểm tra lại” (không tốn lượt) hoặc “Gửi lại”.` };
+        steps.clips = { status: "error", message: `${c.error} cảnh lỗi — vào trang Clip Muse để “Kiểm tra lại” (không tốn lượt), “Gửi lại” hoặc “Bỏ qua cảnh lỗi & dựng”.` };
       } else {
         steps.clips = { status: "running", message: `${mv.shots.length - missing}/${mv.shots.length} cảnh có clip${c?.error ? ` · ${c.error} lỗi` : ""}` };
       }

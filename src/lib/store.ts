@@ -75,6 +75,7 @@ export const DEFAULT_SETTINGS: Settings = {
   songDir: "",
   museAutoRender: true,
   museAvoid: true,
+  museSkipFailed: 20,
   driveFolder: "",
   driveAutoSync: true,
   monitorEnabled: false,

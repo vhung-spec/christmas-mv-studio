@@ -230,6 +230,14 @@ export default function SettingsPage() {
               >
                 <input className="input" value={s.resultsDir} onChange={(e) => set("resultsDir", e.target.value)} />
               </Field>
+              {s.museMode === "gateway" && (
+                <Field
+                  label="Tự bỏ qua cảnh lỗi (tối đa % số cảnh của MV)"
+                  hint="Muse làm xong cả MV mà chỉ còn ít cảnh lỗi (vd. Muse từ chối) → app tự Kiểm tra lại một lần (không tốn lượt), vẫn lỗi thì bỏ qua cảnh đó và vẫn dựng MV (đoạn của cảnh lỗi mượn / lặp cảnh khác). Luôn được bỏ qua ít nhất 1 cảnh. 0 = tắt, chờ bạn bấm “Bỏ qua cảnh lỗi & dựng”."
+                >
+                  <input className="input" type="number" min={0} max={50} step={5} value={s.museSkipFailed} onChange={(e) => set("museSkipFailed", Number(e.target.value))} />
+                </Field>
+              )}
               {s.museMode === "haohao" && (
                 <Field label="Thư mục dữ liệu HaoHao" hint={`Thư mục có file tasks.json. Để trống = tự tìm (${muse?.defaultDir ?? "…"}).`}>
                   <input className="input" value={s.museDataDir} placeholder={muse?.defaultDir} onChange={(e) => set("museDataDir", e.target.value)} />

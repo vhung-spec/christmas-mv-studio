@@ -78,13 +78,13 @@ describe("dây chuyền: ý tưởng → MP4", () => {
 
   afterAll(async () => (await import("@/lib/museEngine")).closeMuseEngine());
 
-  /** Muse giả làm xong lần lượt mọi lệnh đã nhận (cổng chạy từng lệnh một). */
-  async function museFinishAll() {
+  /** Muse giả làm xong lần lượt mọi lệnh đã nhận (cổng chạy từng lệnh một); lệnh thứ `fail` thì Muse trả lời không có video. */
+  async function museFinishAll(fail = 0) {
     for (let k = 1; k <= engine.store.list().length; k++) {
       await waitFor(() => fake.sent.length >= k, 5000, `Muse nhận lệnh ${k}`);
-      fake.finish(k);
+      fake.finish(k, k !== fail);
     }
-    await waitFor(() => engine.store.list().every((t) => t.status === "succeeded"), 5000, "Muse làm xong");
+    await waitFor(() => engine.store.list().every((t) => t.status === "succeeded" || t.status === "failed"), 5000, "Muse làm xong");
   }
 
   it("chế độ claude.ai (chưa có API key) → không nhận ý tưởng", async () => {
@@ -128,13 +128,25 @@ describe("dây chuyền: ý tưởng → MP4", () => {
     const b = await item(2);
     expect(b.steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/Chưa thấy bài “Bài Chưa Có”/) });
 
-    // Muse giả làm xong → clip vào MV.
-    await museFinishAll();
+    // Muse giả làm xong → clip vào MV; riêng cảnh cuối của MV 1 Muse không làm được video
+    // (cổng gửi lần lượt theo thứ tự xếp hàng; danh sách task mới nhất đứng đầu).
+    const lastShot = mv.shots[mv.shots.length - 1].shot_no;
+    const lastTask = (await jobs.readMuse()).mvs.find((m) => m.mv_id === mv.id)!.shots.find((s) => s.shot_no === lastShot)!.task_id!;
+    const tasks = engine.store.list().length;
+    await museFinishAll(tasks - engine.store.list().findIndex((t) => t.id === lastTask));
     await jobs.museTick();
-    expect(Object.keys((await media.loadProject(mv.id)).clips)).toHaveLength(mv.shots.length);
-
-    // 4. Đủ clip + có bài → dựng MP4.
+    expect(Object.keys((await media.loadProject(mv.id)).clips)).toHaveLength(mv.shots.length - 1);
+    // Cảnh lỗi: app tự kiểm tra lại một lần (không gửi lại), vẫn lỗi thì tự bỏ qua.
     await pl.pipelineTick();
+    expect((await item(1)).steps.clips.status).toBe("running");
+    await waitFor(() => engine.store.list().every((t) => t.status === "succeeded" || t.status === "failed"), 5000, "kiểm tra lại xong");
+    await jobs.museTick();
+    expect((await jobs.readMuse()).mvs.find((m) => m.mv_id === mv.id)!.shots.find((s) => s.shot_no === lastShot)).toMatchObject({ status: "skipped" });
+    expect(fake.sent).toHaveLength(tasks);
+
+    // 4. Đủ clip (trừ cảnh bỏ qua) + có bài → dựng MP4 (đoạn của cảnh bỏ qua mượn cảnh khác).
+    await pl.pipelineTick();
+    expect((await item(1)).steps.clips).toMatchObject({ status: "done", message: `Đủ clip (bỏ qua 1 cảnh lỗi: #${lastShot})` });
     expect((await item(1)).steps.render.status).toBe("running");
     await queue.idle();
     await pl.pipelineTick();

@@ -16,6 +16,7 @@ const CHIP: Record<MuseShotStatus, string> = {
   done: "border-mint-dark/60 bg-mint/30",
   error: "border-cherry bg-cherry/10 text-cherry-dark",
   kept: "border-ink/30 bg-chrome/40",
+  skipped: "border-ink/20 bg-cream-dark text-muted line-through",
 };
 
 /** Tiến độ Muse (?mv=… cho một MV), tự tải lại vài giây một lần khi còn cảnh đang làm / đang đăng nhập. */
@@ -27,7 +28,7 @@ export function useMuse(mvId?: string) {
   useEffect(() => {
     void reload();
   }, [reload]);
-  const open = (view?.mvs.some((m) => m.shots.some((s) => s.status !== "done" && s.status !== "kept")) ?? false) || Boolean(view?.gateway?.loggingIn);
+  const open = (view?.mvs.some((m) => m.shots.some((s) => s.status !== "done" && s.status !== "kept" && s.status !== "skipped")) ?? false) || Boolean(view?.gateway?.loggingIn);
   useEffect(() => {
     if (!open) return;
     const t = setInterval(() => void reload(), 4000);
@@ -217,6 +218,7 @@ export function MuseShots({
   onResend,
   onReimport,
   onRecheck,
+  onSkip,
   onForget,
   showTitle,
 }: {
@@ -227,6 +229,8 @@ export function MuseShots({
   onReimport: (shots: number[]) => void;
   /** Đọc lại phiên chat Muse cũ của cảnh lỗi (không gửi lại, không tốn lượt). */
   onRecheck: (shots: number[]) => void;
+  /** Bỏ qua các cảnh lỗi để vẫn dựng MV bằng các cảnh còn lại. */
+  onSkip: (shots: number[]) => void;
   onForget: () => void;
   showTitle?: boolean;
 }) {
@@ -234,8 +238,10 @@ export function MuseShots({
   const reimport = mv.shots.filter((s) => s.status === "error" && s.import_error_task).map((s) => s.shot_no);
   const recheck = mv.shots.filter((s) => s.status === "error" && s.submitted && s.task_id && !s.import_error_task).map((s) => s.shot_no);
   const errors = mv.shots.filter((s) => s.status === "error" && !s.import_error_task).map((s) => s.shot_no);
+  const failed = mv.shots.filter((s) => s.status === "error").map((s) => s.shot_no);
+  const skipped = mv.shots.filter((s) => s.status === "skipped").map((s) => s.shot_no);
   const waitingText = pasteText([...new Set(mv.shots.filter((s) => s.status === "waiting").map((s) => s.text))]);
-  const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+  const pct = c.total ? Math.round(((c.done + c.skipped) / c.total) * 100) : 0;
   return (
     <div className="space-y-2" data-testid={`muse-mv-${mv.mv_id}`}>
       <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -249,6 +255,7 @@ export function MuseShots({
           {c.active > 0 && ` · ${c.active} đang làm`}
           {c.waiting > 0 && ` · ${c.waiting} chờ dán`}
           {c.error > 0 && <span className="text-cherry-dark"> · {c.error} lỗi</span>}
+          {c.skipped > 0 && ` · ${c.skipped} bỏ qua`}
         </span>
         <div className="ml-auto flex flex-wrap gap-2">
           {waitingText && <CopyButton text={waitingText} label={`📋 Copy lại ${c.waiting} prompt chờ dán`} />}
@@ -272,6 +279,21 @@ export function MuseShots({
               ↻ Gửi lại {errors.length} cảnh lỗi
             </button>
           )}
+          {failed.length > 0 && !c.active && !c.waiting && (
+            <button
+              className="btn-primary btn-sm"
+              disabled={busy}
+              onClick={() => onSkip(failed)}
+              title="Không làm lại các cảnh này: MV vẫn được dựng bằng các cảnh đã có (đoạn của cảnh lỗi mượn / lặp cảnh khác)."
+            >
+              ⤼ Bỏ qua {failed.length} cảnh lỗi &amp; dựng
+            </button>
+          )}
+          {skipped.length > 0 && (
+            <button className="btn-ghost btn-sm" disabled={busy} onClick={() => onResend(skipped)} title="Tạo clip riêng cho các cảnh đã bỏ qua (tốn thêm lượt Muse); có clip mới thì MV được tự dựng lại.">
+              ↻ Gửi lại {skipped.length} cảnh đã bỏ qua
+            </button>
+          )}
           <button className="btn-ghost btn-sm" disabled={busy} onClick={onForget} title="Thôi theo dõi (không xoá clip đã có, không huỷ việc đang làm bên Muse / HaoHao)">
             Bỏ theo dõi
           </button>
@@ -288,7 +310,7 @@ export function MuseShots({
             title={[MUSE_STATUS_LABEL[s.status], s.step, s.message].filter(Boolean).join(" — ")}
             data-status={s.status}
           >
-            #{s.shot_no} {s.status === "done" ? "✓" : s.status === "error" ? "✗" : s.status === "kept" ? "•" : (s.step ?? MUSE_STATUS_LABEL[s.status])}
+            #{s.shot_no} {s.status === "done" ? "✓" : s.status === "error" ? "✗" : s.status === "kept" ? "•" : s.status === "skipped" ? "⤼" : (s.step ?? MUSE_STATUS_LABEL[s.status])}
           </span>
         ))}
       </div>
@@ -380,6 +402,7 @@ export function MuseCard({ mvId, missing, onClips }: { mvId: string; missing: nu
               onResend={(s) => void send(s)}
               onReimport={(s) => void post({ action: "reimport", id: mvId, shots: s })}
               onRecheck={(s) => void post({ action: "recheck", id: mvId, shots: s })}
+              onSkip={(s) => void post({ action: "skip", id: mvId, shots: s })}
               onForget={() => void post({ action: "forget", id: mvId })}
             />
           ) : (
