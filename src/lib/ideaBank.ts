@@ -5,7 +5,16 @@
 import { randomUUID } from "node:crypto";
 import { UserError } from "./errors";
 import { generationMode } from "./generate";
-import { BANK_LIMITS, DEFAULT_BANK_CONFIG, type BankConfig, type BankStatus, type BankView, type IdeaBank } from "./ideaBankTypes";
+import {
+  BANK_LIMITS,
+  DEFAULT_BANK_CONFIG,
+  ideaSeason,
+  seasonPlan,
+  type BankConfig,
+  type BankStatus,
+  type BankView,
+  type IdeaBank,
+} from "./ideaBankTypes";
 import { callStructured, hasCredentials } from "./llm";
 import { IDEAS_SCHEMA, zIdeaBatch, type RawIdeaBatch } from "./llmSchemas";
 import { mockIdeas } from "./mock";
@@ -135,7 +144,7 @@ const clamp = (v: unknown, [lo, hi]: readonly [number, number], fallback: number
 export function setBankConfig(patch: Partial<Record<keyof BankConfig, unknown>>): Promise<BankConfig> {
   return updateBank((b) => {
     const c = { ...b.config };
-    for (const k of ["feed", "suggest", "autoApprove", "needSong"] as const) if (typeof patch[k] === "boolean") c[k] = patch[k];
+    for (const k of ["feed", "suggest", "autoApprove", "needSong", "seasonShift"] as const) if (typeof patch[k] === "boolean") c[k] = patch[k];
     if (patch.ahead !== undefined) c.ahead = clamp(patch.ahead, BANK_LIMITS.ahead, c.ahead);
     if (patch.batch !== undefined) c.batch = clamp(patch.batch, BANK_LIMITS.batch, c.batch);
     b.config = c;
@@ -191,6 +200,9 @@ function pickExamples(ideas: IdeaRow[], n = 8): IdeaRow[] {
   return Array.from({ length: n }, (_, k) => good[Math.floor((k * good.length) / n)]);
 }
 
+/** Số ý tưởng Claude đã đề xuất (không tính ý tưởng đã bỏ) — đo độ "nghiêng dần" sang thu → đông. */
+const claudeDone = (b: IdeaBank) => b.ideas.filter((x) => x.source === "claude" && x.status !== "rejected").length;
+
 /** Lọc ý tưởng Claude trả về: năm 1950–1959, mã chủ đề có thật, dàn ý đủ dài, địa điểm + thời điểm chưa có. */
 export function cleanSuggestions(raw: RawIdeaBatch["ideas"], known: IdeaRow[], themes: Set<string>) {
   const seen = new Set(known.map((i) => norm(i.world_location)));
@@ -225,20 +237,27 @@ async function runSuggest(count?: number): Promise<NonNullable<BankView["last"]>
   const { libs, themes } = await themeList(bank);
   const allowed = new Set(themes.map((t) => t.code));
   const known = await knownIdeas(bank);
+  const seasons = bank.config.seasonShift ? seasonPlan(n, claudeDone(bank)) : null;
   let raw: RawIdeaBatch;
   let cost: number | null = null;
   if (mode === "mock") {
-    raw = mockIdeas(n, known, themes);
+    raw = mockIdeas(n, known, themes, seasons);
   } else {
     const res = await callStructured({
       settings,
       system: IDEAS_SYSTEM,
-      user: buildIdeasPrompt({ count: n, themes, examples: pickExamples(known), existing: known, series: seriesOf(known, nextIdeaId(known)) }),
+      user: buildIdeasPrompt({ count: n, themes, examples: pickExamples(known), existing: known, series: seriesOf(known, nextIdeaId(known)), seasons }),
       schema: IDEAS_SCHEMA,
       validator: zIdeaBatch,
       check: (d) => {
         const c = cleanSuggestions(d.ideas, known, allowed);
-        return c.ideas.length >= Math.ceil(n / 2) ? null : `only ${c.ideas.length} of ${n} ideas are usable: ${c.problems.slice(0, 6).join("; ")}`;
+        if (c.ideas.length < Math.ceil(n / 2)) return `only ${c.ideas.length} of ${n} ideas are usable: ${c.problems.slice(0, 6).join("; ")}`;
+        // Thiếu ý tưởng thu–đông quá 1 → nhờ Claude sửa một lần (lần hai vẫn thiếu thì dùng luôn).
+        const cold = seasons ? seasons.autumn + seasons.winter : 0;
+        const got = c.ideas.filter((i) => ideaSeason(i.world_location)).length;
+        return got >= cold - 1
+          ? null
+          : `only ${got} ideas are set in autumn or winter, need ${seasons!.autumn} autumn + ${seasons!.winter} winter with the season word in world_location`;
       },
       maxTokens: 16000,
       price: libs.pricing?.models?.[settings.model],
@@ -335,6 +354,7 @@ export async function bankView(): Promise<BankView> {
     library: (await readSongLibrary()).songs.filter((s) => s.lyrics?.trim()).length,
     suggesting: isSuggesting(),
     error: mem.error,
+    season: b.config.seasonShift ? seasonPlan(b.config.batch, claudeDone(b)) : null,
     last: mem.last,
   };
 }

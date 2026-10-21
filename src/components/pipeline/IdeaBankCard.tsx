@@ -6,7 +6,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Card, ErrorBox, Spinner } from "@/components/ui";
 import { formatUsd } from "@/lib/cost";
-import { BANK_LIMITS, type BankConfig, type BankIdea, type BankView } from "@/lib/ideaBankTypes";
+import { BANK_LIMITS, ideaSeason, type BankConfig, type BankIdea, type BankView } from "@/lib/ideaBankTypes";
 
 export type BankData = BankView & { mode: "claude" | "mock" | "manual" };
 
@@ -34,12 +34,16 @@ function NumberBox({ value, range, onCommit, disabled }: { value: number; range:
   );
 }
 
+const SEASON_ICON = { autumn: "🍂", winter: "❄️" } as const;
+
 function IdeaLine({ x, children }: { x: BankIdea; children?: ReactNode }) {
   const i = x.idea;
+  const season = ideaSeason(i.world_location);
   return (
     <li className="flex flex-wrap items-start gap-2 border-t border-ink/10 py-1.5 first:border-t-0">
       <div className="min-w-0 flex-1">
-        <b>#{i.id}</b> {i.world_location} · {i.theme_code}
+        <b>#{i.id}</b> {season && `${SEASON_ICON[season]} `}
+        {i.world_location} · {i.theme_code}
         {i.theme_name ? ` ${i.theme_name}` : ""}
         <div className="text-xs text-muted">{i.outline}</div>
         {x.source === "claude" && i.series && <div className="text-xs text-muted">Series: {i.series}</div>}
@@ -127,6 +131,15 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
               Dùng luôn, không cần duyệt
             </label>
           </div>
+          <label className="flex flex-wrap items-center gap-2 pl-6">
+            <input type="checkbox" checked={c.seasonShift} disabled={busy} onChange={(e) => setConfig({ seasonShift: e.target.checked })} />
+            Ý tưởng mới nghiêng dần sang 🍂 mùa thu rồi ❄️ mùa đông
+            {bank.season && (
+              <span className="text-xs text-muted">
+                (lần tới: {bank.season.autumn} thu · {bank.season.winter} đông · {bank.season.other} mùa khác — càng về sau càng nhiều mùa đông)
+              </span>
+            )}
+          </label>
           <p className="text-xs text-muted">
             Mỗi MV tốn tiền Claude viết kịch bản (khoảng 0,10–0,20 USD) và lượt Muse cho từng cảnh; mỗi lần đề xuất ý tưởng chỉ tốn vài cent. Dây chuyền chỉ lấy ý
             tưởng mới khi các MV đang làm đã đủ clip, nên tự đi theo tốc độ của Muse.

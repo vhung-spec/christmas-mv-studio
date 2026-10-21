@@ -2,6 +2,7 @@
 // Dùng khi chưa có ANTHROPIC_API_KEY hoặc bật "Chế độ demo" trong Cài đặt.
 
 import { placeholdersIn } from "./assemble";
+import type { SeasonPlan } from "./ideaBankTypes";
 import type { RawGeneration, RawIdeaBatch, RawLocation, RawShot } from "./llmSchemas";
 import type { GenContext } from "./prompts";
 import type { Character, EraYear, PlannedShot, ShotClass, StructurePlan, Tone } from "./types";
@@ -331,6 +332,12 @@ const IDEA_PLACES = [
   "Chicago Navy Pier",
 ];
 const IDEA_MOMENTS = ["Summer", "Winter Night", "Autumn Evening", "Spring Morning", "Moonlight", "Sunset Drive"];
+/** Thời điểm theo mùa khi kho đang nghiêng dần sang thu → đông. */
+const SEASON_MOMENTS = {
+  autumn: ["Autumn Evening", "Fall Homecoming", "Halloween Night", "Thanksgiving Weekend"],
+  winter: ["Winter Night", "Christmas Eve", "Snowy Morning", "New Year's Eve"],
+  other: ["Summer", "Spring Morning", "Moonlight", "Sunset Drive"],
+};
 const IDEA_STORIES = [
   (p: string) => `Hai người tình cờ đứng cạnh nhau ở ${p}; một câu đùa vụng về mở đầu cả buổi tối không muốn kết thúc.`,
   (p: string) => `Chàng trai lấy hết can đảm mời cô gái nhảy giữa ${p}, và bản nhạc trên radio như viết riêng cho hai người.`,
@@ -338,15 +345,27 @@ const IDEA_STORIES = [
   (p: string) => `Hai người hẹn gặp lại ở ${p} sau một năm xa cách, không ai chắc người kia còn nhớ.`,
 ];
 
-/** Ý tưởng mẫu cho chế độ demo: ghép địa điểm + thời điểm + năm chưa có trong kho, chủ đề ít dùng nhất. */
-export function mockIdeas(count: number, existing: { world_location: string }[], themes: { code: string; used: number }[]): RawIdeaBatch {
+/**
+ * Ý tưởng mẫu cho chế độ demo: ghép địa điểm + thời điểm + năm chưa có trong kho, chủ đề ít dùng nhất.
+ * `seasons` = số ý tưởng mùa thu / mùa đông cần có (thu trước, rồi đông, rồi mùa khác).
+ */
+export function mockIdeas(
+  count: number,
+  existing: { world_location: string }[],
+  themes: { code: string; used: number }[],
+  seasons?: SeasonPlan | null,
+): RawIdeaBatch {
   const taken = new Set(existing.map((i) => i.world_location.toLowerCase()));
   const used = new Map(themes.map((t) => [t.code, t.used]));
   const ideas: RawIdeaBatch["ideas"] = [];
+  const slots = seasons
+    ? [...Array<"autumn">(seasons.autumn).fill("autumn"), ...Array<"winter">(seasons.winter).fill("winter")]
+    : [];
   let n = 0;
   for (let year = 1950; year <= 1959 && ideas.length < count; year++) {
     for (const place of IDEA_PLACES) {
-      for (const moment of IDEA_MOMENTS) {
+      const moments = seasons ? SEASON_MOMENTS[slots[ideas.length] ?? "other"] : IDEA_MOMENTS;
+      for (const moment of moments) {
         if (ideas.length >= count) break;
         const world_location = `${place} ${moment} ${year}`;
         if (taken.has(world_location.toLowerCase())) continue;

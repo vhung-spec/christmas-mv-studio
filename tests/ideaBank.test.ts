@@ -105,6 +105,61 @@ describe("kho ý tưởng", () => {
     expect((await bank.bankView()).counts).toMatchObject({ new: 10, proposed: 0 });
   });
 
+  it("mùa của ý tưởng đề xuất nghiêng dần sang thu → đông", async () => {
+    const { seasonPlan, ideaSeason, SEASON_RAMP } = await import("@/lib/ideaBankTypes");
+    // Lúc đầu 4/10 thu–đông (chủ yếu thu) → tăng dần → gần hết là mùa đông.
+    expect(seasonPlan(10, 0)).toEqual({ autumn: 3, winter: 1, other: 6 });
+    expect(seasonPlan(10, SEASON_RAMP / 2)).toEqual({ autumn: 3, winter: 4, other: 3 });
+    expect(seasonPlan(10, SEASON_RAMP)).toEqual({ autumn: 2, winter: 7, other: 1 });
+    expect(seasonPlan(10, SEASON_RAMP * 5)).toEqual(seasonPlan(10, SEASON_RAMP));
+    expect(seasonPlan(3, 0)).toEqual({ autumn: 1, winter: 0, other: 2 });
+    let cold = 0;
+    for (let done = 0; done <= SEASON_RAMP; done += 10) {
+      const p = seasonPlan(10, done);
+      expect(p.autumn + p.winter).toBeGreaterThanOrEqual(cold);
+      cold = p.autumn + p.winter;
+    }
+    expect(ideaSeason("Vermont Covered Bridge Autumn 1953")).toBe("autumn");
+    expect(ideaSeason("Harvard Football Homecoming 1955")).toBe("autumn");
+    expect(ideaSeason("Rockefeller Center Christmas Eve 1954")).toBe("winter");
+    expect(ideaSeason("Sun Valley Ski Lodge 1956")).toBe("winter");
+    expect(ideaSeason("Times Square New Year's Eve 1957")).toBe("winter");
+    expect(ideaSeason("Niagara Falls Honeymoon 1952")).toBeNull();
+    expect(ideaSeason("Hollywood Boulevard Summer 1954")).toBeNull();
+
+    // Prompt gửi Claude ghi rõ số ý tưởng thu / đông; tắt thì như cũ (đa dạng mùa).
+    const { buildIdeasPrompt } = await import("@/lib/prompts");
+    const input = { count: 10, themes: [{ code: "T01", name: "Sét ái tình", used: 0 }], examples: [], existing: [], series: null };
+    const on = buildIdeasPrompt({ ...input, seasons: seasonPlan(10, 0) });
+    expect(on).toContain("exactly 3 ideas set in autumn and 1 set in winter; the other 6 in any season");
+    expect(on).not.toContain("vary regions, seasons,");
+    const off = buildIdeasPrompt(input);
+    expect(off).toContain("vary regions, seasons, years");
+    expect(off).not.toContain("autumn");
+
+    // Demo: đề xuất đúng số ý tưởng thu / đông; càng về sau càng nhiều mùa đông.
+    const bank = await import("@/lib/ideaBank");
+    await bank.addIdeas([idea("1", "Hollywood Boulevard Summer 1954")]);
+    expect((await bank.bankView()).season).toEqual({ autumn: 3, winter: 1, other: 6 });
+    const seasonsOf = async () => (await bank.bankView()).proposals.map((x) => ideaSeason(x.idea.world_location));
+    await bank.suggestIdeas(10);
+    expect(await seasonsOf()).toEqual(["autumn", "autumn", "autumn", "winter", null, null, null, null, null, null]);
+    await bank.setIdeas("proposed", "approve");
+    for (let k = 0; k < 5; k++) {
+      await bank.suggestIdeas(10);
+      await bank.setIdeas("proposed", "approve");
+    }
+    expect((await bank.bankView()).season).toEqual({ autumn: 2, winter: 7, other: 1 });
+    await bank.suggestIdeas(10);
+    const late = await seasonsOf();
+    expect(late.filter((s) => s === "winter")).toHaveLength(7);
+    expect(late.filter((s) => s === "autumn")).toHaveLength(2);
+    // Ý tưởng đã bỏ không tính; tắt thì không chia mùa.
+    await bank.setIdeas("proposed", "reject");
+    await bank.setBankConfig({ seasonShift: false });
+    expect((await bank.bankView()).season).toBeNull();
+  });
+
   it("dây chuyền tự lấy ý tưởng mỗi lúc `ahead` MV; kho sắp hết → tự đề xuất, chờ duyệt mới dùng", async () => {
     const bank = await import("@/lib/ideaBank");
     const pl = await import("@/lib/pipeline");

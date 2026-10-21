@@ -1,6 +1,7 @@
 // System prompt (mục 5 của spec) và các user prompt gửi tới Claude.
 
 import { coreBudget } from "./assemble";
+import type { SeasonPlan } from "./ideaBankTypes";
 import { formatTime } from "./structure";
 import type {
   CharacterBible,
@@ -344,6 +345,8 @@ export interface IdeasPromptInput {
   existing: IdeaRow[];
   /** Series đang dở (ý tưởng mới nối tiếp series này), nếu có. */
   series: string | null;
+  /** Số ý tưởng mùa thu / mùa đông (kênh đang nghiêng dần sang thu → đông); không có = mùa nào cũng được. */
+  seasons?: SeasonPlan | null;
 }
 
 export const IDEAS_SYSTEM =
@@ -351,13 +354,23 @@ export const IDEAS_SYSTEM =
 
 export function buildIdeasPrompt(input: IdeasPromptInput): string {
   const line = (i: IdeaRow) => `${i.world_location} | ${i.theme_code} | ${i.outline.replace(/\s+/g, " ").slice(0, 160)}`;
+  const s = input.seasons;
+  const cold = s ? s.autumn + s.winter : 0;
   return [
     `Write ${input.count} NEW music-video ideas for the channel, in the same format and spirit as the examples.`,
     "Each idea:",
     '- world_location: English, "<real American place> <moment or season> <year>", year between 1950 and 1959 (e.g. "Santa Monica Pier Summer 1954"). The place must have existed in that year.',
     "- theme_code: one code from the theme list. Prefer the least-used themes so the channel stays varied.",
     "- outline: Vietnamese, one or two sentences — the specific little love story of this video (where they are, what happens, the emotional moment), like the examples.",
-    "Rules: every world_location must be new (not a place + moment already listed below) and every story different from the listed ones; vary regions, seasons, years and situations; no brand names, no real people.",
+    `Rules: every world_location must be new (not a place + moment already listed below) and every story different from the listed ones; vary regions, ${s ? "" : "seasons, "}years and situations; no brand names, no real people.`,
+    ...(s && cold
+      ? [
+          `Seasons — the channel is moving gradually into autumn and winter (its older videos are mostly summer): exactly ${s.autumn} ideas set in autumn and ${s.winter} set in winter${s.other ? `; the other ${s.other} in any season` : ""}.`,
+          '- Autumn ideas put "Autumn" or "Fall" (or Halloween / Thanksgiving) in world_location: falling leaves, crisp evenings, homecoming dances, football games, hayrides, harvest fairs, Halloween, Thanksgiving.',
+          '- Winter ideas put "Winter", "Christmas", "Snow" or "New Year\'s Eve" in world_location: snow, ice skating, warm diners on cold nights, Christmas lights and shop windows, ski lodges, New Year\'s Eve.',
+          "- In warm regions (California, Florida, Las Vegas, the Southwest) show the season through holidays, light and clothes (Christmas lights on palm trees, New Year's Eve on the Strip), not snow.",
+        ]
+      : []),
     input.series
       ? `These ideas continue the series "${input.series}": stay with these regions, return series_name as the regions part of that label.`
       : 'series_name: a short label of the regions these ideas cover, like "California – Las Vegas – Route 66 – New York".',

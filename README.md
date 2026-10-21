@@ -320,6 +320,10 @@ Thẻ **Kho ý tưởng** (trang Tự động) giữ mọi ý tưởng của b�
   chuyền và các MV đã viết, cả ý tưởng đã bỏ) rồi viết ý tưởng mới **cùng kiểu**: địa điểm + thời điểm + năm 1950–1959 (tiếng Anh), mã chủ đề có trong
   thư viện hoặc trong bảng của bạn (ưu tiên chủ đề ít dùng), dàn ý tiếng Việt. App bỏ ý tưởng trùng địa điểm hoặc sai định dạng, đánh số tiếp (201, 202…),
   mỗi 50 ý tưởng là một series (“201–250 · …”). Mỗi lần đề xuất tốn vài cent tiền Claude API.
+- **Ý tưởng mới nghiêng dần sang 🍂 mùa thu rồi ❄️ mùa đông** (bật sẵn): ý tưởng của kênh phần lớn là mùa hè, nên mỗi lần đề xuất app dặn Claude đúng số
+  ý tưởng thu / đông — lần đầu 4/10 (3 thu, 1 đông), tăng dần theo số ý tưởng Claude đã đề xuất (ý tưởng đã bỏ không tính), sau khoảng 60 ý tưởng thì
+  9/10 (2 thu, 7 đông) và giữ mức đó. Vùng nắng ấm (California, Florida, Las Vegas) thì thể hiện mùa qua lễ hội, ánh đèn, trang phục thay vì tuyết.
+  Thẻ ghi sẵn số thu / đông của lần đề xuất tới; ý tưởng thu / đông có dấu 🍂 / ❄️. Bỏ tick = mùa nào cũng được như trước.
 - **Chờ tôi duyệt** (mặc định): ý tưởng Claude đề xuất nằm trong khung vàng, bấm **✓ Dùng / ✗ Bỏ** từng cái hoặc **Duyệt tất cả**; chưa duyệt thì dây chuyền
   không dùng và Claude không đề xuất thêm. **Dùng luôn, không cần duyệt**: chạy liên tục không cần bạn (vẫn theo tốc độ của Muse).
 - **✨ Nhờ Claude đề xuất ngay**: đề xuất bất cứ lúc nào. Lần đề xuất tự động bị lỗi (vd. chưa có API key) thì 30 phút sau app mới tự thử lại.
