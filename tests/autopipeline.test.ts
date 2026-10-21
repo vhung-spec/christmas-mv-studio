@@ -225,13 +225,34 @@ describe("dây chuyền: ý tưởng → MP4", () => {
     const s3 = await item("3");
     expect(s3.steps.script.status).toBe("done");
     expect(s3.steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/đã ghép vào MV “#1 · Đèn Khuya”/) });
-    expect((await (await import("@/lib/media")).loadProject(s3.mv_id!)).audio).toBeNull();
+    const media = await import("@/lib/media");
+    expect((await media.loadProject(s3.mv_id!)).audio).toBeNull();
 
-    // Danh sách cho Drive: bài chưa ghi "đã dùng"; ghi xong (tên file ở máy đổi theo Drive) thì chuyển sang "đã ghi".
-    expect((await used.usedSongRows(songs)).map((x) => [x.file, x.marked])).toEqual([["Đèn Khuya - Rock Version.mp3", false]]);
-    const { renameSync } = await import("node:fs");
+    // MV làm trước khi có sổ mà trùng bài (như app cũ đã làm): báo trùng, kèm các MV. Đổi bài ở trang Ghép video → hết trùng, bài mới vào sổ.
+    const { createReadStream, renameSync } = await import("node:fs");
+    const { Readable } = await import("node:stream");
+    const stream = (f: string) => Readable.toWeb(createReadStream(f)) as ReadableStream<Uint8Array>;
+    await media.addAudio(s3.mv_id!, "Đèn Khuya - Rock Version.mp3", stream(path.join(songs, "Đèn Khuya - Rock Version.mp3")));
+    let view = await used.usedSongsView(songs);
+    expect(view.duplicates).toEqual([
+      { file: "Đèn Khuya - Rock Version.mp3", mvs: [{ mv_id: mv1.id, title: "#1 · Đèn Khuya" }, { mv_id: s3.mv_id, title: "#3 · Đèn Khuya" }] },
+    ]);
+    const other = make(["-f", "lavfi", "-i", "sine=frequency=440:duration=12", "-c:a", "libmp3lame"], path.join(tmp, "Đèn Khuya - Nam Rock.mp3"));
+    await media.addAudio(s3.mv_id!, "Đèn Khuya - Nam Rock.mp3", stream(other));
+    view = await used.usedSongsView(songs);
+    expect(view.duplicates).toEqual([]);
+    // Danh sách cho Drive (mỗi bài một dòng, kèm các MV đã dùng): chưa ghi "đã dùng" trước; ghi xong (tên file ở máy đổi theo Drive) thì "đã ghi".
+    expect(view.rows.map((x) => [x.file, x.mvs.map((m) => m.title), x.marked])).toEqual([
+      ["Đèn Khuya - Nam Rock.mp3", ["#3 · Đèn Khuya"], false],
+      ["Đèn Khuya - Rock Version.mp3", ["#1 · Đèn Khuya", "#3 · Đèn Khuya"], false],
+    ]);
+    // Bài mới của MV 3 cũng không được ghép cho MV khác nữa.
+    expect(used.takenBy(await used.readUsedSongs(), mv1.id)("Đèn Khuya - Nam Rock.wav")).toBe(true);
     renameSync(path.join(songs, "Đèn Khuya - Rock Version.mp3"), path.join(songs, "Đèn Khuya - Rock Version đã dùng.mp3"));
-    expect((await used.usedSongRows(songs)).map((x) => [x.file, x.marked])).toEqual([["Đèn Khuya - Rock Version.mp3", true]]);
+    expect((await used.usedSongsView(songs)).rows.map((x) => [x.file, x.marked])).toEqual([
+      ["Đèn Khuya - Nam Rock.mp3", false],
+      ["Đèn Khuya - Rock Version.mp3", true],
+    ]);
     await pl.removeFromPipeline(s3.id);
   }, 120000);
 });

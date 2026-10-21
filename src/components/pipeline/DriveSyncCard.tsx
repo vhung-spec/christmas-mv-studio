@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CopyButton, ErrorBox, Spinner } from "@/components/ui";
 import { api } from "@/lib/client";
-import type { UsedSongRow } from "@/lib/songsUsed";
+import type { UsedSongRow, UsedSongsView } from "@/lib/songsUsed";
 
 interface DriveView {
   running: boolean;
@@ -16,8 +16,8 @@ interface DriveView {
   driveFolder: string;
   driveAutoSync: boolean;
   songDir: string;
-  /** Sổ bài đã dùng: bài app đã ghép vào MV, chưa ghi "đã dùng" trên Drive trước. */
-  used: UsedSongRow[];
+  /** Sổ bài đã dùng: bài app đã ghép vào MV (chưa ghi "đã dùng" trên Drive trước), MV đang dùng trùng một bài. */
+  used: UsedSongsView;
 }
 
 const gb = (bytes: number) => (bytes >= 1073741824 ? `${(bytes / 1073741824).toFixed(2)} GB` : `${Math.round(bytes / 1048576)} MB`);
@@ -128,29 +128,59 @@ export function DriveSyncCard({ onSynced }: { onSynced?: () => void }) {
             {last.failed.length ? ` · lỗi ${last.failed.length}: ${last.failed.slice(0, 5).join(", ")}${last.failed.length > 5 ? "…" : ""}` : ""}.
           </p>
         )}
-        <UsedSongs rows={view.used} />
+        <UsedSongs view={view.used} />
       </div>
     </Card>
   );
 }
 
-/** Bài app đã ghép vào MV: chưa ghi "đã dùng" trên Drive thì nhắc ghi; đã ghi (tên file ở máy đã đổi theo Drive) thì gom lại. */
-function UsedSongs({ rows }: { rows: UsedSongRow[] }) {
+const titles = (mvs: UsedSongRow["mvs"]) => mvs.map((m) => m.title).join(" · ");
+
+/**
+ * Sổ bài đã dùng: MV đang dùng trùng một bài (làm trước khi có sổ) → báo đỏ, kèm link Ghép video để đổi bài; bài app đã ghép vào MV mà
+ * chưa ghi "đã dùng" trên Drive thì nhắc ghi; đã ghi (tên file ở máy đã đổi theo Drive) thì gom lại.
+ */
+function UsedSongs({ view }: { view: UsedSongsView }) {
+  const { rows, duplicates } = view;
   const todo = rows.filter((r) => !r.marked);
   const done = rows.filter((r) => r.marked);
   const line = (r: UsedSongRow) => (
-    <li key={`${r.key}#${r.mv_id}`}>
-      <code>{r.file}</code> — {r.title} <span className="text-muted">({new Date(r.at).toLocaleDateString("vi-VN")})</span>
+    <li key={r.key}>
+      <code>{r.file}</code> — {titles(r.mvs)} <span className="text-muted">({new Date(r.at).toLocaleDateString("vi-VN")})</span>
     </li>
   );
   if (!rows.length) return <p className="text-xs text-muted">Sổ bài đã dùng: chưa có bài nào được ghép vào MV.</p>;
   return (
     <div className="space-y-2" data-testid="used-songs">
+      {duplicates.length > 0 && (
+        <div className="rounded-lg border-2 border-cherry bg-cherry/5 p-3" data-testid="duplicate-songs">
+          <b className="text-cherry-dark">⚠ MV đang dùng trùng bài hát ({duplicates.length} bài)</b>
+          <p className="mt-1 text-xs text-muted">
+            Các MV này làm trước khi có sổ bài đã dùng. Giữ MV bạn đã đăng (hoặc muốn giữ); MV còn lại: bấm tên MV → <b>Đổi bài hát</b> → chọn bản khác của bài
+            (vd. <code>12 (1).wav</code>) hoặc bài khác trong Thư mục nhạc → <b>Dựng</b> lại. Clip Muse giữ nguyên, không tốn lượt Muse. Đổi xong, dòng này tự hết.
+          </p>
+          <ul className="mt-1 space-y-1 text-xs">
+            {duplicates.map((d) => (
+              <li key={d.file}>
+                <code>{d.file}</code> —{" "}
+                {d.mvs.map((m, k) => (
+                  <span key={m.mv_id}>
+                    {k > 0 && " · "}
+                    <Link href={`/mv/${m.mv_id}/video`} className="underline">
+                      {m.title}
+                    </Link>
+                  </span>
+                ))}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {todo.length > 0 && (
         <div className="rounded-lg border-2 border-amber-500 bg-amber-50 p-3">
           <div className="flex flex-wrap items-center gap-2">
             <b className="flex-1">Bài app đã ghép vào MV — hãy ghi “đã dùng” trên Drive ({todo.length})</b>
-            <CopyButton text={todo.map((r) => `${r.file}\t${r.title}`).join("\n")} label="📋 Copy danh sách" />
+            <CopyButton text={todo.map((r) => `${r.file}\t${titles(r.mvs)}`).join("\n")} label="📋 Copy danh sách" />
           </div>
           <p className="mt-1 text-xs text-muted">
             App đã tự tránh dùng lại các bài này (sổ bài đã dùng). Ghi “đã dùng” vào tên file trên Drive để bạn cũng biết khi dùng nhạc ở chỗ khác; lần

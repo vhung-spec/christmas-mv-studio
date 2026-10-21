@@ -19,7 +19,7 @@ import { museAccounts } from "./museEngine/accounts";
 import { museView } from "./museJobs";
 import { pipelineView } from "./pipeline";
 import { readQueue } from "./queue";
-import { usedSongRows } from "./songsUsed";
+import { usedSongsView } from "./songsUsed";
 import { SAFE_ID, readSettings } from "./store";
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
@@ -92,7 +92,7 @@ export async function monitorSnapshot() {
     bankView(),
     driveSyncStatus(),
     readQueue(),
-    usedSongRows(settings.songDir).catch(() => []),
+    usedSongsView(settings.songDir).catch(() => ({ rows: [], duplicates: [] })),
   ]);
   // Ổ chứa app và ổ chứa nhạc (cùng ổ thì chỉ một dòng).
   const disks: NonNullable<Awaited<ReturnType<typeof diskFree>>>[] = [];
@@ -145,8 +145,12 @@ export async function monitorSnapshot() {
       : { haohao: true, error: muse.error },
     bank: { counts: bank.counts, ready: bank.ready, proposals: bank.proposals.length, suggesting: bank.suggesting, error: bank.error },
     drive: { running: drive.running, phase: drive.phase, error: drive.error, last: drive.last },
-    // Bài app đã ghép vào MV mà trên Drive chưa ghi "đã dùng" (để bạn ghi cho khớp).
-    songs: { toMark: used.filter((x) => !x.marked).map((x) => ({ file: x.file, title: x.title })), marked: used.filter((x) => x.marked).length },
+    // Bài app đã ghép vào MV mà trên Drive chưa ghi "đã dùng" (để bạn ghi cho khớp); MV đang dùng trùng một bài.
+    songs: {
+      toMark: used.rows.filter((x) => !x.marked).map((x) => ({ file: x.file, title: x.mvs.map((m) => m.title).join(" · ") })),
+      marked: used.rows.filter((x) => x.marked).length,
+      duplicates: used.duplicates.map((d) => ({ file: d.file, titles: d.mvs.map((m) => m.title) })),
+    },
   };
 }
 

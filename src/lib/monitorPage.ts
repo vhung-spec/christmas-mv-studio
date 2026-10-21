@@ -89,6 +89,7 @@ function render(s) {
   if (s.bank.error) alerts.push("Đề xuất ý tưởng: " + s.bank.error);
   for (const ev of (m.failover || [])) alerts.push(ev.kind === "switch" ? "Đã tự đổi tài khoản Muse “" + ev.from + "” → “" + ev.to + "” (" + time(ev.at) + "): " + ev.reason : "Tài khoản Muse “" + ev.from + "” bị lỗi và hết tài khoản dự phòng (" + time(ev.at) + ") — cần bạn xử lý.");
   if (s.bank.proposals) alerts.push(s.bank.proposals + " ý tưởng Claude đề xuất đang chờ bạn duyệt (trên máy chạy).");
+  for (const d of ((s.songs && s.songs.duplicates) || [])) alerts.push("MV dùng trùng bài " + d.file + ": " + d.titles.join(" · ") + " — đổi bài cho MV chưa đăng (trang Ghép video trên máy chạy).");
   if (disk && disk.free < 10 * 1073741824) alerts.push("Ổ " + disk.path + " sắp đầy: còn " + gb(disk.free) + ".");
   $("alerts").hidden = !alerts.length;
   $("alerts").innerHTML = "<h2>Cần chú ý</h2>" + alerts.map((a) => "<div class=error>• " + esc(a) + "</div>").join("");

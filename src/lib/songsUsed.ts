@@ -1,6 +1,7 @@
 // Sổ bài đã dùng (data/songs_used.json): bài nhạc nào đã ghép vào MV thì không lấy lại cho MV khác — kể cả khi tên file chưa có
-// chữ "đã dùng" (app không sửa được Drive), kể cả khi MV đó bị xoá sau này. MV làm trước khi có sổ (hoặc bạn tự tải nhạc lên ở trang
-// Ghép video) được tự thêm vào sổ ở lần đọc sau. Danh sách này cũng cho bạn biết bài nào cần ghi "đã dùng" trên Drive.
+// chữ "đã dùng" (app không sửa được Drive), kể cả khi MV đó bị xoá hoặc đổi bài sau này. Bài của các MV làm trước khi có sổ, hoặc bài
+// bạn tự tải lên / đổi ở trang Ghép video, được tự thêm vào sổ ở lần đọc sau. Sổ cũng cho bạn biết bài nào cần ghi "đã dùng" trên
+// Drive, và MV nào đang dùng trùng một bài.
 
 import path from "node:path";
 import { loadProject } from "./media";
@@ -23,6 +24,7 @@ interface SongsUsedFile {
 }
 
 const readFile = () => readJson<SongsUsedFile>(SONGS_USED_FILE(), { songs: [] });
+const entryId = (x: { key: string; mv_id: string }) => `${x.key}#${x.mv_id}`;
 
 function update<T>(fn: (s: SongsUsedFile) => T): Promise<T> {
   return withLock("songs-used", async () => {
@@ -46,26 +48,33 @@ export function recordUsedSong(mvId: string, file: string, title: string): Promi
   });
 }
 
-/**
- * Đọc sổ, thêm các MV đã có bài hát mà chưa có trong sổ (MV làm trước khi có sổ, nhạc tự tải lên). Mới nhất trước.
- */
-export async function readUsedSongs(): Promise<UsedSong[]> {
+/** Bài hiện đang nằm trong mỗi MV còn trong lịch sử. */
+type Current = Map<string, UsedSong>;
+
+/** Đọc sổ và bài hiện có của mọi MV; bài chưa có trong sổ (MV cũ, nhạc tự tải lên / đổi) thì thêm vào sổ. */
+async function scan(): Promise<{ songs: UsedSong[]; current: Current }> {
   const book = await readFile();
-  const known = new Set(book.songs.map((x) => x.mv_id));
-  const found: UsedSong[] = [];
+  const have = new Set(book.songs.map(entryId));
+  const current: Current = new Map();
   for (const mv of await listMVs()) {
-    if (known.has(mv.id)) continue;
     const audio = (await loadProject(mv.id).catch(() => null))?.audio;
-    if (audio?.name) found.push({ key: songKey(audio.name), file: audio.name, mv_id: mv.id, title: mvTitle(mv.idea), at: audio.uploaded_at || mv.created_at });
+    if (!audio?.name) continue;
+    current.set(mv.id, { key: songKey(audio.name), file: audio.name, mv_id: mv.id, title: mvTitle(mv.idea), at: audio.uploaded_at || mv.created_at });
   }
+  const found = [...current.values()].filter((x) => !have.has(entryId(x)));
   const songs = found.length
     ? await update((s) => {
-        const have = new Set(s.songs.map((x) => `${x.key}#${x.mv_id}`));
-        s.songs.push(...found.filter((x) => !have.has(`${x.key}#${x.mv_id}`)));
+        const ids = new Set(s.songs.map(entryId));
+        s.songs.push(...found.filter((x) => !ids.has(entryId(x))));
         return s.songs;
       })
     : book.songs;
-  return [...songs].sort((a, b) => b.at.localeCompare(a.at));
+  return { songs, current };
+}
+
+/** Sổ bài đã dùng (kèm bài của MV chưa có trong sổ), mới nhất trước. */
+export async function readUsedSongs(): Promise<UsedSong[]> {
+  return [...(await scan()).songs].sort((a, b) => b.at.localeCompare(a.at));
 }
 
 /** Bài đã ghép vào MV khác (không tính MV `mvId` — chọn lại bài cho chính MV đó vẫn được). */
@@ -74,15 +83,41 @@ export function takenBy(used: UsedSong[], mvId?: string): SongTaken {
   return (file) => keys.has(songKey(file));
 }
 
-export interface UsedSongRow extends UsedSong {
+export interface UsedSongRow {
+  key: string;
+  /** Tên file lúc ghép vào MV gần nhất. */
+  file: string;
+  /** Các MV đã dùng bài này (MV đã xoá hoặc đã đổi bài vẫn còn trong sổ). */
+  mvs: { mv_id: string; title: string }[];
+  at: string;
   /** File của bài này trong Thư mục nhạc đã có chữ "đã dùng" (bạn đã ghi trên Drive, app đã đồng bộ tên). */
   marked: boolean;
 }
 
-/** Bài app đã dùng, kèm đã ghi "đã dùng" trên Drive chưa (theo tên file trong Thư mục nhạc). Chưa ghi trước, mới nhất trước. */
-export async function usedSongRows(songDir: string): Promise<UsedSongRow[]> {
-  const used = await readUsedSongs();
+export interface UsedSongsView {
+  /** Mỗi bài một dòng: chưa ghi "đã dùng" trên Drive trước, mới nhất trước. */
+  rows: UsedSongRow[];
+  /** Các bài đang nằm trong từ 2 MV trở lên (MV làm trước khi có sổ bài đã dùng). */
+  duplicates: { file: string; mvs: { mv_id: string; title: string }[] }[];
+}
+
+/** Sổ bài đã dùng cho giao diện: bài cần ghi "đã dùng" trên Drive, và MV đang dùng trùng một bài. */
+export async function usedSongsView(songDir: string): Promise<UsedSongsView> {
+  const { songs, current } = await scan();
   const files = songDir.trim() ? await listSongs(songDir.trim()).catch(() => []) : [];
   const marked = new Set(files.filter((f) => isUsedSong(path.basename(f))).map((f) => songKey(f)));
-  return used.map((x) => ({ ...x, marked: marked.has(x.key) })).sort((a, b) => Number(a.marked) - Number(b.marked));
+  const byKey = new Map<string, UsedSongRow>();
+  for (const x of [...songs].sort((a, b) => a.at.localeCompare(b.at))) {
+    const row = byKey.get(x.key) ?? { key: x.key, file: x.file, mvs: [], at: x.at, marked: marked.has(x.key) };
+    if (!row.mvs.some((m) => m.mv_id === x.mv_id)) row.mvs.push({ mv_id: x.mv_id, title: x.title });
+    Object.assign(row, { file: x.file, at: x.at });
+    byKey.set(x.key, row);
+  }
+  const rows = [...byKey.values()].sort((a, b) => Number(a.marked) - Number(b.marked) || b.at.localeCompare(a.at));
+  const now = new Map<string, UsedSong[]>();
+  for (const x of current.values()) now.set(x.key, [...(now.get(x.key) ?? []), x]);
+  const duplicates = [...now.values()]
+    .filter((list) => list.length > 1)
+    .map((list) => ({ file: list[0].file, mvs: list.sort((a, b) => a.at.localeCompare(b.at)).map((x) => ({ mv_id: x.mv_id, title: x.title })) }));
+  return { rows, duplicates };
 }

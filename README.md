@@ -303,9 +303,12 @@ Kênh làm nhạc theo số ý tưởng: ý tưởng số 12 có thư mục bài
   do trong thẻ Kho ý tưởng), việc đang chạy thì chờ.
 - **Chống trùng nhạc — sổ bài đã dùng** (`data/songs_used.json`, không commit): bài nào app đã ghép vào MV thì **không ghép cho MV khác nữa**, dù tên file
   chưa có chữ “đã dùng” (app không sửa được Drive) và dù MV đó bị xoá sau này; nhận ra cùng bài dù tên file đổi (Drive thêm “đã dùng”, bản WAV / MP3).
-  MV làm trước khi có sổ (hoặc nhạc bạn tự tải lên ở trang Ghép video) được tự thêm vào sổ. Bài đã dùng hết bản → việc chờ, báo đã ghép vào MV nào.
-  Thẻ **Kho nhạc trên Google Drive** liệt kê **bài app đã ghép vào MV mà trên Drive chưa ghi “đã dùng”** (có nút Copy danh sách) để bạn ghi cho khớp;
-  ghi xong, lần đồng bộ sau bài chuyển xuống mục “đã ghi”. Trang theo dõi ở máy chính cũng có dòng này.
+  MV làm trước khi có sổ (hoặc nhạc bạn tự tải lên / đổi ở trang Ghép video) được tự thêm vào sổ. Bài đã dùng hết bản → việc chờ, báo đã ghép vào MV nào.
+  Thẻ **Kho nhạc trên Google Drive** liệt kê **bài app đã ghép vào MV mà trên Drive chưa ghi “đã dùng”** (mỗi bài một dòng kèm các MV, có nút Copy danh
+  sách) để bạn ghi cho khớp; ghi xong, lần đồng bộ sau bài chuyển xuống mục “đã ghi”. Trang theo dõi ở máy chính cũng có dòng này.
+- **MV đã làm mà trùng bài** (làm trước khi có sổ): thẻ Kho nhạc báo đỏ **⚠ MV đang dùng trùng bài hát** kèm link từng MV (trang theo dõi cũng báo). Giữ MV
+  đã đăng; MV còn lại: trang Ghép video → **Đổi bài hát** (bản khác của bài, vd. `12 (1).wav`, hoặc bài khác) → **Dựng** lại — clip Muse giữ nguyên, không
+  tốn lượt. Đổi xong thì hết báo.
 - **Không làm hai MV cùng ý tưởng**: **▶ Chạy ngay** (và dây chuyền tự lấy từ kho) bỏ qua ý tưởng đã có MV hoặc đang chạy, dòng trùng trong bảng, MV đang
   chạy dở — báo lại từng việc bỏ qua. Ý tưởng “Chạy ngay” mà cũng có trong kho thì kho đánh dấu đã dùng, không lấy lại.
 - **Chỉ lấy ý tưởng đã có nhạc** (thẻ Kho ý tưởng, bật sẵn khi đã đặt Thư mục nhạc): ý tưởng chưa có file nhạc cùng số (hoặc trùng tên bài) nằm chờ
