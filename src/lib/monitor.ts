@@ -19,6 +19,7 @@ import { museAccounts } from "./museEngine/accounts";
 import { museView } from "./museJobs";
 import { pipelineView } from "./pipeline";
 import { readQueue } from "./queue";
+import { usedSongRows } from "./songsUsed";
 import { SAFE_ID, readSettings } from "./store";
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
@@ -85,7 +86,14 @@ const FILE_TYPES: [RegExp, string, boolean][] = [
 
 export async function monitorSnapshot() {
   const settings = await readSettings();
-  const [pipeline, muse, bank, drive, queue] = await Promise.all([pipelineView(), museView(), bankView(), driveSyncStatus(), readQueue()]);
+  const [pipeline, muse, bank, drive, queue, used] = await Promise.all([
+    pipelineView(),
+    museView(),
+    bankView(),
+    driveSyncStatus(),
+    readQueue(),
+    usedSongRows(settings.songDir).catch(() => []),
+  ]);
   // Ổ chứa app và ổ chứa nhạc (cùng ổ thì chỉ một dòng).
   const disks: NonNullable<Awaited<ReturnType<typeof diskFree>>>[] = [];
   for (const d of await Promise.all([diskFree(process.cwd()), settings.songDir ? diskFree(settings.songDir) : null])) {
@@ -137,6 +145,8 @@ export async function monitorSnapshot() {
       : { haohao: true, error: muse.error },
     bank: { counts: bank.counts, ready: bank.ready, proposals: bank.proposals.length, suggesting: bank.suggesting, error: bank.error },
     drive: { running: drive.running, phase: drive.phase, error: drive.error, last: drive.last },
+    // Bài app đã ghép vào MV mà trên Drive chưa ghi "đã dùng" (để bạn ghi cho khớp).
+    songs: { toMark: used.filter((x) => !x.marked).map((x) => ({ file: x.file, title: x.title })), marked: used.filter((x) => x.marked).length },
   };
 }
 

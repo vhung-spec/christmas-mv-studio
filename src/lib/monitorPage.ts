@@ -114,6 +114,8 @@ function render(s) {
   const d = s.drive;
   rows.push("<tr><td>Kho nhạc Drive</td><td>" + (d.running ? esc(d.phase || "Đang đồng bộ…") : d.last ? "Đồng bộ lúc " + esc(time(d.last.at)) + " · " + d.last.unused + " bản chưa dùng trên Drive · tải mới " + d.last.downloaded : "Chưa đồng bộ") + "</td></tr>");
   rows.push("<tr><td>Kho ý tưởng</td><td>chưa dùng " + s.bank.counts.new + (s.bank.ready !== null ? " (có nhạc " + s.bank.ready + ")" : "") + " · đã dùng " + s.bank.counts.used + (s.bank.suggesting ? " · Claude đang nghĩ ý tưởng mới" : "") + "</td></tr>");
+  const sg = s.songs;
+  if (sg && sg.toMark.length) rows.push("<tr><td>Nhạc cần ghi “đã dùng” trên Drive (" + sg.toMark.length + ")</td><td>" + sg.toMark.map((x) => "<b>" + esc(x.file) + "</b> " + esc(x.title)).join("<br>") + "</td></tr>");
   $("system").innerHTML = "<table>" + rows.join("") + "</table>";
 }
 async function tick() {

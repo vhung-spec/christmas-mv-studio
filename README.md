@@ -301,6 +301,13 @@ Kênh làm nhạc theo số ý tưởng: ý tưởng số 12 có thư mục bài
 - **Thư mục nhạc** (Cài đặt) trỏ tới thư mục chứa các file này (vd. bản tải về của thư mục *KHO NHẠC* trên Drive). Ý tưởng không ghi tên bài → app lấy file
   theo số ý tưởng, **bản chưa có chữ “đã dùng” trước** (theo thứ tự bản, WAV trước MP3). Mọi bản đều “đã dùng” → kho ý tưởng **bỏ qua** ý tưởng đó (ghi lý
   do trong thẻ Kho ý tưởng), việc đang chạy thì chờ.
+- **Chống trùng nhạc — sổ bài đã dùng** (`data/songs_used.json`, không commit): bài nào app đã ghép vào MV thì **không ghép cho MV khác nữa**, dù tên file
+  chưa có chữ “đã dùng” (app không sửa được Drive) và dù MV đó bị xoá sau này; nhận ra cùng bài dù tên file đổi (Drive thêm “đã dùng”, bản WAV / MP3).
+  MV làm trước khi có sổ (hoặc nhạc bạn tự tải lên ở trang Ghép video) được tự thêm vào sổ. Bài đã dùng hết bản → việc chờ, báo đã ghép vào MV nào.
+  Thẻ **Kho nhạc trên Google Drive** liệt kê **bài app đã ghép vào MV mà trên Drive chưa ghi “đã dùng”** (có nút Copy danh sách) để bạn ghi cho khớp;
+  ghi xong, lần đồng bộ sau bài chuyển xuống mục “đã ghi”. Trang theo dõi ở máy chính cũng có dòng này.
+- **Không làm hai MV cùng ý tưởng**: **▶ Chạy ngay** (và dây chuyền tự lấy từ kho) bỏ qua ý tưởng đã có MV hoặc đang chạy, dòng trùng trong bảng, MV đang
+  chạy dở — báo lại từng việc bỏ qua. Ý tưởng “Chạy ngay” mà cũng có trong kho thì kho đánh dấu đã dùng, không lấy lại.
 - **Chỉ lấy ý tưởng đã có nhạc** (thẻ Kho ý tưởng, bật sẵn khi đã đặt Thư mục nhạc): ý tưởng chưa có file nhạc cùng số (hoặc trùng tên bài) nằm chờ
   trong kho, không tốn lượt Muse; thả file nhạc vào thư mục là dây chuyền tự lấy. Thẻ hiện số ý tưởng “đã có nhạc / chờ nhạc”.
 - **Thư viện lời bài hát** `data/song_library.json` (không commit): mỗi số bài một mục — địa điểm, chủ đề, dàn ý, lời. Ý tưởng cùng số **và cùng địa điểm**

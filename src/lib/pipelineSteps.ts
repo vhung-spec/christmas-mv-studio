@@ -36,6 +36,12 @@ export interface PipelineState {
   items: PipelineItem[];
 }
 
+/** Kết quả thêm việc: số việc đã thêm, việc bỏ qua kèm lý do (MV đang chạy dở, ý tưởng đã có MV / đang chạy / trùng trong bảng). */
+export interface AddResult {
+  added: number;
+  skipped: { title: string; reason: string }[];
+}
+
 export interface PipelineView {
   items: PipelineItem[];
   error: string | null;

@@ -4,8 +4,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Card, ErrorBox, Spinner } from "@/components/ui";
+import { Card, CopyButton, ErrorBox, Spinner } from "@/components/ui";
 import { api } from "@/lib/client";
+import type { UsedSongRow } from "@/lib/songsUsed";
 
 interface DriveView {
   running: boolean;
@@ -15,6 +16,8 @@ interface DriveView {
   driveFolder: string;
   driveAutoSync: boolean;
   songDir: string;
+  /** Sổ bài đã dùng: bài app đã ghép vào MV, chưa ghi "đã dùng" trên Drive trước. */
+  used: UsedSongRow[];
 }
 
 const gb = (bytes: number) => (bytes >= 1073741824 ? `${(bytes / 1073741824).toFixed(2)} GB` : `${Math.round(bytes / 1048576)} MB`);
@@ -125,7 +128,43 @@ export function DriveSyncCard({ onSynced }: { onSynced?: () => void }) {
             {last.failed.length ? ` · lỗi ${last.failed.length}: ${last.failed.slice(0, 5).join(", ")}${last.failed.length > 5 ? "…" : ""}` : ""}.
           </p>
         )}
+        <UsedSongs rows={view.used} />
       </div>
     </Card>
+  );
+}
+
+/** Bài app đã ghép vào MV: chưa ghi "đã dùng" trên Drive thì nhắc ghi; đã ghi (tên file ở máy đã đổi theo Drive) thì gom lại. */
+function UsedSongs({ rows }: { rows: UsedSongRow[] }) {
+  const todo = rows.filter((r) => !r.marked);
+  const done = rows.filter((r) => r.marked);
+  const line = (r: UsedSongRow) => (
+    <li key={`${r.key}#${r.mv_id}`}>
+      <code>{r.file}</code> — {r.title} <span className="text-muted">({new Date(r.at).toLocaleDateString("vi-VN")})</span>
+    </li>
+  );
+  if (!rows.length) return <p className="text-xs text-muted">Sổ bài đã dùng: chưa có bài nào được ghép vào MV.</p>;
+  return (
+    <div className="space-y-2" data-testid="used-songs">
+      {todo.length > 0 && (
+        <div className="rounded-lg border-2 border-amber-500 bg-amber-50 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <b className="flex-1">Bài app đã ghép vào MV — hãy ghi “đã dùng” trên Drive ({todo.length})</b>
+            <CopyButton text={todo.map((r) => `${r.file}\t${r.title}`).join("\n")} label="📋 Copy danh sách" />
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            App đã tự tránh dùng lại các bài này (sổ bài đã dùng). Ghi “đã dùng” vào tên file trên Drive để bạn cũng biết khi dùng nhạc ở chỗ khác; lần
+            đồng bộ sau bài chuyển xuống mục “đã ghi”.
+          </p>
+          <ul className="mt-1 max-h-48 space-y-0.5 overflow-auto text-xs">{todo.map(line)}</ul>
+        </div>
+      )}
+      {done.length > 0 && (
+        <details className="text-xs">
+          <summary className="cursor-pointer text-muted">Đã ghi “đã dùng” trên Drive ({done.length})</summary>
+          <ul className="mt-1 max-h-48 space-y-0.5 overflow-auto">{done.map(line)}</ul>
+        </details>
+      )}
+    </div>
   );
 }

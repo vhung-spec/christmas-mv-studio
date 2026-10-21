@@ -57,6 +57,27 @@ describe("tự ghép bài hát (so tên bài với tên file)", () => {
     expect(pickSong("Neon Heartbeat", files)).toBeNull();
     expect(pickSong("Đêm", files)).toBeNull(); // một chữ chung không đủ
   });
+
+  it("sổ bài đã dùng: cùng bài dù tên file đổi; bài đã ghép vào MV khác thì chọn bản khác hoặc báo đã dùng", async () => {
+    const { matchSongForIdea, songKey } = await import("@/lib/songs");
+    expect(songKey("12.wav")).toBe("12|0");
+    expect(songKey("12 đã dùng.wav")).toBe("12|0");
+    expect(songKey("12.mp3")).toBe("12|0");
+    expect(songKey("12 (1).wav")).toBe("12|1");
+    expect(songKey("Đèn Khuya - Rock Version đã dùng.wav")).toBe(songKey("Đèn Khuya - Rock Version.wav"));
+    const nums = ["12.wav", "12 (1).wav", "13.wav"];
+    const taken = (keys: string[]) => (f: string) => keys.includes(songKey(f));
+    expect(matchSongForIdea(nums, { id: "12" })).toMatchObject({ file: "12.wav", used: false, free: 2 });
+    expect(matchSongForIdea(nums, { id: "12" }, undefined, taken(["12|0"]))).toMatchObject({ file: "12 (1).wav", used: false, free: 1 });
+    expect(matchSongForIdea(nums, { id: "12" }, undefined, taken(["12|0", "12|1"]))).toMatchObject({ used: true, free: 0, total: 2 });
+    // Tên bài ghi rõ: bản chưa dùng trước; hết bản thì báo đã dùng. Tên dự phòng (đoán) thì chỉ lấy bản chưa dùng.
+    const dk = taken([songKey("Đèn Khuya - Rock Version.wav")]);
+    expect(matchSongForIdea(files, { id: "x", song_title: "Đèn Khuya - Rock Version" }, undefined, dk)).toMatchObject({ file: "Đèn Khuya - Nam Rock.wav", used: false });
+    const both = taken([songKey("Đèn Khuya - Rock Version.wav"), songKey("Đèn Khuya - Nam Rock.wav")]);
+    expect(matchSongForIdea(files, { id: "x", song_title: "Đèn Khuya" }, undefined, both)).toMatchObject({ by: "title", used: true });
+    expect(matchSongForIdea(files, { id: "x" }, "Đèn Khuya", both)).toBeNull();
+    expect(matchSongForIdea(["Đèn Khuya - Rock Version đã dùng.wav"], { id: "x", song_title: "Đèn Khuya" })).toMatchObject({ used: true });
+  });
 });
 
 describe("dây chuyền: ý tưởng → MP4", () => {
@@ -99,7 +120,7 @@ describe("dây chuyền: ý tưởng → MP4", () => {
     const jobs = await import("@/lib/museJobs");
     const queue = await import("@/lib/queue");
     const media = await import("@/lib/media");
-    const added = await pl.addToPipeline({
+    const { added } = await pl.addToPipeline({
       ideas: [
         { id: "1", world_location: "Santa Monica Pier Summer 1955", theme_code: "T01", outline: "Gặp nhau bên vòng đu quay", song_title: "Đèn Khuya" },
         { id: "2", world_location: "Times Square Winter 1956", theme_code: "T01", outline: "Hẹn hò mùa đông", song_title: "Bài Chưa Có" },
@@ -175,4 +196,42 @@ describe("dây chuyền: ý tưởng → MP4", () => {
     await pl.clearFinishedPipeline();
     expect((await pl.readPipeline()).items).toHaveLength(0);
   }, 300000);
+
+  it("chống trùng nhạc: ý tưởng đã có MV không chạy lại; bài đã ghép vào MV khác không ghép nữa; danh sách bài cần ghi trên Drive", async () => {
+    const pl = await import("@/lib/pipeline");
+    const used = await import("@/lib/songsUsed");
+    const store = await import("@/lib/store");
+    const item = async (n: string) => (await pl.readPipeline()).items.find((i) => i.idea?.id === n)!;
+    // Sổ bài đã dùng: bài dây chuyền đã ghép vào MV 1 ở test trước.
+    const mv1 = (await store.listMVs()).find((m) => m.idea.id === "1")!;
+    expect((await used.readUsedSongs()).map((x) => [x.file, x.mv_id, x.title])).toEqual([["Đèn Khuya - Rock Version.mp3", mv1.id, "#1 · Đèn Khuya"]]);
+
+    // "Chạy ngay" lại ý tưởng 1 (đã có MV) → bỏ qua; ý tưởng 3 dán hai lần → chỉ chạy một.
+    const one = { id: "1", world_location: "Santa Monica Pier Summer 1955", theme_code: "T01", outline: "Gặp nhau bên vòng đu quay", song_title: "Đèn Khuya" };
+    const three = { id: "3", world_location: "Malibu Pier Autumn 1956", theme_code: "T01", outline: "Hẹn hò bên bến tàu lúc lá vàng", song_title: "Đèn Khuya" };
+    const r = await pl.addToPipeline({ ideas: [one, three, { ...three, outline: " hẹn hò  bên bến tàu lúc lá vàng" }] });
+    expect(r.added).toBe(1);
+    expect(r.skipped).toEqual([
+      { title: "#1 · Đèn Khuya", reason: "ý tưởng này đã có MV" },
+      { title: "#3 · Đèn Khuya", reason: expect.stringMatching(/đang chạy/) },
+    ]);
+
+    // Ý tưởng 3 cùng tên bài "Đèn Khuya" nhưng file đó đã ghép vào MV 1 → không ghép lại, chờ bài mới.
+    for (let k = 0; k < 2; k++) {
+      await pl.pipelineTick();
+      await pl.pipelineIdle();
+    }
+    await pl.pipelineTick();
+    const s3 = await item("3");
+    expect(s3.steps.script.status).toBe("done");
+    expect(s3.steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/đã ghép vào MV “#1 · Đèn Khuya”/) });
+    expect((await (await import("@/lib/media")).loadProject(s3.mv_id!)).audio).toBeNull();
+
+    // Danh sách cho Drive: bài chưa ghi "đã dùng"; ghi xong (tên file ở máy đổi theo Drive) thì chuyển sang "đã ghi".
+    expect((await used.usedSongRows(songs)).map((x) => [x.file, x.marked])).toEqual([["Đèn Khuya - Rock Version.mp3", false]]);
+    const { renameSync } = await import("node:fs");
+    renameSync(path.join(songs, "Đèn Khuya - Rock Version.mp3"), path.join(songs, "Đèn Khuya - Rock Version đã dùng.mp3"));
+    expect((await used.usedSongRows(songs)).map((x) => [x.file, x.marked])).toEqual([["Đèn Khuya - Rock Version.mp3", true]]);
+    await pl.removeFromPipeline(s3.id);
+  }, 120000);
 });

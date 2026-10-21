@@ -3,6 +3,7 @@
 // nhờ Claude nghĩ thêm — chờ bạn duyệt, hoặc dùng luôn nếu bật "Tự duyệt". Lưu ở data/ideas.json. Chỉ dùng phía server.
 
 import { randomUUID } from "node:crypto";
+import path from "node:path";
 import { UserError } from "./errors";
 import { generationMode } from "./generate";
 import {
@@ -22,6 +23,7 @@ import { extractYear, splitThemeCell } from "./parser";
 import { IDEAS_SYSTEM, buildIdeasPrompt } from "./prompts";
 import { readSongLibrary } from "./songLibrary";
 import { listSongs, matchSongForIdea } from "./songs";
+import { readUsedSongs, takenBy } from "./songsUsed";
 import { IDEAS_FILE, PIPELINE_FILE, listMVs, readJson, readLibraries, readSettings, withLock, writeJson } from "./store";
 import type { IdeaRow } from "./types";
 
@@ -60,7 +62,24 @@ const norm = (s = "") =>
     .replace(/đ/g, "d")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
-const sameIdea = (i: IdeaRow) => `${norm(i.world_location)}|${norm(i.outline)}`;
+/** Khoá so trùng ý tưởng: địa điểm + dàn ý (bỏ dấu, hoa thường, dấu cách). */
+export const sameIdea = (i: IdeaRow) => `${norm(i.world_location)}|${norm(i.outline)}`;
+
+/** Ý tưởng chạy thẳng (nút "Chạy ngay", không qua kho) mà cũng có trong kho → đánh dấu đã dùng để kho không lấy lại. */
+export async function markIdeasUsed(ideas: IdeaRow[]): Promise<number> {
+  const keys = new Set(ideas.map(sameIdea));
+  if (!(await readBank()).ideas.some((x) => (x.status === "new" || x.status === "proposed") && keys.has(sameIdea(x.idea)))) return 0;
+  return updateBank((b) => {
+    const now = new Date().toISOString();
+    let n = 0;
+    for (const x of b.ideas) {
+      if ((x.status !== "new" && x.status !== "proposed") || !keys.has(sameIdea(x.idea))) continue;
+      Object.assign(x, { status: "used", used_at: now });
+      n++;
+    }
+    return n;
+  });
+}
 
 /** Thêm ý tưởng của bạn vào kho (bỏ qua ý tưởng đã có: trùng địa điểm + dàn ý). */
 export async function addIdeas(rows: IdeaRow[]): Promise<{ added: number; skipped: number }> {
@@ -113,9 +132,15 @@ export async function takeIdeas(n: number, check?: TakeCheck): Promise<IdeaRow[]
 export async function songCheck(songDir: string, needSong: boolean): Promise<TakeCheck | null> {
   const files = songDir.trim() ? await listSongs(songDir.trim()).catch(() => null) : null;
   if (!files) return null;
+  // Sổ bài đã dùng: bài đã ghép vào MV nào đó cũng coi như đã ghi "đã dùng".
+  const taken = takenBy(await readUsedSongs());
   return (idea) => {
-    const song = matchSongForIdea(files, idea, idea.world_location);
-    if (song?.by === "number" && song.used) return `Bỏ qua: cả ${song.total} bản nhạc bài số ${song.n} đều đã ghi “đã dùng”.`;
+    const song = matchSongForIdea(files, idea, idea.world_location, taken);
+    if (song?.used) {
+      return song.by === "number"
+        ? `Bỏ qua: cả ${song.total} bản nhạc bài số ${song.n} đều đã dùng (ghi “đã dùng” hoặc đã ghép vào MV khác).`
+        : `Bỏ qua: bài “${path.basename(song.file)}” đã dùng (ghi “đã dùng” hoặc đã ghép vào MV khác).`;
+    }
     return needSong && !song ? "wait" : "take";
   };
 }

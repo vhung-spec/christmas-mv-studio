@@ -97,46 +97,68 @@ export function songNumber(fileName: string): { n: number; version: number } | n
   return m ? { n: Number(m[1]), version: Number(m[2] ?? m[3] ?? 0) } : null;
 }
 
+/**
+ * Khoá nhận ra cùng một bài dù tên file đổi (Drive thêm "đã dùng", bản WAV / MP3): bài đánh số → "12|1" (bài 12, bản 1);
+ * tên bài → "t|den khuya rock version".
+ */
+export function songKey(fileName: string): string {
+  const base = path.basename(fileName);
+  const num = songNumber(base);
+  if (num) return `${num.n}|${num.version}`;
+  return `t|${normSong(base.replace(/\.[a-z0-9]{2,5}$/i, "")).replace(/\bda ?dung\b/g, " ").replace(/\s+/g, " ").trim()}`;
+}
+
+/** Bài đã ghép vào MV khác (sổ bài đã dùng) — coi như đã ghi "đã dùng". */
+export type SongTaken = (file: string) => boolean;
+
 const extRank = (file: string) => (/\.(wav|flac|aiff?)$/i.test(file) ? 0 : 1);
 
 export interface NumberedSong {
   file: string;
-  /** Bản được chọn đã có chữ "đã dùng" (mọi bản của bài đều đã dùng). */
+  /** Bản được chọn đã dùng — có chữ "đã dùng" hoặc đã ghép vào MV khác (mọi bản của bài đều đã dùng). */
   used: boolean;
   total: number;
   free: number;
 }
 
 /** File của bài số n: bản chưa dùng trước (theo thứ tự bản, WAV trước MP3); bài không có file → null. */
-export function pickSongByNumber(n: number, files: string[]): NumberedSong | null {
+export function pickSongByNumber(n: number, files: string[], taken?: SongTaken): NumberedSong | null {
   const mine = files
-    .map((file) => ({ file, num: songNumber(file), used: isUsedSong(path.basename(file)) }))
+    .map((file) => ({ file, num: songNumber(file), used: isUsedSong(path.basename(file)) || Boolean(taken?.(file)) }))
     .filter((x) => x.num?.n === n)
     .sort((a, b) => Number(a.used) - Number(b.used) || a.num!.version - b.num!.version || extRank(a.file) - extRank(b.file) || a.file.localeCompare(b.file));
   if (!mine.length) return null;
   return { file: mine[0].file, used: mine[0].used, total: mine.length, free: mine.filter((x) => !x.used).length };
 }
 
-export type SongMatch = { file: string; by: "title"; ties: number } | ({ by: "number"; n: number } & NumberedSong);
+/** `used` = bài tìm được đã dùng hết (mọi bản khớp đều ghi "đã dùng" hoặc đã ghép vào MV khác) — không được ghép nữa. */
+export type SongMatch = { file: string; by: "title"; ties: number; used: boolean } | ({ by: "number"; n: number } & NumberedSong);
 
 /**
  * Bài cho một ý tưởng: trùng tên bài (nếu ý tưởng có tên bài), không thấy thì theo số ý tưởng (ý tưởng 12 → "12.wav", "12 (1).wav"…),
- * cuối cùng thử tên dự phòng (vd. địa điểm). null nếu không có thư mục nhạc hoặc không thấy.
+ * cuối cùng thử tên dự phòng (vd. địa điểm). null nếu không có thư mục nhạc hoặc không thấy. `taken` = sổ bài đã dùng.
  */
-export async function findSongForIdea(dir: string, idea: { id: string; song_title?: string }, fallbackTitle?: string): Promise<SongMatch | null> {
+export async function findSongForIdea(dir: string, idea: { id: string; song_title?: string }, fallbackTitle?: string, taken?: SongTaken): Promise<SongMatch | null> {
   if (!dir.trim()) return null;
-  return matchSongForIdea(await listSongs(dir.trim()), idea, fallbackTitle);
+  return matchSongForIdea(await listSongs(dir.trim()), idea, fallbackTitle, taken);
 }
 
 /** Như findSongForIdea nhưng trên danh sách file đã đọc sẵn (xét nhiều ý tưởng mà chỉ đọc thư mục một lần). */
-export function matchSongForIdea(files: string[], idea: { id: string; song_title?: string }, fallbackTitle?: string): SongMatch | null {
-  const byTitle = (t?: string) => (t?.trim() ? pickSong(t, files) : null);
-  const hit = byTitle(idea.song_title);
-  if (hit) return { file: hit.file, by: "title", ties: hit.ties };
+export function matchSongForIdea(files: string[], idea: { id: string; song_title?: string }, fallbackTitle?: string, taken?: SongTaken): SongMatch | null {
+  const free = files.filter((f) => !isUsedSong(path.basename(f)) && !taken?.(f));
+  // Tên bài ghi rõ: bản chưa dùng trước, chỉ còn bản đã dùng thì báo đã dùng. Tên dự phòng (đoán theo địa điểm) chỉ lấy bản chưa dùng.
+  const byTitle = (t: string | undefined, strict: boolean): SongMatch | null => {
+    if (!t?.trim()) return null;
+    const hit = pickSong(t, free);
+    if (hit) return { file: hit.file, by: "title", ties: hit.ties, used: false };
+    const old = strict ? pickSong(t, files) : null;
+    return old ? { file: old.file, by: "title", ties: old.ties, used: true } : null;
+  };
+  const hit = byTitle(idea.song_title, true);
+  if (hit) return hit;
   if (/^\d+$/.test(idea.id)) {
-    const num = pickSongByNumber(Number(idea.id), files);
+    const num = pickSongByNumber(Number(idea.id), files, taken);
     if (num) return { by: "number", n: Number(idea.id), ...num };
   }
-  const fb = byTitle(fallbackTitle);
-  return fb ? { file: fb.file, by: "title", ties: fb.ties } : null;
+  return byTitle(fallbackTitle, false);
 }

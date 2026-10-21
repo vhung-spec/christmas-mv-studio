@@ -27,8 +27,8 @@ export async function POST(req: Request) {
       case "add": {
         const mvIds = Array.isArray(body.mvIds) ? body.mvIds.filter((x): x is string => typeof x === "string") : [];
         const ideas = Array.isArray(body.ideas) ? body.ideas.map((x) => zIdea.parse(x)) : [];
-        const added = await addToPipeline({ mvIds, ideas });
-        return NextResponse.json({ added, ...(await pipelineView()) });
+        const { added, skipped } = await addToPipeline({ mvIds, ideas });
+        return NextResponse.json({ added, skipped, ...(await pipelineView()) });
       }
       case "retry":
         await retryPipeline(String(body.id ?? ""));

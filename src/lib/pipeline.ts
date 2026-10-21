@@ -1,7 +1,8 @@
 // DÂY CHUYỀN TỰ ĐỘNG — mỗi việc là một MV (có sẵn, hoặc viết từ một dòng ý tưởng) chạy qua 4 bước:
 //   1. Kịch bản: Claude viết (cần API key; chế độ Demo cũng chạy được) — làm lần lượt từng MV.
 //   2. Bài hát: MV chưa có bài → tìm file trùng tên bài trong Thư mục nhạc (Cài đặt), không có tên bài thì theo số ý tưởng
-//      (kho nhạc đánh số: ý tưởng 12 → "12.wav", "12 (1).wav"; bỏ qua bản có chữ "đã dùng") và đưa vào MV.
+//      (kho nhạc đánh số: ý tưởng 12 → "12.wav", "12 (1).wav"; bỏ qua bản có chữ "đã dùng" và bản đã ghép vào MV khác —
+//      sổ bài đã dùng, songsUsed.ts) và đưa vào MV.
 //   3. Clip: gửi các cảnh chưa có clip sang Muse (Muse trong app), clip xong tự vào đúng cảnh (museJobs).
 //   4. Dựng: đủ clip + có bài hát → thêm vào hàng chờ dựng, chạy, chờ ra MP4.
 // Kho ý tưởng (ideaBank.ts): dây chuyền tự lấy dần ý tưởng chưa dùng, kho sắp hết thì nhờ Claude đề xuất thêm.
@@ -13,16 +14,17 @@ import { Readable } from "node:stream";
 import { UserError } from "./errors";
 import { probe } from "./ffmpeg";
 import { generateMV, generationMode } from "./generate";
-import { isSuggesting, readBank, songCheck, startSuggest, takeIdeas } from "./ideaBank";
+import { isSuggesting, markIdeasUsed, readBank, sameIdea, songCheck, startSuggest, takeIdeas } from "./ideaBank";
 import { addAudio, loadProject } from "./media";
 import { museCounts } from "./muse";
 import { ensureMuseWatch, readMuse, sendToMuse } from "./museJobs";
 import { addToQueue, readQueue, startQueue } from "./queue";
 import { isRendering } from "./render";
 import { librarySongFor } from "./songLibrary";
-import { findSongForIdea } from "./songs";
-import type { PipelineItem, PipelineState, PipelineStep, PipelineView, StepName } from "./pipelineSteps";
-import { PIPELINE_FILE, loadMV, readJson, readSettings, withLock, writeJson } from "./store";
+import { findSongForIdea, songKey } from "./songs";
+import { readUsedSongs, recordUsedSong, takenBy } from "./songsUsed";
+import type { AddResult, PipelineItem, PipelineState, PipelineStep, PipelineView, StepName } from "./pipelineSteps";
+import { PIPELINE_FILE, listMVs, loadMV, readJson, readSettings, withLock, writeJson } from "./store";
 import type { IdeaRow } from "./types";
 
 const POLL_MS = 5000;
@@ -51,8 +53,11 @@ const newId = () => `pl_${Date.now().toString(36)}${Math.random().toString(36).s
 const fresh = (): Record<StepName, PipelineStep> => ({ script: { status: "pending" }, song: { status: "pending" }, clips: { status: "pending" }, render: { status: "pending" } });
 const finished = (it: PipelineItem) => Boolean(it.done_at);
 
-/** Thêm việc: MV có sẵn và / hoặc ý tưởng mới. MV đang chạy dở trong dây chuyền thì bỏ qua. */
-export async function addToPipeline(input: { mvIds?: string[]; ideas?: IdeaRow[] }): Promise<number> {
+/**
+ * Thêm việc: MV có sẵn và / hoặc ý tưởng mới. Bỏ qua MV đang chạy dở trong dây chuyền, và ý tưởng đã có MV hoặc đang chạy
+ * (tránh hai MV cùng ý tưởng — cùng bài nhạc). Ý tưởng thêm vào mà cũng có trong kho thì được đánh dấu đã dùng ở kho.
+ */
+export async function addToPipeline(input: { mvIds?: string[]; ideas?: IdeaRow[] }): Promise<AddResult> {
   const mvIds = input.mvIds ?? [];
   const ideas = input.ideas ?? [];
   if (!mvIds.length && !ideas.length) throw new UserError("Chưa chọn MV hay ý tưởng nào.");
@@ -68,14 +73,36 @@ export async function addToPipeline(input: { mvIds?: string[]; ideas?: IdeaRow[]
     items.push({ id: newId(), title: mv.idea.song_title || mv.idea.world_location, added_at: now, mv_id: id, steps: { ...fresh(), script: { status: "done", message: `${mv.shots.length} cảnh (có sẵn)` } } });
   }
   for (const idea of ideas) items.push({ id: newId(), title: idea.song_title || idea.world_location, added_at: now, idea, steps: fresh() });
-  const added = await updatePipeline((st) => {
-    const busy = new Set(st.items.filter((i) => !finished(i) && i.mv_id).map((i) => i.mv_id));
-    const take = items.filter((i) => !i.mv_id || !busy.has(i.mv_id));
+  const made = ideas.length ? new Set((await listMVs()).map((m) => sameIdea(m.idea))) : new Set<string>();
+  const result = await updatePipeline((st) => {
+    const open = st.items.filter((i) => !finished(i));
+    const busy = new Set(open.flatMap((i) => (i.mv_id ? [i.mv_id] : [])));
+    const running = new Set(open.flatMap((i) => (i.idea ? [sameIdea(i.idea)] : [])));
+    const take: PipelineItem[] = [];
+    const skipped: AddResult["skipped"] = [];
+    for (const it of items) {
+      const key = it.idea ? sameIdea(it.idea) : null;
+      const reason =
+        it.mv_id && busy.has(it.mv_id)
+          ? "MV đang chạy trong dây chuyền"
+          : key && made.has(key)
+            ? "ý tưởng này đã có MV"
+            : key && running.has(key)
+              ? "ý tưởng này đang chạy trong dây chuyền (hoặc trùng dòng khác trong bảng)"
+              : null;
+      if (reason) {
+        skipped.push({ title: it.idea?.id && /^\d+$/.test(it.idea.id) ? `#${it.idea.id} · ${it.title}` : it.title, reason });
+        continue;
+      }
+      take.push(it);
+      if (key) running.add(key);
+    }
     st.items.unshift(...take);
-    return take.length;
+    return { added: take.length, skipped, ideas: take.flatMap((i) => (i.idea ? [i.idea] : [])) };
   });
+  if (result.ideas.length) await markIdeasUsed(result.ideas);
   ensurePipelineWatch();
-  return added;
+  return { added: result.added, skipped: result.skipped };
 }
 
 export function removeFromPipeline(id: string): Promise<void> {
@@ -119,8 +146,9 @@ function startScript(item: PipelineItem, songDir: string) {
         if (lib) idea.lyrics = lib.lyrics;
       }
       if (!idea.duration_sec) {
-        const song = await findSongForIdea(songDir, idea).catch(() => null);
-        if (song) {
+        const taken = takenBy(await readUsedSongs().catch(() => []));
+        const song = await findSongForIdea(songDir, idea, undefined, taken).catch(() => null);
+        if (song && !song.used) {
           const d = (await probe(song.file).catch(() => null))?.duration;
           if (d && d >= 10) idea.duration_sec = Math.min(1200, Math.round(d));
         }
@@ -179,15 +207,23 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
   } else if (!isRendering(mv.id)) {
     const title = mv.idea.song_title || item.title;
     try {
-      const song = await findSongForIdea(settings.songDir, mv.idea, item.title);
+      // Sổ bài đã dùng: bài đã ghép vào MV khác thì không lấy lại (dù tên file chưa ghi "đã dùng").
+      const used = await readUsedSongs();
+      const song = await findSongForIdea(settings.songDir, mv.idea, item.title, takenBy(used, mv.id));
       if (!song) {
-        const num = /^d+$/.test(mv.idea.id) ? ` (hoặc file số ${mv.idea.id})` : "";
+        const num = /^\d+$/.test(mv.idea.id) ? ` (hoặc file số ${mv.idea.id})` : "";
         steps.song = { status: "waiting", message: `Chưa thấy bài “${title}”${num} trong thư mục nhạc — thêm file vào thư mục, hoặc tải lên ở trang Ghép video.` };
-      } else if (song.by === "number" && song.used) {
-        steps.song = { status: "waiting", message: `Bài số ${song.n}: cả ${song.total} bản trong thư mục nhạc đều đã ghi “đã dùng” — thêm bản mới, hoặc tải bài lên ở trang Ghép video.` };
+      } else if (song.used) {
+        const by = used.find((x) => x.key === songKey(song.file) && x.mv_id !== mv.id);
+        const what = song.by === "number" ? `Bài số ${song.n}: cả ${song.total} bản trong thư mục nhạc` : `Bài “${path.basename(song.file)}”`;
+        steps.song = {
+          status: "waiting",
+          message: `${what} đều đã dùng (ghi “đã dùng”${by ? `, hoặc đã ghép vào MV “${by.title}”` : " hoặc đã ghép vào MV khác"}) — thêm bản mới, hoặc tải bài lên ở trang Ghép video.`,
+        };
       } else {
         const name = path.basename(song.file);
         await addAudio(mv.id, name, Readable.toWeb(createReadStream(song.file)) as ReadableStream<Uint8Array>);
+        await recordUsedSong(mv.id, name, `${/^\d+$/.test(mv.idea.id) ? `#${mv.idea.id} · ` : ""}${title}`);
         const note =
           song.by === "number"
             ? ` (bài số ${song.n}${song.free > 1 ? `, còn ${song.free - 1} bản chưa dùng khác` : ""})`

@@ -38,6 +38,8 @@ beforeEach(async () => {
   await (await import("@/lib/pipeline")).pipelineIdle();
   writeFileSync(path.join(tmp, "ideas.json"), "{}");
   writeFileSync(path.join(tmp, "pipeline.json"), JSON.stringify({ items: [] }));
+  // MV và sổ bài đã dùng của test trước: ý tưởng đã có MV thì không chạy lại được.
+  for (const f of ["history", "media", "songs_used.json"]) rmSync(path.join(tmp, f), { recursive: true, force: true });
 });
 
 describe("kho ý tưởng", () => {
@@ -54,6 +56,19 @@ describe("kho ý tưởng", () => {
     // Bỏ một ý tưởng chưa dùng.
     expect(await bank.setIdeas([v.upcoming[0].key], "reject")).toBe(1);
     expect((await bank.bankView()).counts).toMatchObject({ new: 0, rejected: 1 });
+  });
+
+  it("“Chạy ngay” ý tưởng cũng có trong kho → kho đánh dấu đã dùng, không lấy lại", async () => {
+    const bank = await import("@/lib/ideaBank");
+    const pl = await import("@/lib/pipeline");
+    await bank.addIdeas([idea("1", "Hollywood Boulevard Summer 1954"), idea("2", "Santa Monica Pier Summer 1954")]);
+    const r = await pl.addToPipeline({ ideas: [{ ...idea("1", "Hollywood Boulevard Summer 1954"), outline: idea("1", "hollywood boulevard summer 1954").outline }] });
+    expect(r).toEqual({ added: 1, skipped: [] });
+    expect((await bank.readBank()).ideas.map((x) => [x.idea.id, x.status])).toEqual([
+      ["1", "used"],
+      ["2", "new"],
+    ]);
+    expect((await bank.takeIdeas(5)).map((i) => i.id)).toEqual(["2"]);
   });
 
   it("lọc ý tưởng Claude trả về: năm 1950–1959, mã chủ đề có thật, không trùng địa điểm", async () => {
@@ -254,7 +269,7 @@ describe("kho ý tưởng", () => {
     // Ý tưởng 3 chưa có nhạc: vẫn chờ trong kho, chưa vào dây chuyền.
     expect(v.counts).toMatchObject({ new: 1, used: 2 });
     expect(v.ready).toBe(0);
-    expect(v.skipped.map((x) => [x.idea.id, x.note])).toEqual([["1", expect.stringMatching(/bài số 1 đều đã ghi “đã dùng”/)]]);
+    expect(v.skipped.map((x) => [x.idea.id, x.note])).toEqual([["1", expect.stringMatching(/bài số 1 đều đã dùng \(ghi “đã dùng” hoặc đã ghép vào MV khác\)/)]]);
     const mv = (await store.loadMV(items[0].mv_id!))!;
     expect(mv.idea.lyrics).toBe(lyrics);
     expect(mv.idea.duration_sec).toBe(12);

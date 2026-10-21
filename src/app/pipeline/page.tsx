@@ -8,7 +8,7 @@ import { type BankData, IdeaBankCard } from "@/components/pipeline/IdeaBankCard"
 import { Card, ErrorBox, Spinner } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/client";
 import type { ParseResult } from "@/lib/parser";
-import { STEP_LABEL, type PipelineItem, type PipelineView, type StepName, type StepStatus } from "@/lib/pipelineSteps";
+import { STEP_LABEL, type AddResult, type PipelineItem, type PipelineView, type StepName, type StepStatus } from "@/lib/pipelineSteps";
 import type { IdeaRow } from "@/lib/types";
 
 interface Candidate {
@@ -110,8 +110,14 @@ export default function PipelinePage() {
     const muse = cfg?.museMode === "gateway" ? "Lượt Muse tính vào hạn mức tuần của tài khoản Meta." : "Đang dùng cách dán tay vào HaoHao: bước Clip Muse chờ bạn dán prompt ở trang Clip Muse.";
     if (!confirm(`Chạy tự động ${ideas + chosen.length} việc?\n\n${lines.join("\n")}\n\n${muse}`)) return;
     await run(async () => {
-      const r = await api<PipelineView & { added: number }>("/api/pipeline", { method: "POST", json: { action: "add", ...payload } });
-      setNotice(`Đã thêm ${r.added} việc vào dây chuyền.`);
+      const r = await api<PipelineView & AddResult>("/api/pipeline", { method: "POST", json: { action: "add", ...payload } });
+      const skip = r.skipped.length
+        ? ` Bỏ qua ${r.skipped.length} việc (tránh làm trùng MV, trùng nhạc): ${r.skipped
+            .slice(0, 8)
+            .map((s) => `${s.title} — ${s.reason}`)
+            .join("; ")}${r.skipped.length > 8 ? "; …" : ""}.`
+        : "";
+      setNotice(`Đã thêm ${r.added} việc vào dây chuyền.${skip}`);
       setParsed(null);
       setSelected(new Set());
       await reload();
