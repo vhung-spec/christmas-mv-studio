@@ -66,6 +66,7 @@ export default function MuseAccountsCard({ onChanged }: { onChanged?: () => void
       setView(r.view);
       if (json.action === "add") setNotice(`Đã chuyển sang “${r.view.active.name}”. Cửa sổ Chrome của Muse đang mở — đăng nhập tài khoản mới trong đó.`);
       else if (json.action === "switch") setNotice(`Đã chuyển sang “${r.view.active.name}”${r.requeued ? ` · ${r.requeued} cảnh sẽ được gửi lại bằng tài khoản này` : ""}.`);
+      else if (json.action === "delete") setNotice("Đã xoá tài khoản khỏi app — hồ sơ Chrome của nó nằm trong Thùng rác.");
       onChanged?.();
     } catch (e) {
       setError((e as Error).message);
@@ -154,6 +155,19 @@ export default function MuseAccountsCard({ onChanged }: { onChanged?: () => void
                   )}
                   <button className="btn-primary btn-sm" disabled={busy} onClick={() => void post({ action: "switch", to: a.id }, `“${a.name}”`)}>
                     {busy && <Spinner />} Dùng tài khoản này
+                  </button>
+                  <button
+                    className="btn-ghost btn-sm"
+                    disabled={busy}
+                    title="Bỏ tài khoản này khỏi danh sách; hồ sơ Chrome (phiên đăng nhập) của nó được chuyển vào Thùng rác"
+                    onClick={() => {
+                      if (!confirm(`Xoá tài khoản “${a.name}” khỏi app?
+
+Hồ sơ Chrome của nó (phiên đăng nhập Muse) được chuyển vào THÙNG RÁC — lấy lại được từ Thùng rác nếu cần. Tài khoản Meta của bạn không bị ảnh hưởng.`)) return;
+                      void post({ action: "delete", id: a.id }, "");
+                    }}
+                  >
+                    🗑 Xoá
                   </button>
                 </li>
               ))}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { UserError } from "@/lib/errors";
 import { errorResponse, readJsonBody } from "@/lib/http";
-import { museAccounts, renameMuseAccount, setMuseBackup, setMuseFailover, switchMuseAccount } from "@/lib/museEngine/accounts";
+import { deleteMuseAccount, museAccounts, renameMuseAccount, setMuseBackup, setMuseFailover, switchMuseAccount } from "@/lib/museEngine/accounts";
 import { ensureMuseWatch } from "@/lib/museJobs";
 import { readSettings } from "@/lib/store";
 
@@ -17,7 +17,8 @@ export async function GET() {
 
 /**
  * { action: "switch", to, force? } · { action: "add", name, force? } (hồ sơ trống → mở cửa sổ đăng nhập) · { action: "rename", id, name }
- * · { action: "failover", enabled } (tự đổi khi tài khoản lỗi) · { action: "backup", id, on } (dùng làm dự phòng).
+ * · { action: "failover", enabled } (tự đổi khi tài khoản lỗi) · { action: "backup", id, on } (dùng làm dự phòng)
+ * · { action: "delete", id } (bỏ tài khoản không dùng nữa; hồ sơ Chrome vào Thùng rác).
  * Có cảnh đang làm mà chưa force → { needsConfirm, inflight } để hỏi lại người dùng.
  */
 export async function POST(req: Request) {
@@ -36,6 +37,10 @@ export async function POST(req: Request) {
       });
     } else if (body.action === "rename") {
       await renameMuseAccount(String(body.id ?? ""), String(body.name ?? ""));
+    } else if (body.action === "delete") {
+      await deleteMuseAccount(String(body.id ?? "")).catch((err) => {
+        throw new UserError((err as Error).message);
+      });
     } else if (body.action === "failover") {
       await setMuseFailover(body.enabled === true);
     } else if (body.action === "backup") {

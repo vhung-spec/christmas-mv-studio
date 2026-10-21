@@ -1,11 +1,13 @@
-// TÀI KHOẢN MUSE — mỗi tài khoản một hồ sơ Chrome riêng (giữ phiên đăng nhập). App luôn chạy bằng thư mục "chrome-profile";
-// các tài khoản khác được cất trong "chrome-profile--<mã>" (hoặc thư mục bạn tự cất tay, vd. "chrome-profile-cu").
+// TÀI KHOẢN MUSE — mỗi tài khoản một thư mục hồ sơ Chrome CỐ ĐỊNH (giữ phiên đăng nhập): tài khoản đầu là "chrome-profile",
+// tài khoản thêm sau là "chrome-profile--<mã>" (thư mục bạn tự cất tay, vd. "chrome-profile-cu", cũng được nhận).
 // Đổi tài khoản = dừng nhận việc, (nếu bạn đồng ý) đưa các cảnh đang làm về hàng chờ để gửi lại bằng tài khoản mới, đóng Chrome,
-// đổi tên thư mục, mở lại. Không xoá hồ sơ nào. Danh sách lưu ở accounts.json trong thư mục dữ liệu Muse.
+// mở lại Chrome bằng thư mục của tài khoản kia — KHÔNG đổi tên thư mục nào (Windows hay chặn đổi tên khi Chrome / File Explorer
+// còn giữ file). Xoá tài khoản = hồ sơ của nó vào Thùng rác (không xoá vĩnh viễn). Danh sách: accounts.json trong thư mục dữ liệu Muse.
 // Dùng khi một tài khoản bị lỗi / bị khoá — không phải để luân phiên nhiều tài khoản lách hạn mức tuần.
 
 import { existsSync, promises as fs } from "node:fs";
 import path from "node:path";
+import { moveToTrash } from "../trash";
 import { museEngine, restartMuseEngine } from "./index";
 import { LIMIT_RE, type WorkerState } from "./runner";
 
@@ -16,7 +18,7 @@ export interface MuseAccount {
   name: string;
   created_at: string;
   last_used_at: string;
-  /** Thư mục đang cất hồ sơ (tài khoản không dùng). Tài khoản đang dùng: không có. */
+  /** Thư mục hồ sơ Chrome của tài khoản (trong thư mục dữ liệu Muse). */
   folder?: string;
   /** Tình trạng lúc cất, vd. "Muse báo hết lượt (20/10 14:05)". */
   last_state?: string;
@@ -76,13 +78,16 @@ async function load(dir: string): Promise<AccountsFile> {
     data = null;
   }
   if (!data?.accounts?.length) data = { active: "tk1", accounts: [{ id: "tk1", name: "Tài khoản 1", created_at: now(), last_used_at: now() }] };
+  // Bản cũ (đổi tên thư mục): tài khoản đang dùng chưa ghi thư mục = "chrome-profile".
+  const act = data.accounts.find((a) => a.id === data.active);
+  if (act && !act.folder) act.folder = ACTIVE_PROFILE;
   // Thư mục hồ sơ cất tay (vd. "chrome-profile-cu") chưa có trong danh sách → thêm vào.
   const known = new Set(data.accounts.map((a) => a.folder).filter(Boolean));
   const folders = await fs.readdir(/*turbopackIgnore: true*/ dir).catch(() => [] as string[]);
   for (const f of folders) {
-    if (!f.startsWith(`${ACTIVE_PROFILE}-`) || known.has(f)) continue;
+    if (!(f === ACTIVE_PROFILE || f.startsWith(`${ACTIVE_PROFILE}-`)) || known.has(f)) continue;
     if (!(await fs.stat(path.join(/*turbopackIgnore: true*/ dir, f)).then((s) => s.isDirectory(), () => false))) continue;
-    const label = f.slice(ACTIVE_PROFILE.length).replace(/^-+/, "");
+    const label = f.slice(ACTIVE_PROFILE.length).replace(/^-+/, "") || "cũ";
     let id = slug(label);
     while (data.accounts.some((a) => a.id === id)) id += "x";
     data.accounts.push({ id, name: `Hồ sơ cất tay (${label})`, created_at: now(), last_used_at: "", folder: f });
@@ -92,19 +97,6 @@ async function load(dir: string): Promise<AccountsFile> {
 
 async function save(dir: string, data: AccountsFile) {
   await fs.writeFile(file(dir), JSON.stringify(data, null, 2), "utf8");
-}
-
-/** Đổi tên thư mục; Chrome vừa tắt có thể còn giữ file vài giây → thử lại tới ~20 giây. */
-async function renameDir(from: string, to: string) {
-  for (let i = 0; ; i++) {
-    try {
-      return await fs.rename(from, to);
-    } catch (err) {
-      const code = (err as NodeJS.ErrnoException).code ?? "";
-      if (i >= 20 || !["EPERM", "EBUSY", "EACCES", "ENOTEMPTY"].includes(code)) throw err;
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-  }
 }
 
 function describe(state: WorkerState): string | undefined {
@@ -142,14 +134,14 @@ export async function switchMuseAccount(req: { to: string } | { add: string }, f
     const t = data.accounts.find((a) => a.id === req.to);
     if (!t) throw new Error("Không có tài khoản này.");
     if (t.id === cur.id) return { ok: true, active: cur, requeued: 0 };
-    // Thư mục hồ sơ bị mất (vd. xoá tay) → dùng hồ sơ trống, đăng nhập lại.
-    if (t.folder && !existsSync(path.join(/*turbopackIgnore: true*/ dir, t.folder))) t.folder = undefined;
     target = t;
   } else {
     const name = req.add.trim().slice(0, 60) || `Tài khoản ${data.accounts.length + 1}`;
     let id = slug(name);
     while (data.accounts.some((a) => a.id === id)) id += "x";
-    target = { id, name, created_at: now(), last_used_at: "" };
+    let folder = `${ACTIVE_PROFILE}--${id}`;
+    while (existsSync(path.join(/*turbopackIgnore: true*/ dir, folder))) folder += "x";
+    target = { id, name, created_at: now(), last_used_at: "", folder };
     data.accounts.push(target);
   }
 
@@ -171,17 +163,9 @@ export async function switchMuseAccount(req: { to: string } | { add: string }, f
   }
 
   await restartMuseEngine(async () => {
-    const active = path.join(/*turbopackIgnore: true*/ dir, ACTIVE_PROFILE);
-    let stash = `${ACTIVE_PROFILE}--${cur.id}`;
-    if (existsSync(path.join(/*turbopackIgnore: true*/ dir, stash))) stash += `-${Date.now().toString(36)}`;
-    // Tài khoản chưa từng mở Chrome thì chưa có hồ sơ → cất một thư mục trống để vẫn đổi về được (đăng nhập lại).
-    if (existsSync(active)) await renameDir(active, path.join(/*turbopackIgnore: true*/ dir, stash));
-    else await fs.mkdir(path.join(/*turbopackIgnore: true*/ dir, stash), { recursive: true });
-    cur.folder = stash;
-    if (target.folder) {
-      await renameDir(path.join(/*turbopackIgnore: true*/ dir, target.folder), active);
-      target.folder = undefined;
-    }
+    // Thư mục của tài khoản đích (mất / chưa có → hồ sơ trống, đăng nhập lại). Chrome mở lại bằng thư mục này — không đổi tên gì.
+    target.folder ??= `${ACTIVE_PROFILE}--${target.id}`;
+    await fs.mkdir(path.join(/*turbopackIgnore: true*/ dir, target.folder), { recursive: true });
     data.active = target.id;
     target.last_used_at = now();
     target.last_state = undefined;
@@ -194,6 +178,23 @@ export async function switchMuseAccount(req: { to: string } | { add: string }, f
   if ("add" in req) void fresh.worker.login();
   else void fresh.worker.check().catch(() => {});
   return { ok: true, active: target, requeued: inflight.length };
+}
+
+/** Xoá tài khoản không dùng nữa: bỏ khỏi danh sách, hồ sơ Chrome của nó vào Thùng rác (không xoá vĩnh viễn). */
+export async function deleteMuseAccount(id: string): Promise<void> {
+  const dir = museEngine().dir;
+  const data = await load(dir);
+  const a = data.accounts.find((x) => x.id === id);
+  if (!a) throw new Error("Không có tài khoản này.");
+  if (a.id === data.active) throw new Error("Đang dùng tài khoản này — đổi sang tài khoản khác trước rồi mới xoá.");
+  const folder = a.folder ? path.join(/*turbopackIgnore: true*/ dir, a.folder) : null;
+  if (folder && existsSync(folder)) {
+    await moveToTrash(folder).catch((err) => {
+      throw new Error(`Không chuyển được hồ sơ “${a.name}” vào Thùng rác (${(err as Error).message.slice(0, 160)}). Đóng các cửa sổ File Explorer đang mở thư mục đó rồi thử lại.`);
+    });
+  }
+  data.accounts = data.accounts.filter((x) => x.id !== id);
+  await save(dir, data);
 }
 
 export async function renameMuseAccount(id: string, name: string): Promise<void> {

@@ -196,11 +196,14 @@ Phần này chạy ngay trong app (mã ở `src/lib/museEngine/`), không có se
 - **Xem thử không tốn lượt**: chạy app với biến `MUSE_FAKE=1` → “Muse giả” (video sọc màu 10 giây, không mở Chrome).
 - Lưu ý: app điều khiển trang web Muse giống người dùng; Meta đổi trang thì có thể phải sửa (`src/lib/museEngine/page.ts`). Tự động hoá có thể trái điều
   khoản của Meta — app chỉ dùng **một tài khoản**, không proxy, không xoay vòng tài khoản.
-- **Đổi tài khoản khi tài khoản bị lỗi / bị khoá** (Cài đặt → *Tài khoản Muse*): mỗi tài khoản một hồ sơ Chrome; app luôn chạy bằng
-  thư mục `chrome-profile`, các tài khoản khác cất trong `chrome-profile--<mã>` (thư mục cất tay như `chrome-profile-cu` cũng được
-  nhận). **Thêm tài khoản mới** → cất hồ sơ đang dùng, mở Chrome trống để đăng nhập; **Dùng tài khoản này** → đổi về hồ sơ đã lưu.
-  Mỗi lần đổi: dừng nhận việc, (bạn đồng ý thì) đưa các cảnh đang làm về hàng chờ để gửi lại bằng tài khoản mới — tài khoản mới
-  không đọc được phiên chat của tài khoản cũ — đóng Chrome, đổi tên thư mục, mở lại. Không xoá hồ sơ nào; chỉ một tài khoản mỗi lúc,
+- **Đổi tài khoản khi tài khoản bị lỗi / bị khoá** (Cài đặt → *Tài khoản Muse*): mỗi tài khoản một thư mục hồ sơ Chrome **cố
+  định** (tài khoản đầu: `chrome-profile`, thêm sau: `chrome-profile--<mã>`; thư mục cất tay như `chrome-profile-cu` cũng được
+  nhận). **Thêm tài khoản mới** → thư mục mới trống, mở Chrome để đăng nhập (trang đăng nhập của Meta — thường là Instagram /
+  Facebook; đăng nhập xong mà trang dừng ở Instagram / Facebook thì app tự mở lại Muse); **Dùng tài khoản này** → đổi về tài khoản
+  đã lưu; **🗑 Xoá** → bỏ khỏi danh sách, hồ sơ vào **Thùng rác** (không xoá được tài khoản đang dùng). Mỗi lần đổi: dừng nhận việc,
+  (bạn đồng ý thì) đưa các cảnh đang làm về hàng chờ để gửi lại bằng tài khoản mới — tài khoản mới không đọc được phiên chat của
+  tài khoản cũ — đóng Chrome, mở lại Chrome bằng thư mục của tài khoản kia (**không đổi tên thư mục nào** — Windows hay chặn đổi tên
+  khi Chrome / File Explorer còn giữ file). Không xoá hồ sơ nào; chỉ một tài khoản mỗi lúc,
   đổi bằng tay (app không tự xoay vòng khi hết hạn mức). Danh sách: `accounts.json` trong thư mục dữ liệu Muse. Mã:
   `src/lib/museEngine/accounts.ts`.
 - **Tự đổi khi tài khoản lỗi** (cùng thẻ, tắt sẵn): bật lên và tick *Dự phòng* ở các tài khoản đã đăng nhập sẵn. Mỗi 2 phút app

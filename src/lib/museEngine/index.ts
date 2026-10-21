@@ -2,6 +2,7 @@
 // Một bản duy nhất cho cả tiến trình (giữ qua hot reload khi phát triển). Chỉ dùng phía server.
 // Tắt app → Chrome của Muse tự tắt theo; mở lại app → task đang làm dở được dò tiếp (không gửi lại).
 
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { Chrome } from "./chrome";
 import { FakeMuse } from "./fake";
@@ -27,6 +28,21 @@ export function museDataDir(): string {
   return path.join(/*turbopackIgnore: true*/ path.dirname(root), `${path.basename(root)}-muse-gateway`);
 }
 
+/**
+ * Hồ sơ Chrome của tài khoản Muse đang dùng (accounts.json: mỗi tài khoản một thư mục cố định — đổi tài khoản chỉ đổi thư mục
+ * Chrome mở, không đổi tên thư mục nào). Chưa có danh sách → "chrome-profile".
+ */
+export function activeProfileDir(dir: string): string {
+  try {
+    const data = JSON.parse(readFileSync(path.join(/*turbopackIgnore: true*/ dir, "accounts.json"), "utf8")) as { active?: string; accounts?: { id: string; folder?: string }[] };
+    const folder = data.accounts?.find((a) => a.id === data.active)?.folder;
+    if (folder && /^[\w.-]+$/.test(folder)) return path.join(/*turbopackIgnore: true*/ dir, folder);
+  } catch {
+    // chưa có danh sách tài khoản
+  }
+  return path.join(/*turbopackIgnore: true*/ dir, "chrome-profile");
+}
+
 type EngineOptions = { dir?: string; page?: MuseDriver; worker?: Partial<Omit<WorkerOptions, "store" | "page" | "outputDir">> };
 const g = globalThis as unknown as { __mvMuseEngine?: MuseEngine; __mvMuseEngineOpts?: EngineOptions };
 
@@ -35,7 +51,7 @@ export function initMuseEngine(opts: EngineOptions = {}): MuseEngine {
   g.__mvMuseEngineOpts = opts;
   const dir = opts.dir ?? museDataDir();
   const fake = !opts.page && Boolean(process.env.MUSE_FAKE);
-  const page = opts.page ?? (fake ? new FakeMuse() : new MusePage(new Chrome({ profileDir: path.join(/*turbopackIgnore: true*/ dir, "chrome-profile"), url: "https://muse.ai" })));
+  const page = opts.page ?? (fake ? new FakeMuse() : new MusePage(new Chrome({ profileDir: activeProfileDir(dir), url: "https://muse.ai" })));
   const store = new TaskStore(dir);
   const worker = new Worker({ store, page, outputDir: path.join(/*turbopackIgnore: true*/ dir, "videos"), ...(fake ? { gapMs: 1000, pollMs: 1000 } : {}), ...opts.worker });
   g.__mvMuseEngine = { dir, store, worker, page, fake };

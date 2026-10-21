@@ -1,15 +1,17 @@
 // Tự đổi sang tài khoản Muse dự phòng khi tài khoản đang dùng bị lỗi (không đổi khi chỉ hết lượt).
-// Muse giả đọc trạng thái theo hồ sơ đang dùng: file "logged-out" = bị đăng xuất, file "refuse" = Muse từ chối nhận lệnh (nội dung = lý do).
+// Muse giả đọc trạng thái theo hồ sơ đang dùng (thư mục của tài khoản đang dùng): file "logged-out" = bị đăng xuất,
+// file "refuse" = Muse từ chối nhận lệnh (nội dung = lý do).
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { activeProfileDir } from "@/lib/museEngine";
 import type { Attachment } from "@/lib/museEngine/page";
 import { FAST, FakeMuse, waitFor } from "./fakeMuse";
 
 const tmp = mkdtempSync(path.join(tmpdir(), "mvps-failover-"));
 const dir = path.join(tmp, "muse");
-const active = (name: string) => path.join(dir, "chrome-profile", name);
+const active = (name: string) => path.join(activeProfileDir(dir), name);
 
 class ProfileMuse extends FakeMuse {
   async login() {

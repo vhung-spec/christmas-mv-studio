@@ -266,7 +266,22 @@ export class MusePage implements MuseDriver {
   }
 
   async login() {
-    return ((await this.call("login")) as { loggedIn: boolean }) ?? { loggedIn: false };
+    const r = ((await this.call("login")) as { loggedIn: boolean }) ?? { loggedIn: false };
+    if (!r.loggedIn) await this.backToMuse().catch(() => {});
+    return r;
+  }
+
+  /**
+   * Hồ sơ mới: Muse chuyển sang trang đăng nhập của Meta (thường là Instagram, hoặc Facebook). Đăng nhập xong mà trang dừng ở
+   * Instagram / Facebook (không tự quay về Muse) → mở lại Muse để app nhận ra đã đăng nhập. Đang ở trang đăng nhập / xác minh /
+   * Accounts Center thì để yên cho bạn làm tiếp.
+   */
+  private async backToMuse() {
+    const u = new URL(String(await this.chrome.evaluate("location.href")));
+    if (u.host === new URL(this.chrome.url).host) return;
+    if (!/(^|\.)(instagram|facebook|meta)\.com$/i.test(u.hostname) || /^(accountscenter|auth)\./i.test(u.hostname)) return;
+    if (/login|accounts|auth|checkpoint|challenge|two_factor|recover|password|oauth|dialog|consent|confirm|signup|privacy|security/i.test(u.pathname + u.search)) return;
+    await this.chrome.cmd("Page.navigate", { url: this.chrome.url }, this.chrome.sessionId);
   }
 
   /** Không thấy khung chat (trang lạ / kẹt) → về trang chủ Muse rồi gửi lại một lần. */
