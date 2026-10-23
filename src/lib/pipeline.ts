@@ -36,6 +36,9 @@ const g = globalThis as unknown as {
 };
 const mem = (g.__mvPipeline ??= { loop: null, again: false, wake: null, generating: null, error: null });
 
+/** Việc đang được Claude viết kịch bản (tự cập nhật chờ viết xong mới cài); null = không viết gì. */
+export const scriptRunning = () => mem.generating;
+
 export function readPipeline(): Promise<PipelineState> {
   return readJson<PipelineState>(PIPELINE_FILE(), { items: [] });
 }

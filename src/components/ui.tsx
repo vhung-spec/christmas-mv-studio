@@ -23,8 +23,9 @@ export function CopyButton({ text, label = "Copy", className = "btn-ghost btn-sm
 }
 
 export function Card({ title, actions, children, className = "" }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
+  // min-w-0: chữ dài không xuống dòng (đường dẫn, địa chỉ trang) không kéo cả lưới thẻ rộng ra (trên điện thoại).
   return (
-    <section className={`card p-4 ${className}`}>
+    <section className={`card min-w-0 p-4 ${className}`}>
       {(title || actions) && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {title && <h2 className="card-title">{title}</h2>}

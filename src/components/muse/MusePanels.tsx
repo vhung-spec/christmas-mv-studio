@@ -5,9 +5,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CopyButton, ErrorBox, Spinner } from "@/components/ui";
-import { api, copyText } from "@/lib/client";
+import { api, copyText, isRemote } from "@/lib/client";
 import { MUSE_STATUS_LABEL, museCounts, pasteText, type MuseMV, type MuseShotStatus } from "@/lib/muse";
 import type { MuseView, SendResult } from "@/lib/museJobs";
+import MuseScreen from "./MuseScreen";
 
 const CHIP: Record<MuseShotStatus, string> = {
   waiting: "border-amber-500 bg-amber-100 text-amber-900",
@@ -50,6 +51,13 @@ export function confirmSend(view: MuseView | null, shots: number, again = false)
 export function MuseStatus({ view, url, onView }: { view: MuseView; url: string; onView: (v: MuseView) => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Khung xem cửa sổ Chrome của Muse (đăng nhập ngay trên trang). Mở app từ xa mà Muse đang chờ đăng nhập → tự mở khung.
+  const [screen, setScreen] = useState(false);
+  const remote = isRemote();
+  const loggingIn = Boolean(view.gateway?.loggingIn);
+  useEffect(() => {
+    if (remote && loggingIn) setScreen(true);
+  }, [remote, loggingIn]);
   async function act(action: "login" | "check") {
     setBusy(true);
     setError(null);
@@ -84,7 +92,9 @@ export function MuseStatus({ view, url, onView }: { view: MuseView; url: string;
             <span className="badge border-mint-dark/50 bg-mint/30">✓ Muse chạy trong app</span>
           )}
           {g.loggingIn ? (
-            <span className="badge border-sky-400 bg-sky-100 text-sky-900">Đang chờ bạn đăng nhập trong cửa sổ Chrome của Muse…</span>
+            <span className="badge border-sky-400 bg-sky-100 text-sky-900">
+              {remote ? "Đang chờ bạn đăng nhập — làm ngay trong khung “Cửa sổ Chrome của Muse”…" : "Đang chờ bạn đăng nhập trong cửa sổ Chrome của Muse…"}
+            </span>
           ) : g.loggedIn ? (
             <span className="badge border-mint-dark/50 bg-mint/30">Đã đăng nhập Muse</span>
           ) : g.loggedIn === false ? (
@@ -105,14 +115,25 @@ export function MuseStatus({ view, url, onView }: { view: MuseView; url: string;
           )}
           {waiting > 0 && <span className="text-xs text-muted">· hàng đợi Muse: {waiting}</span>}
           <span className="ml-auto flex gap-2">
-            <button className="btn-ghost btn-sm" disabled={busy} onClick={() => void act("login")} title="Mở cửa sổ Chrome của Muse để đăng nhập">
+            <button
+              className="btn-ghost btn-sm"
+              disabled={busy}
+              onClick={() => void act("login").then(() => remote && setScreen(true))}
+              title="Mở cửa sổ Chrome của Muse để đăng nhập"
+            >
               Đăng nhập Muse
             </button>
+            {!g.fake && (
+              <button className="btn-ghost btn-sm" onClick={() => setScreen(!screen)} title="Xem và bấm cửa sổ Chrome của Muse ngay trên trang này (dùng được cả khi điều khiển từ xa)">
+                🖥 {screen ? "Ẩn" : "Xem"} cửa sổ Muse
+              </button>
+            )}
             <button className="btn-ghost btn-sm" disabled={busy} onClick={() => void act("check")} title="Kiểm tra lại đăng nhập và hạn mức">
               {busy && <Spinner />} Kiểm tra
             </button>
           </span>
         </div>
+        {screen && <MuseScreen onClose={() => setScreen(false)} />}
         {g.paused && <p className="text-xs font-semibold text-amber-800">⏸ {g.paused}</p>}
         <ErrorBox error={error} />
         {view.error && <p className="text-xs text-cherry-dark">Lần dò gần nhất: {view.error}</p>}

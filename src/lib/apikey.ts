@@ -3,7 +3,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-const ENV_FILE = () => path.join(/*turbopackIgnore: true*/ process.cwd(), ".env.local");
+/** File .env.local của app (MV_ENV_FILE chỉ dùng cho test: không ghi vào .env.local thật). */
+const ENV_FILE = () => process.env.MV_ENV_FILE || path.join(/*turbopackIgnore: true*/ process.cwd(), ".env.local");
 const KEY_LINE = /^\s*ANTHROPIC_API_KEY\s*=.*$/m;
 
 export function maskKey(key: string | undefined): string | null {

@@ -56,6 +56,11 @@ export function isRendering(mvId: string): boolean {
   return jobs.get(mvId)?.status === "running";
 }
 
+/** Đang dựng MV nào không (tự cập nhật chờ dựng xong mới cài). */
+export function anyRendering(): boolean {
+  return [...jobs.values()].some((j) => j.status === "running");
+}
+
 export function cancelRender(mvId: string): RenderJob | null {
   const j = jobs.get(mvId);
   if (j?.status === "running") {

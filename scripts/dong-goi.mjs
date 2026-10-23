@@ -73,6 +73,14 @@ const copy = (rel, from = path.join(ROOT, rel)) => {
   copyFileSync(from, to);
 };
 for (const f of files) copy(f);
+// Bản trong gói (mã commit, ngày): app biết đang chạy bản nào và so với GitHub khi tự cập nhật.
+const gitOut = (args) => {
+  const r = spawnSync("git", args, { cwd: ROOT, encoding: "utf8" });
+  return r.status === 0 ? r.stdout.trim() : "";
+};
+const [commit = "", date = ""] = gitOut(["log", "-1", "--format=%H%n%cI"]).split("\n");
+const version = { app: "christmas-mv-studio", commit, date, branch: gitOut(["rev-parse", "--abbrev-ref", "HEAD"]), source: "goi", dirty: gitOut(["status", "--porcelain", "--untracked-files=no"]) !== "", packed_at: new Date().toISOString(), files };
+writeFileSync(path.join(app, "ban-cai.json"), JSON.stringify(version, null, 2) + "\n");
 const data = [];
 if (!update) {
   for (const f of DATA_KEEP) {
@@ -111,7 +119,7 @@ rmSync(stage, { recursive: true, force: true });
 if (res.status !== 0 || !existsSync(zip)) fail("Không nén được file zip.");
 
 const size = statSync(zip).size;
-console.log(`\n✔ Đã đóng gói: ${zip} (${(size / 1048576).toFixed(1)} MB, ${files.length + data.length} file)`);
+console.log(`\n✔ Đã đóng gói: ${zip} (${(size / 1048576).toFixed(1)} MB, ${files.length + data.length} file) — bản ${commit.slice(0, 7)}${version.dirty ? " + thay đổi chưa commit" : ""}`);
 if (oldZip) console.log(`  Gói cũ cùng tên đã chuyển vào Thùng rác.`);
 if (update) {
   console.log("  Bản CẬP NHẬT (chỉ mã nguồn): ở máy kia tắt app, giải nén đè lên thư mục app (chọn Thay thế), rồi chạy lại Chay-Christmas-MV-Studio.bat.");

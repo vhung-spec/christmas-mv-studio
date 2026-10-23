@@ -44,6 +44,8 @@ export const SONG_LIBRARY_FILE = () => dataPath("song_library.json");
 export const DRIVE_SYNC_FILE = () => dataPath("drive_sync.json");
 /** Các kênh: cài đặt xếp bài và lịch sử bài từng video của mỗi kênh (thay cho sổ bài đã dùng songs_used.json của bản trước). */
 export const CHANNELS_FILE = () => dataPath("channels.json");
+/** Phiên đăng nhập cổng điều khiển từ xa (chỉ lưu bản băm của mã phiên, không lưu mật khẩu). */
+export const REMOTE_SESSIONS_FILE = () => dataPath("remote_sessions.json");
 
 export const LIBRARY_FILES = {
   themes: "themes.json",
@@ -83,6 +85,10 @@ export const DEFAULT_SETTINGS: Settings = {
   monitorEnabled: false,
   // App cũ (MV Prompt Studio) dùng 3300 — app Giáng sinh dùng 3301 để chạy song song trên cùng máy.
   monitorPort: 3301,
+  remoteControl: false,
+  updateRepo: "vhung-spec/christmas-mv-studio",
+  updateBranch: "christmas",
+  autoUpdate: true,
   eraShare: 40,
   videoMinutes: 60,
   songSheet: "",

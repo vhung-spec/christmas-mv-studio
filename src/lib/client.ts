@@ -21,6 +21,18 @@ export async function api<T>(url: string, init?: RequestInit & { json?: unknown 
   return data as T;
 }
 
+// Máy chủ báo trang đang mở qua cổng từ xa (/api/status → remote) — đúng cả khi thử cổng trên 127.0.0.1.
+let remoteFlag = false;
+export const markRemote = (on: boolean) => {
+  remoteFlag = Boolean(on);
+};
+
+/** Đang mở app qua cổng điều khiển từ xa (điện thoại / máy khác), không phải ngay trên máy chạy. */
+export function isRemote(): boolean {
+  if (typeof window === "undefined") return false;
+  return remoteFlag || !["127.0.0.1", "localhost", "[::1]"].includes(window.location.hostname);
+}
+
 export async function copyText(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);

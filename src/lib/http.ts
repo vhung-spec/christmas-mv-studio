@@ -24,7 +24,21 @@ export function errorResponse(err: unknown) {
   return NextResponse.json({ error: message }, { status });
 }
 
+/**
+ * Lệnh (POST…) chỉ nhận từ chính trang của app. Trình duyệt luôn ghi Origin khi một trang web gửi lệnh: Origin khác địa chỉ app =
+ * trang web khác đang gửi thay bạn (vd. trang lạ mở trên máy chạy gửi lệnh vào 127.0.0.1) → chặn. Không có Origin (script, curl trên
+ * máy này) thì cho qua. Qua cổng điều khiển từ xa, Host là địa chỉ của cổng nên trang của cổng vẫn khớp.
+ */
+export function assertSameOrigin(req: Request): void {
+  const origin = req.headers.get("origin");
+  if (!origin) return;
+  const host = req.headers.get("host");
+  if (origin !== `http://${host}` && origin !== `https://${host}`) throw new UserError("Bị chặn: lệnh không gửi từ trang của app.", 403);
+}
+
+/** Đọc thân JSON của một lệnh (kèm kiểm tra lệnh gửi từ trang của app). */
 export async function readJsonBody<T = unknown>(req: Request): Promise<T> {
+  assertSameOrigin(req);
   try {
     return (await req.json()) as T;
   } catch {

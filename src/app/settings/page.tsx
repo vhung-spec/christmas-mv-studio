@@ -6,6 +6,7 @@ import EngineCard from "@/components/settings/EngineCard";
 import MonitorCard from "@/components/settings/MonitorCard";
 import MuseAccountsCard from "@/components/muse/MuseAccountsCard";
 import PricingCard from "@/components/settings/PricingCard";
+import UpdateCard from "@/components/settings/UpdateCard";
 import { MuseStatus } from "@/components/muse/MusePanels";
 import { Card, ErrorBox, Field, Spinner } from "@/components/ui";
 import { api } from "@/lib/client";
@@ -296,6 +297,8 @@ export default function SettingsPage() {
         {s.museMode === "gateway" && <MuseAccountsCard onChanged={() => void api<MuseView>("/api/muse").then(setMuse).catch(() => {})} />}
 
         <MonitorCard />
+
+        <UpdateCard />
 
         <Card title="Cặp đôi cố định cho cả series" className="lg:col-span-2">
           <label className="mb-3 flex items-center gap-2 text-sm font-semibold">

@@ -24,6 +24,9 @@ data/song_library.json
 data/drive_sync.json
 data/songs_used.json
 data/channels.json
+data/remote_sessions.json
+# bản đang cài (gói cài / lần tự cập nhật ghi) — máy phát triển dùng git
+/ban-cai.json
 # Cổng Muse: hàng đợi, video tải về, profile Chrome (có phiên đăng nhập Muse — không bao giờ commit)
 gateway-data/
 data/gateway/

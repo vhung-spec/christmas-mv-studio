@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { errorResponse } from "@/lib/http";
+import { assertSameOrigin, errorResponse } from "@/lib/http";
 import { cancelRender, getJob, startRender } from "@/lib/render";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -11,8 +11,9 @@ export async function GET(_req: Request, { params }: Ctx) {
 }
 
 /** Bắt đầu dựng video (chạy nền — theo dõi bằng GET). */
-export async function POST(_req: Request, { params }: Ctx) {
+export async function POST(req: Request, { params }: Ctx) {
   try {
+    assertSameOrigin(req);
     const { id } = await params;
     return NextResponse.json({ job: await startRender(id) }, { status: 202 });
   } catch (err) {

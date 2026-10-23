@@ -51,7 +51,8 @@ export function initMuseEngine(opts: EngineOptions = {}): MuseEngine {
   g.__mvMuseEngineOpts = opts;
   const dir = opts.dir ?? museDataDir();
   const fake = !opts.page && Boolean(process.env.MUSE_FAKE);
-  const page = opts.page ?? (fake ? new FakeMuse() : new MusePage(new Chrome({ profileDir: activeProfileDir(dir), url: "https://muse.ai" })));
+  // MUSE_URL chỉ dùng để thử (vd. trang đăng nhập giả trên máy) — mặc định trang Muse thật.
+  const page = opts.page ?? (fake ? new FakeMuse() : new MusePage(new Chrome({ profileDir: activeProfileDir(dir), url: process.env.MUSE_URL || "https://muse.ai" })));
   const store = new TaskStore(dir);
   const worker = new Worker({ store, page, outputDir: path.join(/*turbopackIgnore: true*/ dir, "videos"), ...(fake ? { gapMs: 1000, pollMs: 1000 } : {}), ...opts.worker });
   g.__mvMuseEngine = { dir, store, worker, page, fake };
@@ -63,6 +64,9 @@ export function initMuseEngine(opts: EngineOptions = {}): MuseEngine {
 export function museEngine(): MuseEngine {
   return g.__mvMuseEngine ?? initMuseEngine();
 }
+
+/** Bộ máy Muse nếu đã mở (không tự mở). */
+export const museEngineIfStarted = (): MuseEngine | null => g.__mvMuseEngine ?? null;
 
 /**
  * Tắt bộ máy (dừng nhận việc, đóng Chrome, ghi hàng đợi), chạy `between` lúc Chrome đã tắt (vd. đổi hồ sơ đăng nhập), rồi mở lại

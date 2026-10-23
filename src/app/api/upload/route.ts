@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { setReferenceImages } from "@/lib/generate";
-import { errorResponse } from "@/lib/http";
+import { assertSameOrigin, errorResponse } from "@/lib/http";
 import { UPLOAD_DIR, loadMV } from "@/lib/store";
 
 const ALLOWED = new Set([".png", ".jpg", ".jpeg", ".webp"]);
@@ -11,6 +11,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 /** Upload ảnh tham chiếu nhân vật (dùng cho image-to-video). Đường dẫn được ghi vào Character Bible. */
 export async function POST(req: Request) {
   try {
+    assertSameOrigin(req);
     const form = await req.formData();
     const mvId = String(form.get("mvId") ?? "");
     const characterId = String(form.get("characterId") ?? "").replace(/[^A-Z0-9_]/gi, "");

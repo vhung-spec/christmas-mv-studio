@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { markRemote } from "./client";
 import type { Effort, Engine, ModelPrice } from "./types";
 
 export interface AppStatus {
@@ -26,6 +27,8 @@ export interface AppStatus {
   museOpen: number;
   /** Số việc chưa xong trong dây chuyền tự động. */
   pipelineOpen: number;
+  /** Trang đang mở qua cổng điều khiển từ xa. */
+  remote: boolean;
 }
 
 export const MODE_LABEL: Record<AppStatus["mode"], string> = {
@@ -40,7 +43,10 @@ export function useStatus(deps: unknown[] = []) {
   const reload = useCallback(() => {
     fetch("/api/status")
       .then((r) => r.json())
-      .then(setStatus)
+      .then((s: AppStatus) => {
+        markRemote(s.remote);
+        setStatus(s);
+      })
       .catch(() => setStatus(null));
   }, []);
   useEffect(() => {

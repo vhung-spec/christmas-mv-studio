@@ -153,9 +153,16 @@ export interface Settings {
   driveFolder: string;
   /** Tự đồng bộ kho nhạc từ Drive mỗi 6 giờ (chỉ tải bản nhạc mới). */
   driveAutoSync: boolean;
-  /** Trang theo dõi (chỉ xem) cho máy khác của bạn, chỉ mở trên địa chỉ Tailscale của máy này, cần mật khẩu. */
+  /** Cổng từ xa cho máy khác / điện thoại của bạn, chỉ mở trên địa chỉ Tailscale của máy này, cần mật khẩu. */
   monitorEnabled: boolean;
   monitorPort: number;
+  /** Cổng từ xa cho điều khiển cả app (như ngồi tại máy); tắt = chỉ xem tiến độ. */
+  remoteControl: boolean;
+  /** Tự cập nhật: repo GitHub ("chủ/tên") và nhánh chứa bản mới; token chỉ-đọc nằm trong .env.local (GITHUB_UPDATE_TOKEN). */
+  updateRepo: string;
+  updateBranch: string;
+  /** Tự kiểm tra bản mới mỗi giờ, tải về và tự cài khi app rảnh (cài lỗi thì quay về bản cũ). */
+  autoUpdate: boolean;
   /** Phần trăm số cảnh là "đời sống Giáng sinh thập niên 50" (không có nhân vật chính), 0 = tắt. */
   eraShare: number;
   /** Độ dài video (phút): app tự xếp bài (kiểu Bokin, theo lịch sử từng kênh) cho đủ khoảng chừng này, clip lặp lại cho hết nhạc. */

@@ -5,9 +5,10 @@ import { museOpen } from "@/lib/muse";
 import { ensureMuseWatch, readMuse } from "@/lib/museJobs";
 import { ensurePipelineWatch, readPipeline } from "@/lib/pipeline";
 import { readQueue } from "@/lib/queue";
+import { REMOTE_HEADER } from "@/lib/remote";
 import { listDrafts, readLibraries, readSettings } from "@/lib/store";
 
-export async function GET() {
+export async function GET(req: Request) {
   const settings = await readSettings();
   const libs = await readLibraries();
   const profile = libs.videoModels[settings.videoModel];
@@ -43,5 +44,7 @@ export async function GET() {
     museOpen: museOpen(muse),
     /** Số việc chưa xong trong dây chuyền tự động. */
     pipelineOpen,
+    /** Trang đang mở qua cổng điều khiển từ xa (cổng gắn header này; trình duyệt không tự gắn được). */
+    remote: req.headers.get(REMOTE_HEADER) === "1",
   });
 }

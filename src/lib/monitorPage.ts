@@ -1,14 +1,8 @@
-// Trang theo dõi (chỉ xem) mở trên máy chính của bạn: một file HTML tự đứng, cứ 5 giây đọc /api/status một lần.
+// Trang theo dõi (chỉ xem) của cổng từ xa (/_remote/): một file HTML tự đứng, cứ 5 giây đọc /_remote/api/status một lần.
 // Mọi chữ lấy từ app đều được thoát ký tự trước khi đưa vào trang.
 
-export function monitorPage(): string {
-  return `<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Theo dõi Christmas MV Studio</title>
-<style>
+/** Kiểu chữ / màu chung cho các trang của cổng từ xa (theo dõi, đăng nhập). */
+export const PAGE_STYLE = `
   :root { --bg:#fbf6ec; --card:#fffdf8; --ink:#2b2420; --muted:#7a6f66; --line:#e6dccb; --ok:#2f7d4f; --warn:#a46a00; --bad:#b3261e; --run:#1f5f99; --chip:#f1e9da; }
   @media (prefers-color-scheme: dark) { :root { --bg:#1b1916; --card:#24211d; --ink:#efe8dc; --muted:#a59a8d; --line:#3a352e; --ok:#6cc08f; --warn:#e2b04a; --bad:#ef7b72; --run:#7fb2e5; --chip:#302b25; } }
   * { box-sizing: border-box; }
@@ -33,6 +27,18 @@ export function monitorPage(): string {
   .bar i { display:block; height:100%; background:var(--run); }
   a { color:var(--run); }
   .warnbox { border-color:var(--bad); }
+`;
+
+/** `control` = cổng đang cho điều khiển app (hiện nút mở app). */
+export function monitorPage(control = false): string {
+  return `<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theo dõi Christmas MV Studio</title>
+<style>${PAGE_STYLE}
+  .linkbtn { border:0; background:none; color:var(--run); text-decoration:underline; cursor:pointer; font:inherit; padding:0; }
 </style>
 </head>
 <body>
@@ -41,6 +47,8 @@ export function monitorPage(): string {
     <h1>Christmas MV Studio — theo dõi</h1>
     <span class="muted" id="machine"></span>
     <span class="muted"><span class="dot" id="dot"></span><span id="updated">Đang tải…</span></span>
+    ${control ? '<a href="/pipeline"><b>Mở app để điều khiển →</b></a>' : '<span class="muted">(chỉ xem — điều khiển đang tắt)</span>'}
+    <form method="post" action="/_remote/logout" style="display:inline"><button class="linkbtn" type="submit">Đăng xuất</button></form>
   </header>
   <div class="grid" id="tiles"></div>
   <section id="alerts" class="warnbox" hidden></section>
@@ -80,7 +88,7 @@ function render(s) {
     (disk ? tile("Ổ " + disk.path + " còn trống", gb(disk.free), "trên " + gb(disk.total), disk.free < 10 * 1073741824 ? "error" : "") : "");
   const alerts = [];
   if (s.mode === "manual") alerts.push("Máy chạy chưa có Claude API key — không tự viết được kịch bản.");
-  if (m.loggedIn === false) alerts.push("Muse chưa đăng nhập — vào máy chạy, Cài đặt → Đăng nhập Muse.");
+  if (m.loggedIn === false) alerts.push(${control ? '"Muse chưa đăng nhập — mở app → Clip Muse → Đăng nhập Muse (đăng nhập được ngay trên trang này)."' : '"Muse chưa đăng nhập — vào máy chạy, Cài đặt → Đăng nhập Muse."'});
   if (m.limitHit) alerts.push("Muse báo hết lượt (" + time(new Date(m.limitHit.at).toISOString()) + "): " + m.limitHit.message);
   else if (m.paused) alerts.push("Muse đang dừng: " + m.paused);
   if (m.error) alerts.push("Muse: " + m.error);
@@ -88,7 +96,7 @@ function render(s) {
   if (s.drive.error) alerts.push("Kho nhạc Drive: " + s.drive.error);
   if (s.bank.error) alerts.push("Đề xuất ý tưởng: " + s.bank.error);
   for (const ev of (m.failover || [])) alerts.push(ev.kind === "switch" ? "Đã tự đổi tài khoản Muse “" + ev.from + "” → “" + ev.to + "” (" + time(ev.at) + "): " + ev.reason : "Tài khoản Muse “" + ev.from + "” bị lỗi và hết tài khoản dự phòng (" + time(ev.at) + ") — cần bạn xử lý.");
-  if (s.bank.proposals) alerts.push(s.bank.proposals + " ý tưởng Claude đề xuất đang chờ bạn duyệt (trên máy chạy).");
+  if (s.bank.proposals) alerts.push(s.bank.proposals + " ý tưởng Claude đề xuất đang chờ bạn duyệt (trang Tự động → Kho ý tưởng).");
   for (const c of (s.channels || [])) if (c.active && c.videosLeft <= 1 && s.library) alerts.push("Kênh “" + c.name + "” sắp hết bài mới (còn " + c.unused + " bài chưa dùng) — thêm bài vào kho nhạc trên Drive.");
   if (disk && disk.free < 10 * 1073741824) alerts.push("Ổ " + disk.path + " sắp đầy: còn " + gb(disk.free) + ".");
   $("alerts").hidden = !alerts.length;

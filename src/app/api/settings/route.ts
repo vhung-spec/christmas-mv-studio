@@ -7,8 +7,8 @@ export async function GET() {
   return NextResponse.json(await readSettings());
 }
 
-/** Các mục do thẻ riêng quản lý (Kho nhạc trên Google Drive, Theo dõi từ máy khác): nút Lưu của trang Cài đặt không ghi đè. */
-const OWN_CARDS = ["driveFolder", "driveAutoSync", "monitorEnabled", "monitorPort"] as const;
+/** Các mục do thẻ riêng quản lý (Kho nhạc trên Google Drive, Điều khiển từ xa, Cập nhật app): nút Lưu của trang Cài đặt không ghi đè. */
+const OWN_CARDS = ["driveFolder", "driveAutoSync", "monitorEnabled", "monitorPort", "remoteControl", "updateRepo", "updateBranch", "autoUpdate"] as const;
 
 export async function PUT(req: Request) {
   try {

@@ -1,7 +1,8 @@
-// THEO DÕI TỪ MÁY KHÁC — trang CHỈ XEM (không điều khiển được gì) để máy chính của bạn xem tiến độ của máy chạy app.
-// App chính vẫn chỉ mở ở 127.0.0.1. Trang theo dõi là một cổng riêng CHỈ mở trên địa chỉ Tailscale của máy này (100.x.y.z):
-// máy cùng wifi hay người ngoài không vào được, chỉ các máy đăng nhập cùng tài khoản Tailscale của bạn. Vào trang phải có
-// mật khẩu (bạn tự đặt trong app; lưu dạng băm trong .env.local, không commit). Chỉ dùng phía server.
+// CỔNG TỪ XA — để máy khác / điện thoại của bạn xem tiến độ (trang theo dõi /_remote/) và, khi bật "Cho phép điều khiển",
+// dùng cả app như ngồi tại máy (remote.ts chuyển tiếp mọi trang tới app). App chính vẫn chỉ mở ở 127.0.0.1. Cổng là một máy chủ
+// riêng CHỈ mở trên địa chỉ Tailscale của máy này (100.x.y.z): máy cùng wifi hay người ngoài không vào được, chỉ các máy đăng
+// nhập cùng tài khoản Tailscale của bạn. Vào cổng phải đăng nhập bằng mật khẩu (bạn tự đặt trong app; lưu dạng băm trong
+// .env.local, không commit). Chỉ dùng phía server.
 
 import { createReadStream, promises as fs } from "node:fs";
 import http from "node:http";
@@ -20,6 +21,24 @@ import { museAccounts } from "./museEngine/accounts";
 import { museView } from "./museJobs";
 import { pipelineView } from "./pipeline";
 import { readQueue } from "./queue";
+import {
+  clearLoginFails,
+  clientIp,
+  createSession,
+  dropAllSessions,
+  dropSession,
+  findSession,
+  loginLockedFor,
+  loginPage,
+  messagePage,
+  noteLoginFail,
+  okHost,
+  proxyToApp,
+  safeNext,
+  sameOrigin,
+  sessionCookie,
+  sessionCount,
+} from "./remote";
 import { SAFE_ID, readSettings } from "./store";
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
@@ -56,10 +75,11 @@ export async function checkPassword(pw: string, stored: string | undefined): Pro
 
 export const hasMonitorPassword = () => Boolean(process.env[HASH_ENV]);
 
+/** Đặt / đổi / xoá mật khẩu cổng từ xa — mọi thiết bị đang đăng nhập phải đăng nhập lại. */
 export async function setMonitorPassword(pw: string | null): Promise<void> {
   if (pw !== null && pw.length < 6) throw new Error("Mật khẩu cần ít nhất 6 ký tự.");
   await setEnvLine(HASH_ENV, pw === null ? null : await hashPassword(pw));
-  mem.okAuth.clear();
+  await dropAllSessions();
 }
 
 // ---------- Ảnh chụp tình trạng (cho trang theo dõi) ----------
@@ -75,7 +95,7 @@ async function diskFree(dir: string): Promise<{ path: string; free: number; tota
 
 /** Link tải một file kết quả của MV đã xong (video, ảnh bìa, tiêu đề). */
 const fileUrl = (i: { done_at?: string; mv_id?: string }, file?: string) =>
-  i.done_at && i.mv_id && file && SAFE_ID.test(i.mv_id) ? `/file/${i.mv_id}/${encodeURIComponent(file)}` : null;
+  i.done_at && i.mv_id && file && SAFE_ID.test(i.mv_id) ? `/_remote/file/${i.mv_id}/${encodeURIComponent(file)}` : null;
 
 /** File được phép mở từ trang theo dõi: video đã dựng, ảnh bìa, tiêu đề + mô tả (đuôi file, kiểu, luôn tải về). */
 const FILE_TYPES: [RegExp, string, boolean][] = [
@@ -169,63 +189,132 @@ export async function monitorSnapshot() {
 // ---------- Máy chủ ----------
 
 const g = globalThis as unknown as {
-  __mvMonitor?: { servers: Map<string, http.Server>; port: number; error: string | null; okAuth: Map<string, number> };
+  __mvMonitor?: { servers: Map<string, http.Server>; port: number; error: string | null };
 };
-const mem = (g.__mvMonitor ??= { servers: new Map(), port: 0, error: null, okAuth: new Map() });
+const mem = (g.__mvMonitor ??= { servers: new Map(), port: 0, error: null });
 
-const AUTH_CACHE_MS = 10 * 60 * 1000;
+/** Cổng của app chính (start.mjs truyền MVS_APP_PORT; chạy kiểu khác thì PORT hoặc 3100). */
+const appPort = () => Number(process.env.MVS_APP_PORT) || Number(process.env.PORT) || 3100;
+const LOGIN = "/_remote/login";
+const HTML = { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" };
+const TEXT = { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" };
 
-async function authorized(req: http.IncomingMessage): Promise<boolean> {
-  const header = req.headers.authorization ?? "";
-  const cached = mem.okAuth.get(header);
-  if (cached && Date.now() - cached < AUTH_CACHE_MS) return true;
-  const m = header.match(/^Basic\s+(.+)$/i);
-  if (!m) return false;
-  const decoded = Buffer.from(m[1], "base64").toString("utf8");
-  const pw = decoded.slice(decoded.indexOf(":") + 1);
-  if (!(await checkPassword(pw, process.env[HASH_ENV]))) return false;
-  mem.okAuth.set(header, Date.now());
-  return true;
+/** Thân yêu cầu nhỏ (form đăng nhập); quá `max` byte thì bỏ. */
+function readSmallBody(req: http.IncomingMessage, max = 8192): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const parts: Buffer[] = [];
+    req.on("data", (c: Buffer) => {
+      size += c.length;
+      if (size > max) {
+        reject(new Error("quá dài"));
+        req.destroy();
+      } else parts.push(c);
+    });
+    req.on("end", () => resolve(Buffer.concat(parts).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+/** Trang đăng nhập (GET) và kiểm tra mật khẩu (POST): đúng → cookie phiên 30 ngày; sai nhiều lần → khoá 15 phút. */
+async function login(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
+  if (req.method === "GET" || req.method === "HEAD") {
+    res.writeHead(200, HTML).end(loginPage(safeNext(url.searchParams.get("next"), "/pipeline")));
+    return;
+  }
+  if (req.method !== "POST") {
+    res.writeHead(405, TEXT).end();
+    return;
+  }
+  const ip = clientIp(req);
+  const form = new URLSearchParams(await readSmallBody(req));
+  const next = safeNext(form.get("next"), "/pipeline");
+  const locked = loginLockedFor(ip);
+  if (locked) {
+    res.writeHead(429, HTML).end(loginPage(next, `Sai mật khẩu nhiều lần — thử lại sau ${Math.ceil(locked / 60000)} phút.`));
+    return;
+  }
+  if (!(await checkPassword(form.get("password") ?? "", process.env[HASH_ENV]))) {
+    noteLoginFail(ip);
+    await new Promise((r) => setTimeout(r, 600)); // chậm lại khi đoán mật khẩu
+    res.writeHead(401, HTML).end(loginPage(next, "Sai mật khẩu."));
+    return;
+  }
+  clearLoginFails(ip);
+  const token = await createSession(req);
+  // Chưa cho điều khiển → vào trang theo dõi.
+  const to = (await readSettings()).remoteControl ? next : "/_remote/";
+  res.writeHead(303, { Location: to, "Set-Cookie": sessionCookie(token), "Cache-Control": "no-store" }).end();
+}
+
+/** Tải một file kết quả của MV đã xong (video, ảnh bìa, tiêu đề) — có ở cả chế độ chỉ xem. */
+async function serveFile(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
+  const [, , , mvId, file] = url.pathname.split("/");
+  const name = decodeURIComponent(file ?? "");
+  const kind = FILE_TYPES.find(([re]) => re.test(name));
+  if (!SAFE_ID.test(mvId ?? "") || !kind) throw new Error("không có");
+  const p = mediaPath(mvId, name);
+  const st = await fs.stat(p);
+  res.writeHead(200, {
+    "Content-Type": kind[1],
+    "Content-Length": st.size,
+    "Content-Disposition": `${kind[2] || url.searchParams.has("download") ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(name)}`,
+  });
+  if (req.method === "HEAD") res.end();
+  else createReadStream(p).pipe(res);
 }
 
 async function handle(req: http.IncomingMessage, res: http.ServerResponse) {
   res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Cache-Control", "no-store");
-  if (req.method !== "GET" && req.method !== "HEAD") {
-    res.writeHead(405).end();
-    return;
-  }
-  if (!(await authorized(req))) {
-    await new Promise((r) => setTimeout(r, 600)); // chậm lại khi đoán mật khẩu
-    res.writeHead(401, { "WWW-Authenticate": 'Basic realm="Christmas MV Studio - theo doi", charset="UTF-8"', "Content-Type": "text/plain; charset=utf-8" });
-    res.end("Cần mật khẩu trang theo dõi (đặt trong app ở máy chạy: Cài đặt → Theo dõi từ máy khác).");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "same-origin");
+  if (!okHost(req.headers.host, isTailscaleIp)) {
+    res.writeHead(421, TEXT).end("Sai địa chỉ.");
     return;
   }
   const url = new URL(req.url ?? "/", "http://x");
+  const write = req.method !== "GET" && req.method !== "HEAD";
+  // Yêu cầu đổi dữ liệu chỉ nhận từ chính trang của cổng: trang web khác không gửi lệnh thay bạn được.
+  if (write && !sameOrigin(req)) {
+    res.writeHead(403, TEXT).end("Bị chặn: yêu cầu không gửi từ trang của app.");
+    return;
+  }
   try {
-    if (url.pathname === "/") {
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }).end(monitorPage());
-    } else if (url.pathname === "/api/status") {
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" }).end(JSON.stringify(await monitorSnapshot()));
-    } else if (url.pathname.startsWith("/file/")) {
-      const [, , mvId, file] = url.pathname.split("/");
-      const name = decodeURIComponent(file ?? "");
-      const kind = FILE_TYPES.find(([re]) => re.test(name));
-      if (!SAFE_ID.test(mvId ?? "") || !kind) throw new Error("không có");
-      const p = mediaPath(mvId, name);
-      const st = await fs.stat(p);
-      res.writeHead(200, {
-        "Content-Type": kind[1],
-        "Content-Length": st.size,
-        "Content-Disposition": `${kind[2] || url.searchParams.has("download") ? "attachment" : "inline"}; filename*=UTF-8''${encodeURIComponent(name)}`,
-      });
-      if (req.method === "HEAD") res.end();
-      else createReadStream(p).pipe(res);
+    if (url.pathname === LOGIN) return await login(req, res, url);
+    if (!(await findSession(req))) {
+      if (!write && !/^\/(api|_next|_remote\/api)\//.test(url.pathname)) {
+        const next = url.pathname === "/" ? "/pipeline" : url.pathname + url.search;
+        res.writeHead(303, { Location: `${LOGIN}?next=${encodeURIComponent(next)}`, "Cache-Control": "no-store" }).end();
+      } else {
+        res.writeHead(401, { "Content-Type": "application/json; charset=utf-8" }).end(JSON.stringify({ error: "Phiên đăng nhập từ xa đã hết — tải lại trang để đăng nhập lại." }));
+      }
+      return;
+    }
+    if (url.pathname === "/_remote/logout") {
+      await dropSession(req);
+      res.writeHead(303, { Location: LOGIN, "Set-Cookie": sessionCookie(null), "Cache-Control": "no-store" }).end();
+      return;
+    }
+    const s = await readSettings();
+    if (url.pathname === "/_remote" || url.pathname === "/_remote/") {
+      res.writeHead(200, HTML).end(monitorPage(s.remoteControl));
+    } else if (url.pathname === "/_remote/api/status") {
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }).end(JSON.stringify(await monitorSnapshot()));
+    } else if (url.pathname.startsWith("/_remote/file/")) {
+      await serveFile(req, res, url);
+    } else if (url.pathname.startsWith("/_remote/")) {
+      res.writeHead(404, TEXT).end("Không có.");
+    } else if (!s.remoteControl) {
+      if (url.pathname === "/") res.writeHead(303, { Location: "/_remote/" }).end();
+      else
+        res
+          .writeHead(403, HTML)
+          .end(messagePage("Điều khiển từ xa đang tắt", "Cổng này hiện chỉ cho xem tiến độ. Muốn điều khiển app từ xa: ở máy chạy, vào Cài đặt → Điều khiển từ xa → tick “Cho phép điều khiển app”."));
     } else {
-      res.writeHead(404).end();
+      proxyToApp(req, res, appPort());
     }
   } catch {
-    if (!res.headersSent) res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }).end("Không có.");
+    if (!res.headersSent) res.writeHead(404, TEXT).end("Không có.");
   }
 }
 
@@ -240,7 +329,8 @@ async function stopAll() {
  */
 export async function syncMonitor(hosts?: string[]): Promise<void> {
   const s = await readSettings();
-  const want = s.monitorEnabled && hasMonitorPassword() ? (hosts ?? tailscaleAddresses()) : [];
+  // MVS_MONITOR_LOOPBACK=1: mở trên 127.0.0.1 để thử trên chính máy này (chỉ máy này vào được).
+  const want = s.monitorEnabled && hasMonitorPassword() ? (hosts ?? (process.env.MVS_MONITOR_LOOPBACK ? ["127.0.0.1"] : tailscaleAddresses())) : [];
   const same = mem.port === s.monitorPort && want.length === mem.servers.size && want.every((h) => mem.servers.has(h));
   if (same) return;
   await stopAll();
@@ -248,6 +338,9 @@ export async function syncMonitor(hosts?: string[]): Promise<void> {
   mem.error = null;
   for (const host of want) {
     const server = http.createServer((req, res) => void handle(req, res));
+    // Tải video lớn về / tải nhạc lên qua mạng chậm có thể lâu hơn 5 phút (mặc định của Node).
+    server.requestTimeout = 0;
+    server.headersTimeout = 60e3;
     await new Promise<void>((resolve) => {
       server.once("error", (err: NodeJS.ErrnoException) => {
         mem.error = err.code === "EADDRINUSE" ? `Cổng ${s.monitorPort} đang bị chương trình khác dùng — đổi cổng khác.` : err.message;
@@ -274,7 +367,11 @@ export async function monitorStatus() {
   return {
     enabled: s.monitorEnabled,
     port: s.monitorPort,
+    /** Cho điều khiển cả app (không chỉ xem). */
+    control: s.remoteControl,
     hasPassword: hasMonitorPassword(),
+    /** Số thiết bị đang đăng nhập (phiên còn hạn). */
+    sessions: await sessionCount(),
     addresses,
     machine: os.hostname().toLowerCase(),
     listening,
@@ -282,3 +379,6 @@ export async function monitorStatus() {
     error: mem.error,
   };
 }
+
+/** Đăng xuất mọi thiết bị đang mở cổng từ xa. */
+export const logoutAllRemote = () => dropAllSessions();

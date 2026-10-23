@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { errorResponse } from "@/lib/http";
+import { assertSameOrigin, errorResponse } from "@/lib/http";
 import { matrixToIdeas, parseCsv, parseIdeaTable } from "@/lib/parser";
 import { readFirstSheet } from "@/lib/xlsx";
 
@@ -12,6 +12,7 @@ const MAX_BYTES = 5 * 1024 * 1024;
  */
 export async function POST(req: Request) {
   try {
+    assertSameOrigin(req);
     const type = req.headers.get("content-type") ?? "";
     if (type.includes("multipart/form-data")) {
       const form = await req.formData();

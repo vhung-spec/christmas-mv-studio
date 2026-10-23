@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { parseExportJson } from "@/lib/exporters";
 import { importMVs } from "@/lib/generate";
-import { errorResponse } from "@/lib/http";
+import { assertSameOrigin, errorResponse } from "@/lib/http";
 import { summarize } from "@/lib/store";
 
 /** Nhập lại file JSON đã xuất từ công cụ (một hoặc nhiều MV). */
 export async function POST(req: Request) {
   try {
+    assertSameOrigin(req);
     const text = await req.text();
     let mvs;
     try {
