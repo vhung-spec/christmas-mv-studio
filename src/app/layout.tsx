@@ -3,8 +3,8 @@ import Nav from "@/components/Nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MV Prompt Studio",
-  description: "Tạo bộ prompt video cho MV Rock & Roll / Doo-Wop thập niên 1950",
+  title: "Christmas MV Studio",
+  description: "Làm video nhạc Giáng sinh cổ điển thập niên 1950 dài ~1 tiếng: kịch bản, clip Muse, ghép danh sách nhạc",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

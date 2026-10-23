@@ -1,4 +1,4 @@
-// Lập kế hoạch dựng: rải 15–20 clip lên suốt bài hát, lặp lại cảnh theo từng đoạn, cắt theo nhịp.
+// Lập kế hoạch dựng: rải 20–30 clip lên suốt danh sách nhạc (~1 tiếng), lặp lại cảnh theo từng vòng / từng đoạn, cắt theo nhịp.
 // Hàm thuần (không đọc file) — dùng chung cho xem trước trên trình duyệt và lúc dựng thật bằng ffmpeg.
 
 import { DEFAULT_INTRO, DEFAULT_LOGO_LAYOUT, DEFAULT_METADATA } from "./branding";
@@ -17,7 +17,8 @@ export const DEFAULT_EDIT_OPTIONS: EditOptions = {
   flipRepeats: false,
   fadeIn: 1,
   fadeOut: 2,
-  seed: 0,
+  // Video ~1 tiếng lặp clip hơn chục vòng: các vòng sau vòng đầu được xáo thứ tự cho đỡ nhàm (không tốn thêm thời gian dựng).
+  seed: 7,
   quality: "youtube",
   loudness: DEFAULT_LOUDNESS,
   logo: DEFAULT_LOGO_LAYOUT,

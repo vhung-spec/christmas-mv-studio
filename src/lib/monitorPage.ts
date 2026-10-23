@@ -7,7 +7,7 @@ export function monitorPage(): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Theo dõi MV Prompt Studio</title>
+<title>Theo dõi Christmas MV Studio</title>
 <style>
   :root { --bg:#fbf6ec; --card:#fffdf8; --ink:#2b2420; --muted:#7a6f66; --line:#e6dccb; --ok:#2f7d4f; --warn:#a46a00; --bad:#b3261e; --run:#1f5f99; --chip:#f1e9da; }
   @media (prefers-color-scheme: dark) { :root { --bg:#1b1916; --card:#24211d; --ink:#efe8dc; --muted:#a59a8d; --line:#3a352e; --ok:#6cc08f; --warn:#e2b04a; --bad:#ef7b72; --run:#7fb2e5; --chip:#302b25; } }
@@ -38,7 +38,7 @@ export function monitorPage(): string {
 <body>
 <main>
   <header>
-    <h1>MV Prompt Studio — theo dõi</h1>
+    <h1>Christmas MV Studio — theo dõi</h1>
     <span class="muted" id="machine"></span>
     <span class="muted"><span class="dot" id="dot"></span><span id="updated">Đang tải…</span></span>
   </header>
@@ -53,7 +53,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const time = (iso) => iso ? new Date(iso).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) : "";
 const gb = (b) => (b / 1073741824).toFixed(1) + " GB";
-const STEP = { script: "Kịch bản", song: "Bài hát", clips: "Clip Muse", render: "Dựng MP4" };
+const STEP = { script: "Kịch bản", song: "Nhạc", clips: "Clip Muse", render: "Dựng MP4" };
 const ICON = { pending: "·", running: "…", waiting: "⏸", done: "✓", error: "✗" };
 const ORDER = ["script", "song", "clips", "render"];
 function focus(it) {

@@ -1,392 +1,288 @@
 {
   "T01": {
-    "name": "Sét ái tình",
-    "group": "Tình yêu",
-    "mood": "love at first sight, breathless, time stops",
+    "name": "Đêm Giáng sinh lãng mạn",
+    "group": "Lãng mạn",
+    "mood": "romantic Christmas Eve, snowfall magic, a first kiss, time slowing down",
     "pacing": "mid",
     "signature_shots": [
-      "eye-contact slow motion",
-      "crowd blurs around the couple",
-      "freeze-frame glance"
+      "kiss under the mistletoe",
+      "snowflakes catching in her hair in slow motion",
+      "silhouettes against a glowing shop window"
     ],
-    "description_vi": "Tiếng sét ái tình: một ánh mắt khiến thế giới xung quanh như ngừng lại.",
+    "description_vi": "Đêm Giáng sinh tuyết rơi, hai người và một nụ hôn đầu dưới cành tầm gửi.",
     "needs_review": false
   },
   "T02": {
-    "name": "Tỏ tình thầm lặng",
-    "group": "Tình yêu",
-    "mood": "shy unspoken love, secret crush, stolen glances, tender hope",
-    "pacing": "slow",
+    "name": "Hẹn hò trượt băng",
+    "group": "Lãng mạn",
+    "mood": "playful winter date, laughter on the ice, holding hands, rosy cheeks",
+    "pacing": "fast",
     "signature_shots": [
-      "peeking from behind an object",
-      "rack focus from one face to the other",
-      "a small note or gift slipped over quietly"
+      "skating hand in hand, low tracking shot along the ice",
+      "a wobble and a catch on the ice",
+      "slow orbit around the skaters under strings of bulbs"
     ],
-    "description_vi": "Yêu thầm, chưa dám nói, chỉ dám nhìn và quan tâm từ xa.",
+    "description_vi": "Buổi hẹn trên sân băng: vấp ngã, đỡ nhau, cười vang dưới dây đèn.",
     "needs_review": false
   },
   "T03": {
-    "name": "Cầu xin nhận lời",
-    "group": "Tình yêu",
-    "mood": "earnest pleading, hopeful, heart on the sleeve, sweet persistence",
+    "name": "Về nhà đón Giáng sinh",
+    "group": "Hoài niệm",
+    "mood": "homecoming, longing turning into joy, warm reunion",
     "pacing": "mid",
     "signature_shots": [
-      "serenade under a window",
-      "offering flowers at the doorstep",
-      "hopeful close-up waiting for her answer"
+      "a train pulling into a snowy station",
+      "a front door opening onto a warm golden room",
+      "a tight hug at the doorstep in falling snow"
     ],
-    "description_vi": "Chàng trai tha thiết xin cô gái cho mình một cơ hội.",
+    "description_vi": "Người đi xa trở về đúng đêm Giáng sinh, cả nhà ùa ra đón.",
     "needs_review": false
   },
   "T04": {
-    "name": "Theo đuổi & chinh phục",
-    "group": "Tình yêu",
-    "mood": "determined, energetic courtship, comedic persistence",
-    "pacing": "fast",
+    "name": "Gia đình quây quần",
+    "group": "Gia đình",
+    "mood": "family togetherness, warmth, gratitude around a candlelit table",
+    "pacing": "slow",
     "signature_shots": [
-      "running alongside a moving car or bus",
-      "grand gesture in public",
-      "split-diopter shot of both characters"
+      "wide shot of the family around a candlelit dinner table",
+      "hands passing a roast across the table",
+      "grandparents smiling at the children"
     ],
-    "description_vi": "Kiên trì theo đuổi đến khi cô gái gật đầu.",
+    "description_vi": "Bữa tối Giáng sinh ấm cúng, ba thế hệ bên nhau.",
     "needs_review": false
   },
   "T05": {
-    "name": "Em là người duy nhất",
-    "group": "Tình yêu",
-    "mood": "devoted, exclusive, everyone else fades away",
+    "name": "Trang trí cây thông",
+    "group": "Gia đình",
+    "mood": "joyful anticipation, decorating together, sparkle and tinsel",
     "pacing": "mid",
     "signature_shots": [
-      "crowd in soft focus while she stays sharp",
-      "warm light falling only on her",
-      "he ignores every other glance in the room"
+      "lifting a child to place the star on top of the tree",
+      "colored bulb lights switching on across the tree",
+      "close-up of a glass ornament reflecting the room"
     ],
-    "description_vi": "Giữa bao người, chỉ có em.",
+    "description_vi": "Cả nhà trang trí cây thông, khoảnh khắc đèn cây bật sáng.",
     "needs_review": false
   },
   "T06": {
-    "name": "Trao trọn trái tim",
-    "group": "Tình yêu",
-    "mood": "wholehearted surrender, sincere, warm",
-    "pacing": "mid",
+    "name": "Sáng Giáng sinh mở quà",
+    "group": "Trẻ thơ",
+    "mood": "wide-eyed wonder, Christmas morning excitement, pajamas and ribbons",
+    "pacing": "fast",
     "signature_shots": [
-      "hand on heart close-up",
-      "giving a keepsake such as a locket or a letterman jacket",
-      "slow embrace with the camera circling"
+      "kids running down the stairs at dawn",
+      "wrapping paper torn open in slow motion",
+      "a toy train circling under the tree"
     ],
-    "description_vi": "Trao trọn trái tim, không giữ lại gì.",
+    "description_vi": "Sáng sớm Giáng sinh, trẻ con chạy xuống cầu thang mở quà.",
     "needs_review": false
   },
   "T07": {
-    "name": "Chỉ cần có em",
-    "group": "Tình yêu",
-    "mood": "simple contentment, you are all I need, cozy and sweet",
+    "name": "Ông già Noel đến thăm",
+    "group": "Trẻ thơ",
+    "mood": "magic and wonder, belief in Santa, hushed excitement",
     "pacing": "mid",
     "signature_shots": [
-      "two straws in one milkshake",
-      "walking together with nothing else in the world",
-      "montage of small everyday moments"
+      "children peeking from the stairs at a red-suited figure by the fireplace",
+      "a sleigh silhouette crossing the full moon",
+      "milk and cookies left by the hearth"
     ],
-    "description_vi": "Không cần gì hơn, chỉ cần có em bên cạnh.",
+    "description_vi": "Đêm ông già Noel ghé qua, bọn trẻ nín thở nhìn trộm.",
     "needs_review": false
   },
   "T08": {
-    "name": "Say đắm & ngây ngất",
-    "group": "Tình yêu",
-    "mood": "dreamy, euphoric, intoxicated by love",
-    "pacing": "mid",
+    "name": "Thư gửi ông già Noel",
+    "group": "Trẻ thơ",
+    "mood": "innocent hope, a child's wish, tender and quiet",
+    "pacing": "slow",
     "signature_shots": [
-      "spinning camera",
-      "lens flare",
-      "montage of night adventures"
+      "a pencil writing a letter by lamplight",
+      "a letter dropped into a red mailbox in the snow",
+      "a wish whispered at a frosted window"
     ],
-    "description_vi": "Say đắm, ngây ngất như đang mơ giữa đêm hè.",
+    "description_vi": "Một đứa trẻ viết thư xin quà, và điều ước nhỏ thành sự thật.",
     "needs_review": false
   },
   "T09": {
-    "name": "Rung động mãnh liệt",
-    "group": "Tình yêu",
-    "mood": "electric, heart-pounding, high energy",
-    "pacing": "fast",
+    "name": "Tuyết đầu mùa",
+    "group": "Ấm cúng",
+    "mood": "quiet wonder, first snow, the hush of winter",
+    "pacing": "slow",
     "signature_shots": [
-      "fast cuts on beat",
-      "dance close-ups",
-      "reaction shots"
+      "first snowflakes landing on an open palm",
+      "a sleepy street slowly turning white",
+      "breath fogging a window as faces look out"
     ],
-    "description_vi": "Trái tim rung lên mãnh liệt, không giữ nổi bình tĩnh.",
+    "description_vi": "Trận tuyết đầu mùa phủ trắng thị trấn, mọi người ngẩng lên nhìn trời.",
     "needs_review": false
   },
   "T10": {
-    "name": "Tình yêu là phép màu",
-    "group": "Tình yêu",
-    "mood": "magical, wonder, sparkling, dreamlike",
+    "name": "Phố đèn Giáng sinh",
+    "group": "Phố phường",
+    "mood": "festive bustle, sparkling lights, shopping excitement",
     "pacing": "mid",
     "signature_shots": [
-      "fireworks or string lights blooming behind them",
-      "soft glowing halation on the couple",
-      "slow-motion twirl under the lights"
+      "a department store window with animated toys",
+      "crowds with shopping bags under garlands of lights",
+      "a bell ringer beside a red kettle on the corner"
     ],
-    "description_vi": "Tình yêu như một phép màu làm mọi thứ lấp lánh.",
+    "description_vi": "Phố mua sắm đông vui, tủ kính bày đồ chơi chuyển động, đèn giăng khắp nơi.",
     "needs_review": false
   },
   "T11": {
-    "name": "Nụ hôn diệu kỳ",
-    "group": "Tình yêu",
-    "mood": "tender, magical, intimate",
-    "pacing": "slow",
+    "name": "Chợ cây thông",
+    "group": "Phố phường",
+    "mood": "cheerful tradition, crisp air, choosing the perfect tree",
+    "pacing": "mid",
     "signature_shots": [
-      "slow push-in",
-      "soft backlight",
-      "world fades away"
+      "tying a fir tree onto the roof of a car",
+      "a lantern-lit tree lot with steaming breath",
+      "dragging a tree home through the snow"
     ],
-    "description_vi": "Nụ hôn khiến cả thế giới biến mất.",
+    "description_vi": "Đi chọn cây thông ở chợ cây ven đường, buộc lên nóc xe mang về.",
     "needs_review": false
   },
   "T12": {
-    "name": "Thiên thần",
-    "group": "Tình yêu",
-    "mood": "angelic, awe-struck, heavenly beauty, glowing",
+    "name": "Hát mừng Giáng sinh",
+    "group": "Hoài niệm",
+    "mood": "harmony, community, carols in the cold night",
     "pacing": "slow",
     "signature_shots": [
-      "backlit halo of sunlight around her",
-      "she appears through haze and light",
-      "reverent low angle on her smile"
+      "carolers with lanterns at a doorstep",
+      "candlelit faces singing in close-up",
+      "neighbors opening their doors to listen"
     ],
-    "description_vi": "Cô gái đẹp như thiên thần đi lạc xuống trần gian.",
+    "description_vi": "Nhóm hát thánh ca đi từng nhà, hàng xóm mở cửa lắng nghe.",
     "needs_review": false
   },
   "T13": {
-    "name": "Biết ơn vì có em",
-    "group": "Tình yêu",
-    "mood": "grateful, warm, tender appreciation",
+    "name": "Lò sưởi ấm áp",
+    "group": "Ấm cúng",
+    "mood": "cozy, intimate, firelight and hot cocoa",
     "pacing": "slow",
     "signature_shots": [
-      "quiet look of gratitude across a diner table",
-      "hands held over a checkered tablecloth",
-      "soft morning light on both faces"
+      "stockings hanging over a crackling fire",
+      "steam rising from mugs of cocoa",
+      "a cat curled on a rug by the hearth"
     ],
-    "description_vi": "Biết ơn vì cuộc đời có em.",
+    "description_vi": "Tối mùa đông bên lò sưởi, ca cao nóng và tất treo đầy quà.",
     "needs_review": false
   },
   "T14": {
-    "name": "Em cứu rỗi đời anh",
-    "group": "Tình yêu",
-    "mood": "redemption, from loneliness to light, hopeful rebirth",
-    "pacing": "mid",
+    "name": "Đồi tuyết & xe trượt",
+    "group": "Trẻ thơ",
+    "mood": "exhilaration, winter play, rosy cheeks and laughter",
+    "pacing": "fast",
     "signature_shots": [
-      "lonely figure in the rain, then warm light",
-      "she reaches out a hand",
-      "transition from dim tones to bright color"
+      "a sled racing down a hill past a low camera",
+      "a snowball fight in slow motion",
+      "building a snowman with a carrot nose"
     ],
-    "description_vi": "Em đến và kéo anh ra khỏi những ngày cô đơn.",
+    "description_vi": "Trượt tuyết, ném tuyết, đắp người tuyết trên đồi sau nhà.",
     "needs_review": false
   },
   "T15": {
-    "name": "Thầm kín & thân mật",
-    "group": "Tình yêu",
-    "mood": "intimate, private, whispered confessions",
+    "name": "Nhà thờ đêm Giáng sinh",
+    "group": "Hoài niệm",
+    "mood": "reverent, peaceful, candlelight, silent night",
     "pacing": "slow",
     "signature_shots": [
-      "two silhouettes close together",
-      "whispered secret close-up",
-      "quiet riverside or porch at night"
+      "a candlelight procession into a small church",
+      "a snow-covered chapel glowing in the night",
+      "a children's choir in white robes"
     ],
-    "description_vi": "Những khoảnh khắc riêng tư, thì thầm điều chưa từng nói.",
+    "description_vi": "Lễ nửa đêm trong nhà thờ nhỏ phủ tuyết, nến lung linh.",
     "needs_review": false
   },
   "T16": {
-    "name": "Tình yêu không phai",
-    "group": "Tình yêu",
-    "mood": "enduring, timeless, constant love",
-    "pacing": "slow",
+    "name": "Tiệc Giáng sinh & khiêu vũ",
+    "group": "Lãng mạn",
+    "mood": "festive party, swing dancing, laughter and eggnog",
+    "pacing": "fast",
     "signature_shots": [
-      "the same place across different seasons",
-      "an old photograph held in the hand",
-      "hands holding steady"
+      "couples swing dancing under paper decorations",
+      "a toast with eggnog cups",
+      "a big band playing on a garland-draped stage"
     ],
-    "description_vi": "Tình yêu không phai theo năm tháng.",
+    "description_vi": "Tiệc Giáng sinh ở hội trường, ban nhạc chơi, mọi người nhảy swing.",
     "needs_review": false
   },
   "T17": {
-    "name": "Yêu tới bạc đầu",
-    "group": "Tình yêu",
-    "mood": "lifelong devotion, promise of growing old together",
+    "name": "Giáng sinh xa nhà",
+    "group": "Hoài niệm",
+    "mood": "bittersweet longing, missing home, quiet hope",
     "pacing": "slow",
     "signature_shots": [
-      "porch swing at dusk",
-      "promise exchanged face to face",
-      "looking at the horizon side by side"
+      "reading a letter from home beside a tiny tree",
+      "a call home from a phone booth in the snow",
+      "an old photograph lit by a single candle"
     ],
-    "description_vi": "Hứa yêu nhau tới khi tóc bạc.",
+    "description_vi": "Đón Giáng sinh một mình nơi xa, nhớ nhà nhưng vẫn ấm lòng.",
     "needs_review": false
   },
   "T18": {
-    "name": "Mối tình đầu mãi mãi",
-    "group": "Tình yêu",
-    "mood": "first love, innocence, nostalgic forever",
-    "pacing": "mid",
+    "name": "Làng tuyết yên bình",
+    "group": "Ấm cúng",
+    "mood": "serene, picture-postcard, peaceful snowy village",
+    "pacing": "slow",
     "signature_shots": [
-      "carving initials on a tree",
-      "first dance at the sock hop",
-      "shy glance down a school hallway"
+      "a horse-drawn sleigh crossing a covered bridge",
+      "smoke curling from chimneys over a snowy village",
+      "a church steeple under a starry sky"
     ],
-    "description_vi": "Mối tình đầu ngây thơ, nhớ mãi.",
+    "description_vi": "Ngôi làng phủ tuyết như tấm thiệp Giáng sinh, yên bình và lấp lánh.",
     "needs_review": false
   },
   "T19": {
-    "name": "Yêu xa",
-    "group": "Thử thách",
-    "mood": "long-distance longing, letters and phone calls, hopeful waiting",
-    "pacing": "slow",
+    "name": "Bếp Giáng sinh",
+    "group": "Gia đình",
+    "mood": "homey bustle, baking together, sweet smells and flour",
+    "pacing": "mid",
     "signature_shots": [
-      "writing a letter by lamplight",
-      "a call from a phone booth",
-      "train station farewell or reunion"
+      "rolling and cutting gingerbread cookies",
+      "flour dust floating in a sunbeam",
+      "a pie pulled warm from the oven"
     ],
-    "description_vi": "Xa nhau nhưng vẫn chờ, vẫn nhớ.",
+    "description_vi": "Cả nhà làm bánh gừng, nướng bánh trong căn bếp ấm áp.",
     "needs_review": false
   },
   "T20": {
-    "name": "Ghen dễ thương",
-    "group": "Thử thách",
-    "mood": "playful jealousy, pouting, comedic",
+    "name": "Đêm Giao thừa",
+    "group": "Lãng mạn",
+    "mood": "anticipation, countdown, hope for the new year",
     "pacing": "fast",
     "signature_shots": [
-      "side-eye at a rival",
-      "pouty arms-crossed close-up",
-      "playful tug away from the crowd"
+      "confetti and streamers at midnight",
+      "a kiss at the stroke of midnight",
+      "a crowd blowing paper horns"
     ],
-    "description_vi": "Ghen một chút cho đáng yêu.",
+    "description_vi": "Tiệc cuối năm, đếm ngược nửa đêm, hoa giấy tung bay.",
     "needs_review": false
   },
   "T21": {
-    "name": "Giận rồi làm lành",
-    "group": "Thử thách",
-    "mood": "bittersweet tension turning into warm reconciliation",
+    "name": "Chuyến tàu Giáng sinh",
+    "group": "Hoài niệm",
+    "mood": "journey, anticipation, the nostalgia of rail travel in winter",
     "pacing": "mid",
     "signature_shots": [
-      "backs turned to each other in one frame",
-      "slow turn-around reveal",
-      "running reunion embrace"
+      "a steam locomotive crossing a snowy valley",
+      "faces at a frosted train window",
+      "a conductor in a cap calling all aboard"
     ],
-    "description_vi": "Giận hờn rồi lại làm lành.",
+    "description_vi": "Chuyến tàu hơi nước băng qua thung lũng tuyết đưa mọi người về nhà.",
     "needs_review": false
   },
   "T22": {
-    "name": "Gặp lại tình cũ",
-    "group": "Thử thách",
-    "mood": "bittersweet reunion, nostalgia, rekindled spark",
-    "pacing": "slow",
-    "signature_shots": [
-      "recognition across a crowded room",
-      "hesitant approach",
-      "warm-toned flashback of old memories"
-    ],
-    "description_vi": "Tình cờ gặp lại người xưa.",
-    "needs_review": false
-  },
-  "T23": {
-    "name": "Cầu hôn & cưới",
-    "group": "Hôn nhân",
-    "mood": "triumphant devotion, proposal and wedding joy",
+    "name": "Món quà bất ngờ",
+    "group": "Lãng mạn",
+    "mood": "tender surprise, generosity, small loving gestures",
     "pacing": "mid",
     "signature_shots": [
-      "kneeling proposal with a small ring box",
-      "rice thrown on the church steps",
-      "first dance as newlyweds"
+      "a small wrapped box hidden behind the back",
+      "eyes lighting up as a ribbon is pulled",
+      "a gift left on a doorstep in the snow"
     ],
-    "description_vi": "Lời cầu hôn và ngày cưới.",
-    "needs_review": false
-  },
-  "T24": {
-    "name": "Hạnh phúc bình dị",
-    "group": "Hôn nhân",
-    "mood": "simple domestic bliss, warm married life",
-    "pacing": "mid",
-    "signature_shots": [
-      "dancing in the kitchen to the radio",
-      "evening on the front porch",
-      "Sunday drive together"
-    ],
-    "description_vi": "Hạnh phúc vợ chồng giản dị mỗi ngày.",
-    "needs_review": false
-  },
-  "T25": {
-    "name": "Nhớ ngày xưa",
-    "group": "Hoài niệm",
-    "mood": "nostalgia, memories of the old days, sepia warmth",
-    "pacing": "slow",
-    "signature_shots": [
-      "an old jukebox glowing",
-      "a faded photograph",
-      "slow dolly through an empty diner"
-    ],
-    "description_vi": "Hoài niệm những ngày xưa cũ.",
-    "needs_review": false
-  },
-  "T26": {
-    "name": "Nhớ tuổi trẻ",
-    "group": "Hoài niệm",
-    "mood": "youthful nostalgia, carefree teenage days",
-    "pacing": "mid",
-    "signature_shots": [
-      "friends piling into a convertible",
-      "crowded sock hop",
-      "laughter at the malt shop counter"
-    ],
-    "description_vi": "Nhớ tuổi trẻ vô tư.",
-    "needs_review": false
-  },
-  "T27": {
-    "name": "Ước quay ngược thời gian",
-    "group": "Hoài niệm",
-    "mood": "wistful yearning to turn back time",
-    "pacing": "slow",
-    "signature_shots": [
-      "clock hands close-up",
-      "double exposure of past and present",
-      "standing alone at the old meeting spot"
-    ],
-    "description_vi": "Ước gì quay lại được ngày ấy.",
-    "needs_review": false
-  },
-  "T28": {
-    "name": "Tự do & rong chơi",
-    "group": "Cuộc sống & tự do",
-    "mood": "carefree freedom, wind in the hair, open-road adventure",
-    "pacing": "fast",
-    "signature_shots": [
-      "low tracking shot alongside a convertible",
-      "hair and scarf blowing in the wind",
-      "wide shot of the open road"
-    ],
-    "description_vi": "Tự do rong chơi trên những cung đường.",
-    "needs_review": false
-  },
-  "T29": {
-    "name": "Tình quê hương",
-    "group": "Cuộc sống & tự do",
-    "mood": "hometown love, small-town warmth, roots",
-    "pacing": "mid",
-    "signature_shots": [
-      "main street of a small town",
-      "county fair at dusk",
-      "front porch with family"
-    ],
-    "description_vi": "Tình yêu quê nhà, phố nhỏ thân quen.",
-    "needs_review": false
-  },
-  "T30": {
-    "name": "Lát cắt đời thường 50s",
-    "group": "Cuộc sống & tự do",
-    "mood": "lively slice of 1950s everyday life, upbeat and joyful",
-    "pacing": "fast",
-    "signature_shots": [
-      "busy diner at rush hour",
-      "dancing in the street",
-      "crowd around a jukebox"
-    ],
-    "description_vi": "Lát cắt đời thường sôi động của thập niên 50.",
+    "description_vi": "Một món quà nhỏ giấu kín và khoảnh khắc mở ra đầy xúc động.",
     "needs_review": false
   }
 }

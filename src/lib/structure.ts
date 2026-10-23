@@ -1,4 +1,5 @@
-// Chia thời lượng bài hát thành danh sách cảnh — thuần code, không gọi LLM.
+// Chia thời lượng một vòng cảnh thành danh sách cảnh — thuần code, không gọi LLM.
+// Video Giáng sinh dài ~1 tiếng: kịch bản viết cho một vòng 20–30 clip (khung kiểu một bài hát), khi dựng vòng này lặp lại cho hết nhạc.
 
 import type {
   IdeaRow,
@@ -12,15 +13,25 @@ import type {
 } from "./types";
 
 export const DEFAULT_SONG_STRUCTURE: SongSection[] = [
-  { name: "Intro", ratio: 8, role_vi: "Thiết lập bối cảnh: establishing shot, landmark, năm", role_en: "Establish the world: establishing shot, landmark, the year" },
-  { name: "Verse 1", ratio: 17, role_vi: "Giới thiệu nhân vật, đời thường", role_en: "Introduce the characters in their everyday life" },
-  { name: "Pre-chorus", ratio: 8, role_vi: "Khoảnh khắc khơi mào (ánh mắt, cái chạm)", role_en: "The spark: a glance, a touch" },
-  { name: "Chorus 1", ratio: 15, role_vi: "Cao trào cảm xúc của chủ đề", role_en: "First emotional peak of the theme" },
-  { name: "Verse 2", ratio: 15, role_vi: "Câu chuyện tiến triển", role_en: "The story develops" },
-  { name: "Chorus 2", ratio: 12, role_vi: "Cao trào, nhiều chuyển động hơn", role_en: "Second peak with more movement" },
-  { name: "Bridge", ratio: 10, role_vi: "Khoảnh khắc lắng hoặc bước ngoặt", role_en: "A quiet moment or a turning point" },
-  { name: "Final chorus", ratio: 10, role_vi: "Cao trào lớn nhất", role_en: "The biggest climax" },
-  { name: "Outro", ratio: 5, role_vi: "Kết, cảnh rộng, khép lại câu chuyện", role_en: "Resolution: wide shot that closes the story" },
+  { name: "Intro", ratio: 8, role_vi: "Thiết lập mùa Giáng sinh: toàn cảnh tuyết, landmark, năm", role_en: "Establish the snowy Christmas world: establishing shot, landmark, the year" },
+  {
+    name: "Verse 1",
+    ratio: 17,
+    role_vi: "Ngày cận Giáng sinh: nhân vật (hoặc cả thị trấn) chuẩn bị đón lễ",
+    role_en: "The days before Christmas: the characters (or the whole town) getting ready — shopping, the tree, decorations",
+  },
+  { name: "Pre-chorus", ratio: 8, role_vi: "Khoảnh khắc kỳ diệu nhỏ: tuyết đầu mùa, đèn bật sáng", role_en: "A small magical moment: the first snowflakes, the lights switching on" },
+  { name: "Chorus 1", ratio: 15, role_vi: "Niềm vui mùa lễ, cao trào cảm xúc đầu tiên", role_en: "The joy of the season: first emotional peak of the theme" },
+  { name: "Verse 2", ratio: 15, role_vi: "Buổi tối ấm áp, câu chuyện tiến triển", role_en: "A warm evening: the story develops" },
+  {
+    name: "Chorus 2",
+    ratio: 12,
+    role_vi: "Vui chơi mùa đông, nhiều chuyển động: trượt băng, trượt tuyết, khiêu vũ",
+    role_en: "Winter celebration with more movement: skating, sledding, dancing",
+  },
+  { name: "Bridge", ratio: 10, role_vi: "Khoảnh khắc lắng: nến, cửa sổ, một điều ước", role_en: "A quiet, tender moment: candlelight, a window, a wish" },
+  { name: "Final chorus", ratio: 10, role_vi: "Niềm vui Giáng sinh lớn nhất: quà, sum họp", role_en: "The biggest Christmas joy: gifts, gathering, the climax" },
+  { name: "Outro", ratio: 5, role_vi: "Đêm thánh vô cùng: cảnh rộng tuyết rơi, khép lại câu chuyện", role_en: "Silent night: a wide shot in falling snow that closes the story" },
 ];
 
 export const MIN_CLIP_LEN = 3;
@@ -36,7 +47,7 @@ export interface StructureInput {
   sections?: SongSection[];
   lyrics?: string | null;
   signatureShots?: string[];
-  /** Tỉ lệ cảnh "đời sống thập niên 50" (0–0.5). */
+  /** Tỉ lệ cảnh "đời sống Giáng sinh thập niên 50" (0–0.5). */
   eraShare?: number;
 }
 
@@ -323,8 +334,8 @@ function assignSignatureShots(shots: PlannedShot[], signatureShots: string[]) {
 }
 
 /**
- * Cảnh "đời sống thập niên 50" (không có cặp đôi) để MV như một thước phim kỷ niệm: cảnh mở đầu và các cảnh rải đều trong bài,
- * không liền nhau, không phải cảnh cuối (dành cho cặp đôi khép chuyện), cảnh signature hay cảnh nhảy của cặp đôi.
+ * Cảnh "đời sống Giáng sinh thập niên 50" (không có nhân vật chính) để video như một thước phim kỷ niệm: cảnh mở đầu và các cảnh
+ * rải đều trong vòng cảnh, không liền nhau, không phải cảnh cuối (dành cho nhân vật khép chuyện), cảnh signature hay cảnh chuyển động.
  */
 export function assignEraLife(shots: PlannedShot[], share: number) {
   const n = shots.length;

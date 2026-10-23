@@ -172,7 +172,7 @@ export default function SettingsPage() {
                 onChange={(e) => set("clipLen", e.target.value ? Number(e.target.value) : null)}
               />
             </Field>
-            <Field label="Số cảnh mỗi MV (tối thiểu – tối đa)" hint="Số cảnh = số prompt. Bài dài hơn sẽ dùng lại các cảnh khi dựng.">
+            <Field label="Số cảnh mỗi video (tối thiểu – tối đa)" hint="Số cảnh = số prompt = số clip Muse (mỗi clip khoảng 10 giây). Khi dựng, các clip lặp lại cho hết danh sách nhạc (~1 tiếng).">
               <div className="flex items-center gap-2">
                 <input className="input" type="number" min={1} max={200} value={s.minShots} onChange={(e) => set("minShots", Number(e.target.value))} />
                 <span>–</span>
@@ -180,13 +180,16 @@ export default function SettingsPage() {
               </div>
             </Field>
             <Field
-              label="Cảnh đời sống thập niên 50 (% số cảnh)"
-              hint="Cảnh không có cặp đôi: quán soda, jukebox, phố xá, xe cổ, gia đình bên TV… để MV như thước phim kỷ niệm. 0 = tắt, tối đa 50."
+              label="Cảnh đời sống Giáng sinh 50s (% số cảnh)"
+              hint="Cảnh không có nhân vật chính: nhóm hát mừng, chợ cây thông, ông già Noel ở cửa hàng, trẻ con trượt tuyết, tàu hơi nước trong tuyết… để video như thước phim kỷ niệm. 0 = tắt, tối đa 50."
             >
               <input className="input" type="number" min={0} max={50} step={5} value={s.eraShare} onChange={(e) => set("eraShare", Number(e.target.value))} />
             </Field>
-            <Field label="Thời lượng mặc định (giây)">
+            <Field label="Độ dài một vòng cảnh (giây)" hint="Kịch bản viết cho một vòng cảnh (vd. 250 giây ≈ 25 clip × 10 giây); số cảnh vẫn nằm trong khoảng tối thiểu – tối đa ở trên.">
               <input className="input" type="number" min={10} max={1200} value={s.defaultDuration} onChange={(e) => set("defaultDuration", Number(e.target.value))} />
+            </Field>
+            <Field label="Độ dài video (phút)" hint="App ghép các bài nhạc chưa dùng trong Thư mục nhạc cho đủ khoảng chừng này phút (mỗi bài một bản), rồi lặp clip cho hết nhạc.">
+              <input className="input" type="number" min={1} max={600} step={5} value={s.videoMinutes} onChange={(e) => set("videoMinutes", Number(e.target.value))} />
             </Field>
             <Field label="Style preset mặc định">
               <select className="input" value={s.stylePreset} onChange={(e) => set("stylePreset", e.target.value)}>
@@ -240,8 +243,8 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-3">
               <Field
-                label="Thư mục nhạc (tự ghép bài hát)"
-                hint="MV chưa có bài hát → app tự tìm file nhạc trùng tên bài (hoặc theo số ý tưởng) trong thư mục này, vd. D:\KHO NHAC. Ghi tên không kèm ổ đĩa (vd. KHO NHAC) = thư mục nằm cạnh thư mục app. Để trống = không tự ghép."
+                label="Thư mục nhạc Giáng sinh (tự ghép danh sách nhạc)"
+                hint="Video chưa có nhạc → app lấy lần lượt các bài chưa dùng trong thư mục này (theo số bài: 1.wav, 2.mp3…; mỗi bài một bản, bỏ qua bản ghi “đã dùng”) cho đủ “Độ dài video”, rồi nối thành một file. Một file dài sẵn (vd. bản mix 1 tiếng) cũng dùng được. Ghi tên không kèm ổ đĩa (vd. KHO NHAC GIANG SINH) = thư mục nằm cạnh thư mục app. Để trống = không tự ghép."
               >
                 <input className="input" value={s.songDir} onChange={(e) => set("songDir", e.target.value)} />
               </Field>
@@ -294,7 +297,8 @@ export default function SettingsPage() {
             Dùng chung một cặp đôi cho mọi MV trong cùng series
           </label>
           <p className="mb-3 text-xs text-muted">
-            Bật lên: MV đầu tiên của mỗi series sẽ tạo cặp đôi (HE/SHE) và lưu lại; các MV sau dùng nguyên văn. Tắt: mỗi MV có cặp đôi riêng. Có thể sửa trực tiếp ở
+            Bật lên: video đầu tiên của mỗi series sẽ tạo cặp đôi (HE/SHE) và lưu lại; các video sau dùng nguyên văn. Tắt (khuyên dùng): mỗi video tự chọn nhân vật
+            theo ý tưởng — cặp đôi, gia đình, trẻ em, hoặc chỉ cảnh. Có thể sửa trực tiếp ở
             đây hoặc từ trang kết quả (“Lưu làm cặp đôi cố định”).
           </p>
           {Object.keys(couples).length === 0 && <p className="text-sm text-muted">Chưa có cặp đôi nào được lưu.</p>}

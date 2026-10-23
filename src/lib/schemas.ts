@@ -50,6 +50,7 @@ export const zSettings = z.object({
   monitorEnabled: z.boolean(),
   monitorPort: z.number().int().min(1024).max(65535),
   eraShare: z.number().int().min(0).max(50),
+  videoMinutes: z.number().int().min(1).max(600),
   resultsDir: z.string().trim().max(500),
 }).refine((s) => s.minShots <= s.maxShots, { message: "Số cảnh tối thiểu phải ≤ số cảnh tối đa", path: ["minShots"] });
 

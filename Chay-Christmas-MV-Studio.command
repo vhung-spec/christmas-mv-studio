@@ -1,5 +1,5 @@
 #!/bin/bash
-# MV Prompt Studio — bấm đúp để chạy (macOS). Trên Linux: ./Chay-MV-Prompt-Studio.command
+# Christmas MV Studio — bấm đúp để chạy (macOS). Trên Linux: ./Chay-Christmas-MV-Studio.command
 cd "$(dirname "$0")" || exit 1
 if ! command -v node >/dev/null 2>&1; then
   echo ""

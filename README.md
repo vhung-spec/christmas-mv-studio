@@ -1,28 +1,41 @@
-# MV Prompt Studio 🎙️
+# Christmas MV Studio 🎄
 
-Công cụ tạo **bộ prompt video hoàn chỉnh** cho MV phong cách 1950s American (Doo-Wop, Rock & Roll, Rockabilly).
-Bạn chỉ nhập **ý tưởng** của từng bài (1 dòng), công cụ tự sinh:
+App làm **video nhạc Giáng sinh cổ điển nước Mỹ thập niên 1950, dài khoảng 1 tiếng**, để ghép nhạc Giáng sinh của kênh.
+Tách ra từ **MV Prompt Studio** (app MV tình yêu rock'n'roll 1950s) — giữ nguyên toàn bộ phần máy, đổi nội dung sang Giáng sinh.
+Bạn chỉ nhập **ý tưởng** của từng video (1 dòng), công cụ tự sinh:
 
-- **Character Bible**: mô tả cố định của cặp đôi, được chèn **nguyên văn** vào mọi prompt để nhân vật nhất quán giữa các clip.
-- **Storyboard** chia theo cấu trúc bài hát (Intro → Verse → Pre-chorus → Chorus → … → Outro), mỗi cảnh có thời gian, mô tả tiếng Việt và **prompt tiếng Anh** đã gắn style preset ở cuối.
-- **Thumbnail prompt**, 3 gợi ý **tiêu đề YouTube**, **mô tả** theo giọng văn kênh và **ghi chú dựng phim**.
-- **Kiểm tra niên đại** (xe đời sau, điện thoại, LED, vòng đu quay trên Santa Monica Pier…), độ dài prompt, chữ trên màn hình, thương hiệu/người thật, nhịp dựng và **trùng lặp trong series**.
+- **Character Bible** theo ý tưởng: cặp đôi, gia đình, trẻ em, ông bà… hoặc **chỉ cảnh, không nhân vật chính** — mô tả nhân vật được chèn **nguyên văn** vào mọi prompt để nhất quán giữa các clip.
+- **Storyboard một vòng 20–30 cảnh** (mỗi cảnh = 1 clip Muse ~10 giây), mô tả tiếng Việt và **prompt tiếng Anh** đã gắn style preset (phim Kodachrome Giáng sinh 1950s…) ở cuối; xen **cảnh đời sống Giáng sinh 50s** (nhóm hát mừng, chợ cây thông, ông già Noel ở cửa hàng, trẻ con trượt tuyết, tàu hơi nước trong tuyết…).
+- **Thumbnail prompt**, 3 gợi ý **tiêu đề YouTube** (kèm độ dài, vd. “1 Hour”), **mô tả** theo giọng văn kênh và **ghi chú dựng phim**.
+- **Kiểm tra niên đại** (xe đời sau, điện thoại, đèn LED / đồ bơm hơi, cây thông nhôm trước 1958, ngôi sao pha lê ở Rockefeller Center, tuyết ở Hollywood / Miami…), độ dài prompt, chữ trên màn hình, thương hiệu / nhân vật bản quyền (Rudolph, Frosty…), và **trùng lặp trong series**.
 
-Chạy được **hàng loạt** (ví dụ 50 bài một lần) và xuất **XLSX (mỗi MV một sheet)**, CSV, Markdown, TXT, JSON, “Copy tất cả prompt” hoặc **File prompt (.txt)** — chỉ gồm các prompt, mỗi prompt cách nhau một dòng trống.
+Menu **Tự động** chạy trọn **ý tưởng → kịch bản → danh sách nhạc ~1 tiếng → clip Muse → MP4** bằng một nút (mục 2d): app lấy lần lượt các
+**bài Giáng sinh chưa dùng** trong kho nhạc (đồng bộ từ Google Drive như KHO NHẠC), nối thành một danh sách nhạc khoảng 60 phút, **lặp 20–30 clip**
+cho hết nhạc, rồi làm ảnh bìa, tiêu đề, mô tả **kèm danh sách bài + mốc thời gian** (YouTube tự tạo chương) và thư mục kết quả.
 
-Khi công cụ tạo video trả clip về, app **ghép clip với nhạc thành MV hoàn chỉnh (MP4)**: ghép nguyên từng clip theo thứ tự cảnh và lặp lại cho tới hết bài (xem mục 2b).
+### Khác gì MV Prompt Studio (app cũ)
 
-Dùng **Muse (Meta)** thì app lo luôn phần clip: app tự gửi từng cảnh cho Muse, clip nào xong tự vào đúng cảnh, đủ clip thì tự dựng (mục 2c). Menu **Tự động** chạy trọn **ý tưởng → kịch bản → bài hát → clip → MP4** bằng một nút (mục 2d).
+| | MV Prompt Studio (cũ) | Christmas MV Studio (mới) |
+|---|---|---|
+| Nội dung | MV tình yêu rock'n'roll 1950s, luôn có cặp đôi | Giáng sinh 1950s; nhân vật theo ý tưởng (cặp đôi / gia đình / trẻ em / ông bà / chỉ cảnh) |
+| Độ dài video | 1 bài ≈ 3 phút | **~1 tiếng** (Cài đặt → *Độ dài video*, mặc định 60 phút) |
+| Nhạc | 1 bài theo số ý tưởng (ý tưởng 12 → `12.wav`) | **nhiều bài chưa dùng nối nhau** (mỗi bài một bản), không gắn với số ý tưởng |
+| Số cảnh | 15–20 | 20–30 (một vòng, khi dựng lặp lại — các vòng sau xáo thứ tự) |
+| Chủ đề | T01–T30 tình yêu | T01–T22 Giáng sinh (Đêm Giáng sinh lãng mạn, Trang trí cây thông, Tuyết đầu mùa…) |
+| Kho ý tưởng | nghiêng dần sang thu → đông | bỏ; ý tưởng nào cũng là mùa lễ (từ tuyết đầu mùa tới Giao thừa) |
+| Cổng | 3000 · trang theo dõi 3300 | **3100** · trang theo dõi **3301** (chạy song song được trên cùng máy) |
+| Dữ liệu Muse | `…-muse-gateway` cạnh app cũ | thư mục riêng cạnh app mới (vd. `D:\bokin-christmas-muse-gateway`) — đăng nhập Muse riêng |
+| File chạy | `Chay-MV-Prompt-Studio.bat` | `Chay-Christmas-MV-Studio.bat` |
 
 ---
 
 ## 1. Bắt đầu nhanh (không cần biết code)
 
 1. **Cài Node.js** (một lần): tải bản **LTS** tại <https://nodejs.org> và cài như phần mềm bình thường.
-2. **Tải app**: trên GitHub bấm **Code → Download ZIP**, rồi giải nén ra một thư mục (ví dụ `Documents/MV Prompt Studio`).
+2. **Lấy app**: giải nén gói `Christmas-MV-Studio-cai-moi.zip` ra một thư mục (ví dụ `C:\Christmas-MV-Studio`) — xem `HUONG-DAN-MAY-MOI.txt`.
 3. **Mở app**: bấm đúp vào
-   - Windows: **`Chay-MV-Prompt-Studio.bat`**
-   - macOS: **`Chay-MV-Prompt-Studio.command`** (lần đầu: chuột phải → *Open* → *Open* để macOS cho phép chạy.
+   - Windows: **`Chay-Christmas-MV-Studio.bat`** (mở ở <http://127.0.0.1:3100>)
+   - macOS: **`Chay-Christmas-MV-Studio.command`** (lần đầu: chuột phải → *Open* → *Open* để macOS cho phép chạy.
      Nếu báo không có quyền chạy: mở Terminal, gõ `bash ` rồi kéo file này vào cửa sổ Terminal và nhấn Enter.)
 
    Lần đầu app tự cài thư viện và chuẩn bị (vài phút), các lần sau chỉ vài giây. Trình duyệt tự mở trang app.
@@ -259,92 +272,79 @@ App không sửa gì bên HaoHao. Đổi cách gửi giữa chừng: cảnh gử
 
 ## 2d. Tự động: ý tưởng → MP4 (một nút)
 
-Menu **Tự động**: mỗi việc là một MV chạy qua 4 bước, không cần bấm gì thêm:
+Menu **Tự động**: mỗi việc là một video chạy qua 4 bước, không cần bấm gì thêm:
 
 1. **Kịch bản** — Claude viết từ một dòng ý tưởng (cần **Claude API key**: Cài đặt → *API key của Claude*; chế độ **Demo** cũng chạy được để thử).
-   Ở chế độ claude.ai (copy – dán) thì viết kịch bản như mục 2 rồi chọn **Từ MV có sẵn**. Viết lần lượt từng MV.
-2. **Bài hát** — MV chưa có bài → app tìm file trùng **tên bài** trong **Thư mục nhạc** (Cài đặt), vd. `D:\Downloads\Nhạc kênh khúc nhạc thời gian`.
-   So tên không phân biệt dấu / hoa thường, bỏ phần phiên bản sau dấu “ - ” (Rock Version, Nam Metal Rock…), chữ “rock” và số dính ở cuối:
-   tên bài “Đèn Khuya” khớp “Đèn Khuya - Rock Version.wav”. Có hai bản cùng tên (vd. “- Nam Rock” và “- Rock Version”) thì ghi rõ phiên bản trong tên bài
-   (“Đèn Khuya - Rock Version”); không ghi thì app chọn bản đầu theo tên và ghi chú lại. Ý tưởng không ghi thời lượng → kịch bản lấy đúng độ dài bài.
-   Không thấy bài → việc chờ; thả file vào thư mục nhạc (hoặc tải lên ở trang Ghép video) là app tự chạy tiếp.
+   Kịch bản là **một vòng 20–30 cảnh** (Cài đặt → *Số cảnh mỗi video* và *Độ dài một vòng cảnh*, mặc định 250 giây ≈ 25 clip × 10 giây), không phụ thuộc
+   độ dài nhạc. Nhân vật theo dàn ý: cặp đôi, gia đình, trẻ em, ông bà… hoặc “**Chỉ cảnh, không nhân vật chính**” (Character Bible trống, mọi cảnh là phố
+   phường, làng tuyết, người thường). Viết lần lượt từng video.
+2. **Nhạc** — video chưa có nhạc → app lấy lần lượt các **bài chưa dùng** trong **Thư mục nhạc** (Cài đặt) cho đủ **Độ dài video** (mặc định 60 phút),
+   rồi nối thành một file (FLAC, không mất chất lượng). Mỗi bài chỉ lấy **một bản** (bài 12 có `12.wav` và `12 (1).wav` thì video này lấy `12.wav`,
+   bản `12 (1)` để dành cho video khác); bài số nhỏ trước, rồi tới bài đặt theo tên; bỏ qua bản ghi “đã dùng” và bản đã ghép vào video khác (sổ bài đã
+   dùng). Ý tưởng có ghi **tên bài** thì bài đó được đặt lên đầu. Một **file dài sẵn** (vd. bản mix 1 tiếng) đủ độ dài thì dùng một mình nó.
+   Nhạc chưa dùng còn chưa tới 90% độ dài video → việc chờ, báo còn bao nhiêu phút; thả thêm bài vào thư mục (hoặc đồng bộ Drive) là app tự chạy tiếp.
+   Cũng có thể tải nhạc lên tay ở trang Ghép video (một file, tối đa 1,5 GB).
 3. **Clip Muse** — gửi các cảnh chưa có clip sang Muse trong app (mục 2c), clip xong tự vào đúng cảnh.
-4. **Dựng MP4** — đủ clip + có bài hát → thêm vào **Hàng chờ dựng** (thiết lập dựng chung), dựng xong có nút **⬇ Tải MP4**.
+4. **Dựng MP4** — đủ clip + có nhạc → thêm vào **Hàng chờ dựng**. Clip phát nguyên từng clip, vòng đầu theo thứ tự 1 → N, **các vòng sau xáo thứ tự**,
+   lặp cho tới hết nhạc (~14 vòng cho 1 tiếng). Mỗi clip chỉ mã hoá một lần rồi nối bằng stream copy, nên video 1 tiếng dựng gần nhanh như video 4 phút;
+   phần lâu nhất là kiểm tra lại toàn bộ file (giải mã hết hình và tiếng). File 1 tiếng 1080p khoảng **3–5 GB** — máy chạy cần đủ chỗ trống (hoặc chọn
+   720p trong thiết lập dựng).
 
 Cách dùng: menu **Tự động** → tab **Từ ý tưởng** (dán bảng như trang Nhập ý tưởng → **Đọc bảng** → **＋ Đưa N ý tưởng vào kho**, hoặc **▶ Chạy ngay cả N
-ý tưởng** để đưa cả bảng vào dây chuyền một lúc) hoặc tab **Từ MV có sẵn**
-(chọn MV → **▶ Chạy tự động N MV**). App hỏi lại kèm chi phí ước tính (lượt Muse, tiền Claude API). Mỗi việc hiện 4 ô Kịch bản / Bài hát / Clip Muse / Dựng MP4;
-bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse** để Kiểm tra lại / Gửi lại / Bỏ qua cảnh lỗi & dựng (ít cảnh lỗi thì app tự bỏ qua, xem trên). Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
+ý tưởng** để đưa cả bảng vào dây chuyền một lúc) hoặc tab **Từ MV có sẵn** (chọn video → **▶ Chạy tự động N MV**). App hỏi lại kèm chi phí ước tính (lượt
+Muse, tiền Claude API). Mỗi việc hiện 4 ô Kịch bản / Nhạc / Clip Muse / Dựng MP4; bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse**
+để Kiểm tra lại / Gửi lại / Bỏ qua cảnh lỗi & dựng (ít cảnh lỗi thì app tự bỏ qua). Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
 
-### MV hoàn thiện: ảnh bìa, tiêu đề, thư mục kết quả
+### Video hoàn thiện: ảnh bìa, tiêu đề, mô tả có danh sách bài, thư mục kết quả
 
-- **Cảnh đời sống thập niên 50** (Cài đặt → *Cảnh đời sống thập niên 50 (% số cảnh)*, mặc định 30%): cảnh mở đầu và các cảnh rải
-  đều trong bài (không liền nhau, không phải cảnh cuối / signature / cảnh nhảy) là đời sống thường ngày của nơi và năm đó — quầy
-  soda, jukebox, phố chính với xe cổ, gia đình bên TV đen trắng, rạp chiếu ngoài trời… — **không có cặp đôi**, để MV như thước phim
-  kỷ niệm của một thời. Bảng cảnh đánh dấu 📻; cảnh này mà có cặp đôi thì app cảnh báo. 0 = tắt.
-- **Ảnh bìa** (tạo ngay sau khi dựng, không tốn lượt Muse): khung hình đẹp từ chính clip của MV (ưu tiên cảnh có cả cặp đôi ở điệp
-  khúc / signature), cắt 1280×720, màu ấm hơn, nền tối dần ở dưới, **tên bài** to (tên bài, hoặc câu hook điệp khúc trong thư
-  viện lời, hoặc phần đầu tiêu đề YouTube) + dòng “địa điểm · năm”, logo kênh ở góc nếu có. Font như intro (font tải lên, hoặc
-  font hệ thống có dấu tiếng Việt). Kèm file **tiêu đề + mô tả** (tiêu đề YouTube số 1, 2 tiêu đề dự phòng, mô tả + hashtag). Mã:
-  `src/lib/cover.ts`.
-- **Thư mục kết quả** (Cài đặt → *Thư mục kết quả*, mặc định `KET QUA` cạnh thư mục app): mỗi MV xong một thư mục
-  `008 - Santa Monica Moonlight 1959` gồm video (tên file = tiêu đề YouTube), `Ảnh bìa.jpg`, `Tiêu đề - mô tả.txt`. Cùng ổ đĩa
-  thì video là liên kết cứng (không tốn thêm chỗ), khác ổ thì chép; dựng lại MV thì thêm thư mục ` (2)`. Đặt thư mục kết quả trong
-  ổ **Google Drive cho máy tính** (vd. `G:\My Drive\MV hoàn thiện`) thì kết quả tự lên Drive — app không cần đăng nhập Google.
-  Mã: `src/lib/results.ts`. Thẻ Dây chuyền và trang theo dõi hiện ảnh bìa, tiêu đề và nút tải.
+- **Cảnh đời sống Giáng sinh 50s** (Cài đặt → *Cảnh đời sống Giáng sinh 50s (% số cảnh)*, mặc định 40%): cảnh mở đầu và các cảnh rải đều trong vòng cảnh
+  là đời sống mùa lễ của nơi và năm đó — nhóm hát mừng, chợ cây thông, ông già Noel ở cửa hàng, trẻ con trượt tuyết, người đưa thư mang quà, tàu hơi nước
+  trong tuyết… — **không có nhân vật chính**. Bảng cảnh đánh dấu 🎄; cảnh này mà có nhân vật chính thì app cảnh báo. 0 = tắt.
+- **Ảnh bìa** (tạo ngay sau khi dựng, không tốn lượt Muse): khung hình đẹp từ chính clip của video, cắt 1280×720, màu ấm hơn, nền tối dần ở dưới, **tên
+  video** to (phần đầu tiêu đề YouTube, bỏ emoji) + dòng “địa điểm · năm · 1 Hour”, logo kênh ở góc nếu có. Mã: `src/lib/cover.ts`.
+- **Mô tả YouTube kèm danh sách bài**: video dùng nhiều bài thì cuối mô tả (trước dòng hashtag) có `Tracklist:` và từng dòng `0:00 Tên bài`,
+  `3:07 Tên bài`… — YouTube tự tạo chương. Tên bài lấy từ câu điệp khúc trong thư viện lời (thư mục bài đánh số trên Drive), không có thì
+  “Christmas Song No. 12” hoặc tên file. Mô tả này cũng được ghi vào file MP4 và file `Tiêu đề - mô tả.txt`. Mã: `src/lib/playlist.ts`.
+- **Thư mục kết quả** (Cài đặt → *Thư mục kết quả*, mặc định `KET QUA` cạnh thư mục app): mỗi video xong một thư mục
+  `001 - Rockefeller Center Christmas Eve 1955` gồm video (tên file = tiêu đề YouTube), `Ảnh bìa.jpg`, `Tiêu đề - mô tả.txt`. Cùng ổ đĩa thì video là
+  liên kết cứng (không tốn thêm chỗ), khác ổ thì chép. Đặt thư mục kết quả trong ổ **Google Drive cho máy tính** thì kết quả tự lên Drive.
 
-### Kho nhạc đánh số theo ý tưởng
+### Kho nhạc Giáng sinh (đồng bộ từ Google Drive như KHO NHẠC)
 
-Kênh làm nhạc theo số ý tưởng: ý tưởng số 12 có thư mục bài “12” (tài liệu = địa điểm + chủ đề + dàn ý + lời) và file nhạc `12.wav`, `12 (1).wav`
-(hoặc `12.mp3`, `12_1.mp3`) — mỗi lần tạo nhạc ra 2 bản. Bản đã làm MV thì đổi tên thêm chữ **“đã dùng”** (vd. `12 đã dùng.wav`).
+Kho trên Drive giống kho của kênh cũ: thư mục gốc gồm các thư mục bài đánh số (mỗi thư mục một Google Doc: địa điểm, chủ đề, dàn ý, lời) và một thư mục
+file nhạc đặt tên theo số (`12.wav`, `12 (1).wav` = bản thứ hai, `76_1.mp3`). Bản đã làm video thì đổi tên thêm chữ **“đã dùng”** (vd. `12 đã dùng.wav`).
 
-- **Thư mục nhạc** (Cài đặt) trỏ tới thư mục chứa các file này (vd. bản tải về của thư mục *KHO NHẠC* trên Drive). Ý tưởng không ghi tên bài → app lấy file
-  theo số ý tưởng, **bản chưa có chữ “đã dùng” trước** (theo thứ tự bản, WAV trước MP3). Mọi bản đều “đã dùng” → kho ý tưởng **bỏ qua** ý tưởng đó (ghi lý
-  do trong thẻ Kho ý tưởng), việc đang chạy thì chờ.
-- **Chống trùng nhạc — sổ bài đã dùng** (`data/songs_used.json`, không commit): bài nào app đã ghép vào MV thì **không ghép cho MV khác nữa**, dù tên file
-  chưa có chữ “đã dùng” (app không sửa được Drive) và dù MV đó bị xoá sau này; nhận ra cùng bài dù tên file đổi (Drive thêm “đã dùng”, bản WAV / MP3).
-  MV làm trước khi có sổ (hoặc nhạc bạn tự tải lên / đổi ở trang Ghép video) được tự thêm vào sổ. Bài đã dùng hết bản → việc chờ, báo đã ghép vào MV nào.
-  Thẻ **Kho nhạc trên Google Drive** liệt kê **bài app đã ghép vào MV mà trên Drive chưa ghi “đã dùng”** (mỗi bài một dòng kèm các MV, có nút Copy danh
-  sách) để bạn ghi cho khớp; ghi xong, lần đồng bộ sau bài chuyển xuống mục “đã ghi”. Trang theo dõi ở máy chính cũng có dòng này.
-- **MV đã làm mà trùng bài** (làm trước khi có sổ): thẻ Kho nhạc báo đỏ **⚠ MV đang dùng trùng bài hát** kèm link từng MV (trang theo dõi cũng báo). Giữ MV
-  đã đăng; MV còn lại: trang Ghép video → **Đổi bài hát** (bản khác của bài, vd. `12 (1).wav`, hoặc bài khác) → **Dựng** lại — clip Muse giữ nguyên, không
-  tốn lượt. Đổi xong thì hết báo.
-- **Không làm hai MV cùng ý tưởng**: **▶ Chạy ngay** (và dây chuyền tự lấy từ kho) bỏ qua ý tưởng đã có MV hoặc đang chạy, dòng trùng trong bảng, MV đang
-  chạy dở — báo lại từng việc bỏ qua. Ý tưởng “Chạy ngay” mà cũng có trong kho thì kho đánh dấu đã dùng, không lấy lại.
-- **Chỉ lấy ý tưởng đã có nhạc** (thẻ Kho ý tưởng, bật sẵn khi đã đặt Thư mục nhạc): ý tưởng chưa có file nhạc cùng số (hoặc trùng tên bài) nằm chờ
-  trong kho, không tốn lượt Muse; thả file nhạc vào thư mục là dây chuyền tự lấy. Thẻ hiện số ý tưởng “đã có nhạc / chờ nhạc”.
-- **Thư viện lời bài hát** `data/song_library.json` (không commit): mỗi số bài một mục — địa điểm, chủ đề, dàn ý, lời. Ý tưởng cùng số **và cùng địa điểm**
-  mà chưa có lời thì lúc viết kịch bản app lấy lời ở đây, nên các cảnh bám đúng Intro / Verse / Chorus / Bridge của bài. Nhãn kiểu Suno có mô tả
-  (`[Intro - bright, hand claps in]`, `[Sax Solo]`, `[Hand Clap Break - …]`) được hiểu là nhãn đoạn, không lẫn vào lời.
-- **Thư viện chủ đề** (`data/themes.json`) theo đúng bảng mã của kênh: T01–T18 tình yêu · T19–T22 thử thách · T23–T24 hôn nhân · T25–T27 hoài niệm ·
-  T28–T30 cuộc sống & tự do (mỗi mã có tên, nhóm, không khí, nhịp, cảnh đặc trưng).
+- Thẻ **Kho nhạc trên Google Drive** (trang Tự động): dán link thư mục (chia sẻ “Bất kỳ ai có đường liên kết”) → app đọc lời, tải các bản **chưa dùng**
+  về **Thư mục nhạc**, bản nào trên Drive vừa ghi “đã dùng” thì đổi tên bản ở máy cho khớp. Tự đồng bộ mỗi 6 giờ. Không xoá file nào.
+- **Sổ bài đã dùng** (`data/songs_used.json`, không commit): bài nào đã ghép vào video thì **không ghép cho video khác nữa**, dù tên file chưa có chữ
+  “đã dùng”; mỗi bài của danh sách nhạc là một dòng. Thẻ Kho nhạc liệt kê **bài app đã ghép mà trên Drive chưa ghi “đã dùng”** (có nút Copy danh sách) để
+  bạn ghi cho khớp, và báo đỏ khi hai video dùng trùng một bài.
+- Thẻ **Kho ý tưởng** ghi **nhạc chưa dùng còn bao nhiêu phút, đủ cho mấy video**.
 
 ### Kho ý tưởng: chạy liên tục, hết ý tưởng thì Claude đề xuất thêm
 
-Thẻ **Kho ý tưởng** (trang Tự động) giữ mọi ý tưởng của bạn và đánh dấu **chưa dùng / đã dùng** (lưu ở `data/ideas.json`):
+Thẻ **Kho ý tưởng** (trang Tự động) giữ mọi ý tưởng của bạn và đánh dấu **chưa dùng / đã dùng** (lưu ở `data/ideas.json`; app mới bắt đầu với kho trống):
 
-- **Dây chuyền tự lấy ý tưởng trong kho, mỗi lúc N MV** (mặc định 2): chỉ lấy ý tưởng mới khi số MV đang viết kịch bản hoặc chờ clip Muse ít hơn N — nên
-  dây chuyền tự đi theo tốc độ của Muse (kể cả khi Muse báo hết hạn mức tuần), không viết dồn 200 kịch bản một lúc. MV đang lỗi vẫn giữ chỗ, để khi API key
-  hay Muse hỏng thì app không lấy dồn cả kho. MV chỉ còn chờ bài hát thì không giữ chỗ.
-- **Kho sắp hết thì nhờ Claude đề xuất M ý tưởng mới** (mặc định 10): khi số ý tưởng chưa dùng còn ≤ N, Claude đọc các ý tưởng đã có (của bạn, trong dây
-  chuyền và các MV đã viết, cả ý tưởng đã bỏ) rồi viết ý tưởng mới **cùng kiểu**: địa điểm + thời điểm + năm 1950–1959 (tiếng Anh), mã chủ đề có trong
-  thư viện hoặc trong bảng của bạn (ưu tiên chủ đề ít dùng), dàn ý tiếng Việt. App bỏ ý tưởng trùng địa điểm hoặc sai định dạng, đánh số tiếp (201, 202…),
-  mỗi 50 ý tưởng là một series (“201–250 · …”). Mỗi lần đề xuất tốn vài cent tiền Claude API.
-- **Ý tưởng mới nghiêng dần sang 🍂 mùa thu rồi ❄️ mùa đông** (bật sẵn): ý tưởng của kênh phần lớn là mùa hè, nên mỗi lần đề xuất app dặn Claude đúng số
-  ý tưởng thu / đông — lần đầu 4/10 (3 thu, 1 đông), tăng dần theo số ý tưởng Claude đã đề xuất (ý tưởng đã bỏ không tính), sau khoảng 60 ý tưởng thì
-  9/10 (2 thu, 7 đông) và giữ mức đó. Vùng nắng ấm (California, Florida, Las Vegas) thì thể hiện mùa qua lễ hội, ánh đèn, trang phục thay vì tuyết.
-  Thẻ ghi sẵn số thu / đông của lần đề xuất tới; ý tưởng thu / đông có dấu 🍂 / ❄️. Bỏ tick = mùa nào cũng được như trước.
-- **Chờ tôi duyệt** (mặc định): ý tưởng Claude đề xuất nằm trong khung vàng, bấm **✓ Dùng / ✗ Bỏ** từng cái hoặc **Duyệt tất cả**; chưa duyệt thì dây chuyền
-  không dùng và Claude không đề xuất thêm. **Dùng luôn, không cần duyệt**: chạy liên tục không cần bạn (vẫn theo tốc độ của Muse).
-- **✨ Nhờ Claude đề xuất ngay**: đề xuất bất cứ lúc nào. Lần đề xuất tự động bị lỗi (vd. chưa có API key) thì 30 phút sau app mới tự thử lại.
-- Cần **Claude API key** (Cài đặt → *API key của Claude*); chế độ **Demo** cho ý tưởng mẫu để thử, không tốn phí.
+- **Dây chuyền tự lấy ý tưởng trong kho, mỗi lúc N video** (mặc định 2): chỉ lấy ý tưởng mới khi số video đang viết kịch bản hoặc chờ clip Muse ít hơn N —
+  dây chuyền tự đi theo tốc độ của Muse.
+- **Chỉ lấy ý tưởng khi đủ nhạc** (bật sẵn): chỉ lấy bấy nhiêu ý tưởng mà nhạc chưa dùng còn đủ (trừ các video đang chờ ghép nhạc), còn lại chờ trong kho.
+- **Kho sắp hết thì nhờ Claude đề xuất M ý tưởng mới** (mặc định 10): Claude viết ý tưởng **cùng kiểu**: “địa điểm có thật ở Mỹ + dịp lễ + năm 1950–1959”
+  (vd. `Woodstock Vermont Christmas Eve 1952`, `Rockefeller Center First Snow 1955`), mã chủ đề có trong thư viện (ưu tiên chủ đề ít dùng), dàn ý tiếng
+  Việt ghi rõ nhân vật — đủ kiểu: cặp đôi, gia đình, trẻ em, ông bà, bạn bè, và vài ý tưởng **chỉ cảnh**. Vùng nắng ấm (California, Florida, New Orleans)
+  thì thể hiện Giáng sinh qua đèn, cây cọ, quà — không có tuyết.
+- **Chờ tôi duyệt** (mặc định) hoặc **Dùng luôn, không cần duyệt**; **✨ Nhờ Claude đề xuất ngay** bất cứ lúc nào. Cần **Claude API key**; chế độ **Demo** cho
+  ý tưởng mẫu để thử.
+- **Thư viện chủ đề** (`data/themes.json`): T01–T22 Giáng sinh, nhóm Lãng mạn · Gia đình · Trẻ thơ · Phố phường · Ấm cúng · Hoài niệm (mỗi mã có tên,
+  không khí, nhịp, cảnh đặc trưng). Thư viện địa điểm (`data/locations.json`): 18 nơi mùa Giáng sinh thập niên 50 (Rockefeller Center, Fifth Avenue,
+  Central Park, Woodstock Vermont, Bethlehem Pennsylvania, nhà ngoại ô, trang trại Trung Tây, ga tàu tuyết, Hollywood, Miami…); nơi chưa có thì Claude
+  tự suy luận và lưu lại để bạn duyệt.
 
 ## 2e. Chạy trên máy khác (máy chạy riêng, điều khiển từ xa)
 
 App có thể chạy suốt trên một máy Windows khác; bạn điều khiển bằng phần mềm xem màn hình (UltraViewer, Chrome Remote Desktop).
 App vẫn chỉ mở trong chính máy đó (127.0.0.1). Hướng dẫn từng bước cho người không rành máy: **`HUONG-DAN-MAY-MOI.txt`**.
 
-- **Đóng gói**: bấm đúp `Dong-goi-cai-moi.bat` → `MV-Prompt-Studio-cai-moi.zip` (thư mục `MV-Prompt-Studio-goi` cạnh thư mục app):
+- **Đóng gói**: bấm đúp `Dong-goi-cai-moi.bat` → `Christmas-MV-Studio-cai-moi.zip` (thư mục `<tên thư mục app>-goi` cạnh thư mục app, vd. `D:\bokin-christmas-goi`):
   mã nguồn + dữ liệu của bạn (cài đặt, chủ đề, địa điểm, cặp đôi, thư viện lời, kho ý tưởng). **Không** có API key (`.env*`),
   phiên đăng nhập Muse, nhạc, video hay lịch sử MV. `Dong-goi-cap-nhat.bat` → bản chỉ có mã nguồn, giải nén đè để cập nhật app
   ở máy kia mà giữ nguyên dữ liệu ở đó. Thêm `--ra <thư mục>` để đổi nơi để file zip.
@@ -355,21 +355,23 @@ App vẫn chỉ mở trong chính máy đó (127.0.0.1). Hướng dẫn từng b
 - **Tự chạy tiếp khi mở lại**: lúc server khởi động (`src/instrumentation.ts` → `src/lib/autostart.ts`), app tự chạy tiếp
   dây chuyền, Muse và tự đồng bộ khi đến hạn — không cần ai mở trình duyệt. `Bat-tu-chay-khi-mo-may.bat` tạo lối tắt trong
   thư mục Startup để app tự mở mỗi lần đăng nhập Windows (`Tat-tu-chay-khi-mo-may.bat` để thôi). `NO_AUTOSTART=1` để tắt.
-- **Một tài khoản Muse chỉ chạy ở một máy**: chuyển sang máy chạy rồi thì tắt app ở máy cũ.
-- **Máy chỉ có ổ C**: Thư mục nhạc ghi không kèm ổ đĩa (gói cài ghi `KHO NHAC`) = thư mục cạnh thư mục app, vd. app ở
-  `C:\MV-Prompt-Studio` → nhạc ở `C:\KHO NHAC`.
+- **Một tài khoản Muse chỉ chạy ở một máy**: chuyển sang máy chạy rồi thì tắt app ở máy cũ. App Giáng sinh có Chrome / phiên đăng nhập Muse **riêng**
+  (không dùng chung với MV Prompt Studio): nên đăng nhập một tài khoản Muse khác; dùng chung một tài khoản thì hai app chia nhau hạn mức tuần.
+- **Máy chỉ có ổ C**: Thư mục nhạc ghi không kèm ổ đĩa (vd. `KHO NHAC GIANG SINH`) = thư mục cạnh thư mục app, vd. app ở
+  `C:\Christmas-MV-Studio\Christmas-MV-Studio` → nhạc ở `C:\Christmas-MV-Studio\KHO NHAC GIANG SINH`. Video 1 tiếng nặng 3–5 GB: để ý chỗ trống ổ C.
 - **Theo dõi từ máy chính** (Cài đặt → *Theo dõi từ máy khác (Tailscale)*): trang **chỉ xem** — dây chuyền, MV đã xong (tải MP4),
-  Muse, kho ý tưởng, dung lượng ổ, lỗi cần chú ý; tự cập nhật 5 giây/lần. Đây là một cổng riêng (mặc định 3300) **chỉ mở trên
+  Muse, kho ý tưởng, dung lượng ổ, lỗi cần chú ý; tự cập nhật 5 giây/lần. Đây là một cổng riêng (mặc định **3301**; app cũ dùng 3300) **chỉ mở trên
   địa chỉ Tailscale** của máy chạy (100.64.0.0/10) nên máy cùng wifi / người ngoài không vào được, và cần mật khẩu (HTTP Basic;
   lưu dạng băm scrypt trong `.env.local` = `MONITOR_PASSWORD_HASH`, không commit). App chính vẫn chỉ ở 127.0.0.1. Chưa đặt
   mật khẩu thì không mở. Mã: `src/lib/monitor.ts`, `src/lib/monitorPage.ts`.
 
 ## 3. Logic sinh MV
 
-1. **Character Bible** — Claude tạo cặp đôi HE/SHE (hoặc dùng **cặp đôi cố định cho cả series** nếu bật trong Cài đặt).
-   Claude viết prompt với placeholder `{{HE}}`, `{{SHE}}`; công cụ thay bằng mô tả nguyên văn, nên nhân vật luôn đồng nhất.
-2. **Cấu trúc bài hát → danh sách cảnh** (thuần code, `src/lib/structure.ts`): số cảnh = `ceil(thời lượng / độ dài clip)`, rồi giới hạn trong khoảng
-   **tối thiểu – tối đa** của Cài đặt (mặc định **15–20 cảnh = 15–20 prompt mỗi MV**). Khi bật **“Cảnh sẽ được lặp lại khi dựng”**, Claude viết mỗi cảnh
+1. **Character Bible** — Claude chọn nhân vật theo dàn ý: cặp đôi `HE`/`SHE`, gia đình `FATHER`/`MOTHER`/`GIRL`/`BOY`, trẻ em, ông bà… hoặc để trống
+   khi ý tưởng “chỉ cảnh” (hoặc dùng **cặp đôi cố định cho cả series** nếu bật trong Cài đặt). Claude viết prompt với placeholder `{{HE}}`, `{{GIRL}}`…;
+   công cụ thay bằng mô tả nguyên văn, nên nhân vật luôn đồng nhất.
+2. **Một vòng cảnh → danh sách cảnh** (thuần code, `src/lib/structure.ts`): số cảnh = `ceil(độ dài một vòng cảnh / độ dài clip)`, rồi giới hạn trong
+   khoảng **tối thiểu – tối đa** của Cài đặt (mặc định **20–30 cảnh = 20–30 prompt mỗi video**; khung kiểu một bài hát, khi dựng lặp cho hết ~1 tiếng nhạc). Khi bật **“Cảnh sẽ được lặp lại khi dựng”**, Claude viết mỗi cảnh
    thành một clip độc lập, dùng lại được, và ghi chú dựng có mục **“Lặp cảnh”** gợi ý dùng lại cảnh nào ở đoạn nào. Các đoạn chia theo tỉ lệ
    Intro 8% · Verse 1 17% · Pre-chorus 8% · Chorus 1 15% · Verse 2 15% · Chorus 2 12% · Bridge 10% · Final chorus 10% · Outro 5%.
    Nhịp `fast` → chorus dùng clip ngắn hơn (nhiều cảnh hơn). Mỗi chorus được gán ít nhất một cảnh nhảy/chuyển động mạnh,
@@ -388,10 +390,10 @@ Sửa trên giao diện (trang **Thư viện**) hoặc sửa trực tiếp file 
 
 | File | Nội dung |
 |---|---|
-| `themes.json` | 12 mã chủ đề T01–T12 (mood, nhịp dựng, signature shots). Các mã có `needs_review: true` là **tên gợi ý** — hãy sửa cho đúng. |
-| `locations.json` | 24 địa điểm California – Las Vegas – Route 66 – New York (landmark, xe, trang phục, đạo cụ, ánh sáng, thứ **không được xuất hiện**). Địa điểm chưa có sẽ được Claude tự suy luận và lưu với `auto_generated: true` để bạn duyệt. |
-| `era_rules.json` | Quy tắc theo từng năm 1950–1959, vật dụng theo năm ra đời (hula hoop 1958, Thunderbird 1955…), đồ hiện đại bị cấm, thương hiệu/người thật. |
-| `style_presets.json` | Kodachrome 35mm (mặc định), Technicolor musical, Black & white noir, Faded home-movie 8mm. |
+| `themes.json` | 22 chủ đề Giáng sinh T01–T22 (mood, nhịp dựng, signature shots). |
+| `locations.json` | 18 nơi mùa Giáng sinh thập niên 50 — New York, New England, Chicago, Pennsylvania, thị trấn nhỏ, ngoại ô, trang trại, ga tàu, Hollywood, Miami, New Orleans, San Francisco (landmark trang trí mùa lễ, xe, trang phục mùa đông, đạo cụ, ánh sáng, thứ **không được xuất hiện**). Địa điểm chưa có sẽ được Claude tự suy luận và lưu với `auto_generated: true` để bạn duyệt. |
+| `era_rules.json` | Quy tắc theo từng năm 1950–1959 (kèm đồ trang trí Giáng sinh thời đó), vật dụng theo năm ra đời (cây thông nhôm 1958, Thunderbird 1955…), đồ hiện đại bị cấm (đèn LED, đồ bơm hơi, đèn chiếu laser…), thương hiệu / người thật / nhân vật bản quyền (Rudolph, Frosty, Grinch…). |
+| `style_presets.json` | Kodachrome 35mm Giáng sinh (mặc định), Technicolor phim ca nhạc mùa lễ, Phim gia đình 8mm, Phim đen trắng mùa lễ cổ điển. |
 | `pricing.json` | Giá Claude API (USD / 1 triệu token) theo model và tỷ giá đ/USD — dùng để quy đổi chi phí. |
 | `video_models.json` | Veo, Kling, Hailuo, Sora, Runway, Meta Muse: giới hạn ký tự, độ dài clip, có âm thanh hay không, cách viết prompt. |
 | `settings.json` | Cài đặt (model, công cụ video, độ dài clip, số cảnh tối thiểu–tối đa, lặp cảnh, cặp đôi cố định, số luồng song song…). |
@@ -406,9 +408,10 @@ và `data/media/` (nhạc, clip và video đã dựng của từng MV — xoá M
 - **Model**: mặc định `claude-sonnet-5-5`; đổi được trong trang Cài đặt. **Effort** `medium` là cân bằng tốt giữa chất lượng và tốc độ.
 - **Fallback khi bị từ chối**: bật sẵn (server-side fallback của Claude API).
 - **Số MV chạy song song**: mặc định 2 — giảm xuống nếu gặp lỗi *rate limit*.
-- **Cặp đôi cố định cho cả series**: bật lên thì 50 MV cùng series dùng chung một cặp đôi.
+- **Cặp đôi cố định cho cả series**: tắt sẵn (mỗi video tự chọn nhân vật theo ý tưởng); bật lên thì cả series dùng chung một cặp đôi.
 - **Cách tạo nội dung**: Tự động / claude.ai (copy – dán) / Claude API / Demo.
-- **Số cảnh mỗi MV**: mặc định 15–20 (= 15–20 prompt); bật “Cảnh sẽ được lặp lại khi dựng” để mỗi cảnh độc lập, dùng lại được.
+- **Số cảnh mỗi video**: mặc định 20–30 (= 20–30 prompt / lượt Muse); “Cảnh sẽ được lặp lại khi dựng” bật sẵn để mỗi cảnh độc lập, dùng lại được.
+- **Độ dài video**: mặc định 60 phút — app ghép các bài chưa dùng cho đủ chừng này (mục 2d).
 
 ## 6. Tính năng khác
 

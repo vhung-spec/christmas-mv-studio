@@ -49,4 +49,4 @@ export interface PipelineView {
   generating: string | null;
 }
 
-export const STEP_LABEL: Record<StepName, string> = { script: "Kịch bản", song: "Bài hát", clips: "Clip Muse", render: "Dựng MP4" };
+export const STEP_LABEL: Record<StepName, string> = { script: "Kịch bản", song: "Nhạc", clips: "Clip Muse", render: "Dựng MP4" };

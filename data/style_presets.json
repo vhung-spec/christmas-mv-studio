@@ -1,22 +1,22 @@
 {
   "kodachrome": {
-    "name": "Kodachrome 35mm (mặc định)",
-    "text": "Shot on 35mm Kodachrome film, 1950s America, warm saturated pastel colors, soft film grain, gentle vignette, cinematic lighting, nostalgic mood, 24fps",
-    "short": "35mm Kodachrome film, 1950s America, warm pastel colors, soft film grain, 24fps"
+    "name": "Kodachrome 35mm Giáng sinh (mặc định)",
+    "text": "Shot on 35mm Kodachrome film, 1950s American Christmas, warm saturated reds and evergreen greens, glowing colored bulb lights, soft film grain, gentle vignette, cozy nostalgic holiday mood, 24fps",
+    "short": "35mm Kodachrome film, 1950s Christmas, warm reds and greens, soft film grain, 24fps"
   },
   "technicolor": {
-    "name": "Technicolor musical",
-    "text": "Three-strip Technicolor look of a 1950s Hollywood musical, vivid saturated primary colors, glossy studio lighting, soft diffusion glow, fine film grain, 24fps",
-    "short": "1950s Technicolor musical look, vivid primary colors, glossy studio light, 24fps"
-  },
-  "noir": {
-    "name": "Black & white noir",
-    "text": "Black-and-white 1950s film noir, high-contrast chiaroscuro lighting, deep shadows, silver halide film grain, 35mm, 24fps",
-    "short": "Black-and-white 1950s film noir, high contrast, film grain, 24fps"
+    "name": "Technicolor phim ca nhạc mùa lễ",
+    "text": "Three-strip Technicolor look of a 1950s Hollywood holiday musical, vivid saturated reds and greens, glossy studio lighting, soft diffusion glow on snow and lights, fine film grain, 24fps",
+    "short": "1950s Technicolor holiday musical look, vivid reds and greens, soft glow, 24fps"
   },
   "home8mm": {
-    "name": "Faded home-movie 8mm",
-    "text": "Faded 8mm home-movie footage from the 1950s, washed-out warm colors, heavy grain, light leaks, slight gate weave and flicker, soft edges",
-    "short": "Faded 1950s 8mm home movie, washed-out warm colors, heavy grain, light leaks"
+    "name": "Phim gia đình 8mm",
+    "text": "Faded 8mm home-movie footage of a 1950s family Christmas, washed-out warm colors, heavy grain, light leaks, slight gate weave and flicker, soft edges",
+    "short": "Faded 1950s 8mm Christmas home movie, washed-out warm colors, heavy grain, light leaks"
+  },
+  "classic_bw": {
+    "name": "Phim đen trắng mùa lễ cổ điển",
+    "text": "Black-and-white 1950s holiday film, soft silvery highlights, warm glowing windows, gently falling snow, fine silver halide film grain, 35mm, 24fps",
+    "short": "Black-and-white 1950s holiday film, silvery glow, fine film grain, 24fps"
   }
 }

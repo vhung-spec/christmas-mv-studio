@@ -132,6 +132,60 @@
         "tattoo sleeves?"
       ],
       "label_vi": "Trang phục hiện đại"
+    },
+    {
+      "term": "inflatable decoration",
+      "patterns": [
+        "inflatables?",
+        "inflatable (santas?|snowm[ae]n|reindeer|decorations?|yard decorations?)",
+        "blow-?up (santas?|snowm[ae]n|decorations?)"
+      ],
+      "label_vi": "Đồ trang trí bơm hơi (hiện đại)"
+    },
+    {
+      "term": "modern Christmas lights",
+      "patterns": [
+        "laser (christmas )?lights?",
+        "light projectors?",
+        "laser projectors?",
+        "icicle (string )?lights?",
+        "net lights?",
+        "rope lights?",
+        "light[- ]up (inflatables?|signs?)"
+      ],
+      "label_vi": "Đèn Giáng sinh hiện đại (thập niên 50 dùng bóng tròn C7/C9, đèn bọt)"
+    },
+    {
+      "term": "snowboard",
+      "patterns": [
+        "snowboard(s|ing|ers?)?"
+      ],
+      "label_vi": "Ván trượt tuyết (snowboard)"
+    },
+    {
+      "term": "ugly Christmas sweater",
+      "patterns": [
+        "ugly (christmas )?sweaters?",
+        "light-?up sweaters?"
+      ],
+      "label_vi": "Áo len Giáng sinh kiểu hiện đại"
+    },
+    {
+      "term": "Elf on the Shelf",
+      "patterns": [
+        "elf on the shelf"
+      ],
+      "label_vi": "Elf on the Shelf (có từ 2005)"
+    },
+    {
+      "term": "gift card",
+      "patterns": [
+        "gift cards?",
+        "online shopping",
+        "shipping boxes?",
+        "cardboard delivery boxes?"
+      ],
+      "label_vi": "Mua sắm hiện đại"
     }
   ],
   "introduced": [
@@ -414,6 +468,22 @@
       "patterns": [
         "camaros?"
       ]
+    },
+    {
+      "term": "aluminum Christmas tree",
+      "year": 1958,
+      "patterns": [
+        "alumin(i)?um (christmas )?trees?",
+        "tinsel trees?",
+        "silver (artificial )?christmas trees?"
+      ]
+    },
+    {
+      "term": "rotating color wheel light",
+      "year": 1958,
+      "patterns": [
+        "(rotating )?colou?r wheels?"
+      ]
     }
   ],
   "vehicle_makes": [
@@ -495,7 +565,30 @@
     "Sammy Davis",
     "McDonald's",
     "Starbucks",
-    "Hollywood sign"
+    "Hollywood sign",
+    "Rudolph",
+    "Frosty",
+    "Grinch",
+    "Charlie Brown",
+    "Snoopy",
+    "Macy's",
+    "Saks",
+    "Marshall Field's",
+    "Lionel",
+    "Radio Flyer",
+    "Sears",
+    "FAO Schwarz",
+    "Hallmark",
+    "Hershey",
+    "Swarovski",
+    "Salvation Army",
+    "Bing Crosby",
+    "Nat King Cole",
+    "Perry Como",
+    "Gene Autry",
+    "Brenda Lee",
+    "Andy Williams",
+    "Burl Ives"
   ],
   "on_screen_text_patterns": [
     "on-?screen text",
@@ -539,12 +632,20 @@
         "45 rpm records",
         "rotary dial telephone",
         "black-and-white console TV",
-        "soda fountain"
+        "soda fountain",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows"
       ],
       "music_dance": [
         "jitterbug",
         "swing",
-        "early doo-wop street-corner harmony"
+        "early doo-wop street-corner harmony",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Đầu thập niên: phong cách cuối 1940s còn rõ. TV đen trắng bắt đầu phổ biến."
     },
@@ -571,12 +672,20 @@
         "45 rpm records",
         "black-and-white TV",
         "rotary phone",
-        "box camera"
+        "box camera",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows"
       ],
       "music_dance": [
         "jitterbug",
         "doo-wop",
-        "jump blues"
+        "jump blues",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": ""
     },
@@ -601,12 +710,20 @@
         "3-D movie glasses (craze 1952–54)",
         "jukebox",
         "45 rpm records",
-        "black-and-white TV"
+        "black-and-white TV",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows"
       ],
       "music_dance": [
         "jitterbug",
         "doo-wop",
-        "bunny hop"
+        "bunny hop",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Cơn sốt phim 3-D bắt đầu."
     },
@@ -632,12 +749,20 @@
         "jukebox",
         "black-and-white TV",
         "Polaroid-style instant camera",
-        "rotary phone"
+        "rotary phone",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows"
       ],
       "music_dance": [
         "jitterbug",
         "doo-wop",
-        "mambo"
+        "mambo",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Phong cách áo da + áo thun trắng trở thành biểu tượng giới trẻ."
     },
@@ -665,13 +790,21 @@
         "45 rpm records",
         "transistor radio (rare, from late 1954)",
         "color TV (very rare)",
-        "drive-in speakers"
+        "drive-in speakers",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows"
       ],
       "music_dance": [
         "jitterbug",
         "mambo craze",
         "cha-cha",
-        "early rock and roll"
+        "early rock and roll",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Rock & roll bắt đầu bùng nổ. Radio bán dẫn xuất hiện cuối năm 1954."
     },
@@ -699,13 +832,21 @@
         "jukebox",
         "45 rpm records",
         "coonskin caps (craze)",
-        "malt shop milkshakes"
+        "malt shop milkshakes",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows"
       ],
       "music_dance": [
         "rock and roll",
         "jitterbug",
         "cha-cha",
-        "doo-wop"
+        "doo-wop",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Rock & roll trở thành dòng chính. Thunderbird ra mắt."
     },
@@ -732,13 +873,21 @@
         "jukebox",
         "45 rpm records",
         "drive-in speakers",
-        "rotary phone"
+        "rotary phone",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows"
       ],
       "music_dance": [
         "rock and roll",
         "rockabilly",
         "bop",
-        "jitterbug"
+        "jitterbug",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Rockabilly bùng nổ. Đạo luật đường cao tốc liên bang ký năm 1956 (chưa có biển interstate)."
     },
@@ -764,13 +913,21 @@
         "transistor radio",
         "Frisbee (Pluto Platter)",
         "jukebox",
-        "45 rpm records"
+        "45 rpm records",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows"
       ],
       "music_dance": [
         "rock and roll",
         "bop",
         "calypso craze",
-        "doo-wop"
+        "doo-wop",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Vệ tinh Sputnik (tháng 10/1957). Vây đuôi xe ngày càng lớn."
     },
@@ -797,13 +954,22 @@
         "Frisbee",
         "stereo hi-fi",
         "transistor radio",
-        "jukebox"
+        "jukebox",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows",
+        "aluminum Christmas tree with a rotating color wheel"
       ],
       "music_dance": [
         "rock and roll",
         "the stroll",
         "hand jive",
-        "doo-wop"
+        "doo-wop",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Cơn sốt vòng hula hoop. Máy bay phản lực chở khách bắt đầu bay."
     },
@@ -830,13 +996,22 @@
         "stereo hi-fi",
         "transistor radio",
         "jukebox",
-        "Frisbee"
+        "Frisbee",
+        "colored C7 and C9 bulb lights",
+        "bubble lights",
+        "glass ornaments and silver tinsel",
+        "felt stockings on the mantel",
+        "presents wrapped in paper with ribbon bows",
+        "aluminum Christmas tree with a rotating color wheel"
       ],
       "music_dance": [
         "rock and roll",
         "doo-wop",
         "the stroll",
-        "cha-cha"
+        "cha-cha",
+        "Christmas carols",
+        "big band holiday swing",
+        "slow dance at a holiday party"
       ],
       "notes_vi": "Cuối thập niên: vây đuôi xe đạt đỉnh. Bảng chào mừng Las Vegas dựng năm 1959."
     }

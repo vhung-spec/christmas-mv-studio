@@ -11,13 +11,13 @@ import { extractYear, matchLocation, parseDuration, parseTempo, splitThemeCell, 
 import type { IdeaRow, LocationLibrary, ThemeLibrary, Tone } from "@/lib/types";
 import { useStatus } from "@/lib/useStatus";
 
-const SAMPLE = `1 | Hollywood Boulevard Summer 1954 | T01 Sét ái tình       | Chàng trai bắt gặp cô gái bước ra khỏi rạp phim giữa Boulevard đông đúc; chỉ một ánh mắt khiến cả Hollywood như biến mất.
-2 | Hollywood Drive-In Night 1956    | T11 Nụ hôn diệu kỳ    | Buổi hẹn đầu ở drive-in; bộ phim chẳng còn quan trọng sau nụ hôn đầu dưới ánh sáng màn chiếu.
-3 | Sunset Boulevard Rock & Roll 1957| T09 Rung động mãnh liệt| Một cô gái nhảy Rock & Roll trong club khiến chàng trai hoàn toàn mất bình tĩnh.
-4 | Hollywood Summer Nights 1958     | T08 Say đắm & ngây ngất| Hai người rong chơi Hollywood cả đêm, cảm giác như mình là ngôi sao của chính bộ phim tình yêu.
-5 | Santa Monica Pier Summer 1954    | T01 Sét ái tình       | Gặp nhau tình cờ trên pier giữa tiếng nhạc và biển; dành cả buổi chiều tìm cách gặp lại.`;
+const SAMPLE = `1 | Rockefeller Center Christmas Eve 1954 | T01 Đêm Giáng sinh lãng mạn | Cặp đôi trẻ hẹn nhau ở sân băng dưới cây thông khổng lồ; tuyết rơi và nụ hôn đầu dưới ánh đèn màu.
+2 | Woodstock Vermont First Snow 1952      | T18 Làng tuyết yên bình     | Chỉ cảnh, không nhân vật chính: làng tuyết, cầu gỗ có mái, xe trượt ngựa kéo và những ô cửa ấm áp.
+3 | Suburban Home Christmas Morning 1956   | T06 Sáng Giáng sinh mở quà  | Cả gia đình thức dậy sớm, bọn trẻ chạy xuống cầu thang mở quà dưới cây thông đèn bọt.
+4 | State Street Chicago Christmas 1953    | T10 Phố đèn Giáng sinh      | Hai đứa trẻ cùng bà đi xem tủ kính đồ chơi chuyển động và xếp hàng gặp ông già Noel.
+5 | Midwest Farmhouse Christmas Eve 1955   | T03 Về nhà đón Giáng sinh   | Người con trai đi xa trở về trang trại phủ tuyết đúng đêm Giáng sinh, cả nhà ùa ra đón.`;
 
-const SAMPLE_SERIES = "1–50 · California – Las Vegas – Route 66 – New York";
+const SAMPLE_SERIES = "1–50 · New York – New England – Chicago";
 
 const TONES: { value: Tone; label: string }[] = [
   { value: "default", label: "Mặc định" },

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// Đóng gói app để chép sang máy khác (bấm đúp "Dong-goi-chuyen-may.bat"):
+// Đóng gói app để chép sang máy khác (bấm đúp "Dong-goi-cai-moi.bat" / "Dong-goi-cap-nhat.bat"):
 //   node scripts/dong-goi.mjs             → bản CÀI MỚI: mã nguồn + dữ liệu của bạn (cài đặt, thư viện lời, kho ý tưởng, chủ đề…)
 //   node scripts/dong-goi.mjs --cap-nhat  → bản CẬP NHẬT: chỉ mã nguồn (giải nén đè lên thư mục app ở máy kia, dữ liệu ở đó giữ nguyên)
-//   --ra <thư mục>                        → nơi để file zip (mặc định: thư mục "MV-Prompt-Studio-goi" cạnh thư mục app)
+//   --ra <thư mục>                        → nơi để file zip (mặc định: thư mục "<tên thư mục app>-goi" cạnh thư mục app,
+//                                           vd. D:\bokin-christmas → D:\bokin-christmas-goi)
 // Không bao giờ đóng gói API key (.env*), thư viện đã cài (node_modules), bản build (.next), video / clip / lịch sử MV,
 // hàng đợi Muse / dựng của máy này, hay profile Chrome có phiên đăng nhập Muse.
 
@@ -15,8 +16,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const update = args.includes("--cap-nhat");
 const outIdx = args.indexOf("--ra");
-const OUT = path.resolve(outIdx >= 0 && args[outIdx + 1] ? args[outIdx + 1] : path.join(path.dirname(ROOT), "MV-Prompt-Studio-goi"));
-const NAME = "MV-Prompt-Studio";
+const OUT = path.resolve(outIdx >= 0 && args[outIdx + 1] ? args[outIdx + 1] : path.join(path.dirname(ROOT), `${path.basename(ROOT)}-goi`));
+const NAME = "Christmas-MV-Studio";
 const zipName = `${NAME}-${update ? "cap-nhat" : "cai-moi"}.zip`;
 
 /** Dữ liệu của bạn mang theo khi cài mới (có file nào thì lấy file đó). */
@@ -66,12 +67,13 @@ if (!update) {
     }
   }
   // Thư mục nhạc: máy kia có thể không có cùng ổ đĩa (vd. chỉ có ổ C) → ghi tên thư mục không kèm ổ đĩa,
-  // app hiểu là thư mục nằm cạnh thư mục app (vd. app ở C:\MV-Prompt-Studio → nhạc ở C:\KHO NHAC).
+  // app hiểu là thư mục nằm cạnh thư mục app (vd. app ở C:\Christmas-MV-Studio\Christmas-MV-Studio → nhạc ở
+  // C:\Christmas-MV-Studio\KHO NHAC GIANG SINH).
   const sp = path.join(app, "data", "settings.json");
   if (existsSync(sp)) {
     const s = JSON.parse(readFileSync(sp, "utf8"));
     if (typeof s.songDir === "string" && path.isAbsolute(s.songDir.trim())) {
-      s.songDir = path.basename(s.songDir.trim().replace(/[\\/]+$/, "")) || "KHO NHAC";
+      s.songDir = path.basename(s.songDir.trim().replace(/[\\/]+$/, "")) || "KHO NHAC GIANG SINH";
       writeFileSync(sp, JSON.stringify(s, null, 2) + "\n");
     }
   }
@@ -94,7 +96,7 @@ if (res.status !== 0 || !existsSync(zip)) fail("Không nén được file zip.")
 const size = statSync(zip).size;
 console.log(`\n✔ Đã đóng gói: ${zip} (${(size / 1048576).toFixed(1)} MB, ${files.length + data.length} file)`);
 if (update) {
-  console.log("  Bản CẬP NHẬT (chỉ mã nguồn): ở máy kia tắt app, giải nén đè lên thư mục app (chọn Thay thế), rồi chạy lại Chay-MV-Prompt-Studio.bat.");
+  console.log("  Bản CẬP NHẬT (chỉ mã nguồn): ở máy kia tắt app, giải nén đè lên thư mục app (chọn Thay thế), rồi chạy lại Chay-Christmas-MV-Studio.bat.");
 } else {
   console.log(`  Dữ liệu mang theo: ${data.join(", ") || "(không có)"}`);
   console.log("  KHÔNG có API key, phiên đăng nhập Muse, file nhạc hay video — làm theo HUONG-DAN-MAY-MOI.txt trong gói.");

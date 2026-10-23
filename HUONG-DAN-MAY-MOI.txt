@@ -1,132 +1,94 @@
-﻿HƯỚNG DẪN CHẠY MV PROMPT STUDIO TRÊN MÁY KHÁC
-=============================================
+﻿HƯỚNG DẪN CHẠY CHRISTMAS MV STUDIO TRÊN MÁY CHẠY
+=================================================
 
-"Máy chạy" là một máy Windows 10/11 để mở suốt cho app tự làm MV. Bạn điều khiển nó từ xa bằng phần mềm xem màn hình.
+Christmas MV Studio là app RIÊNG cho video nhạc Giáng sinh (~1 tiếng), tách ra từ MV Prompt Studio. Hai app chạy song song
+được trên cùng một máy: app cũ ở cổng 3000, app Giáng sinh ở cổng 3100. Cài app mới KHÔNG đụng tới app cũ
+(C:\MV-Prompt-Studio\MV-Prompt-Studio): mỗi app có thư mục, dữ liệu, kho nhạc và Chrome đăng nhập Muse riêng.
+
+"Máy chạy" là một máy Windows 10/11 để mở suốt cho app tự làm video. Bạn điều khiển nó từ xa bằng phần mềm xem màn hình.
 App chỉ mở trong chính máy chạy (địa chỉ 127.0.0.1): không ai trên mạng vào được app.
-Hướng dẫn này viết cho máy chỉ có ổ C. Máy có ổ D thì làm y hệt, chỉ thay C:\ bằng D:\ (nhạc và video sẽ nằm trên ổ D).
+Hướng dẫn này viết cho máy chỉ có ổ C. Máy có ổ D thì làm y hệt, chỉ thay C:\ bằng D:\.
 
 
-A. CHUẨN BỊ MÁY CHẠY (làm một lần)
------------------------------------
-1. Dung lượng ổ C: còn trống ít nhất 40 GB.
-   - Nhạc khoảng 4 GB, thư viện của app khoảng 1 GB.
-   - Mỗi MV thêm khoảng 0,3–0,5 GB (clip Muse + video MP4). 100 MV ≈ 30–50 GB.
-   - Khi ổ C sắp đầy: chép video đã đăng YouTube ra ổ khác / Google Drive rồi xoá bớt (xem mục D).
-2. Cài Google Chrome: https://www.google.com/chrome  (app dùng Chrome để làm việc với Muse).
-3. Cài Node.js bản LTS: https://nodejs.org  → bấm nút tải bản "LTS" → mở file tải về → Next đến hết.
-4. Không cho máy ngủ: Settings → System → Power (Nguồn và pin) → Screen and sleep →
-   "When plugged in, put my device to sleep after" = Never (Không bao giờ). Màn hình tắt thì không sao.
-5. Điều khiển từ xa: cài CÙNG một phần mềm trên máy chạy và trên máy của bạn, ví dụ
-   - UltraViewer: https://ultraviewer.net
-   - hoặc Chrome Remote Desktop: https://remotedesktop.google.com
-   Hai phần mềm này dùng đúng màn hình thật của máy chạy, nên app và cửa sổ Chrome của Muse vẫn chạy khi bạn ngắt kết nối.
-   KHÔNG nên dùng "Remote Desktop Connection" có sẵn của Windows (mstsc): khi ngắt kết nối, phiên làm việc bị khoá
-   và cửa sổ Chrome của Muse có thể ngừng chạy.
-6. (Nên làm, nếu máy để ở nơi an toàn) Cho Windows tự đăng nhập khi bật máy, để sau khi máy khởi động lại
-   (vd. cập nhật Windows, mất điện) app tự chạy tiếp mà không cần ai gõ mật khẩu:
-   bấm Windows + R → gõ netplwiz → Enter → bỏ chọn "Users must enter a user name and password to use this computer" → OK
-   → nhập mật khẩu Windows hai lần. (Windows 11 không thấy ô này: Settings → Accounts → Sign-in options →
-   tắt "For improved security, only allow Windows Hello sign-in for Microsoft accounts on this device", rồi làm lại.)
+A. CHUẨN BỊ (máy chạy đã chạy app cũ thì bỏ qua phần này, trừ mục 1)
+---------------------------------------------------------------------
+1. Dung lượng ổ C: video Giáng sinh dài 1 tiếng nên NẶNG HƠN app cũ nhiều.
+   - Mỗi video: khoảng 3–5 GB (MP4 1 tiếng 1080p) + 0,5 GB (clip Muse + danh sách nhạc). Lúc dựng cần thêm ~1 GB tạm.
+   - Nhạc Giáng sinh: tuỳ kho (mỗi bài ~10–40 MB). Mỗi video dùng khoảng 18–20 bài (mỗi bài một bản).
+   - Nên còn trống ít nhất 60 GB. Đăng YouTube xong thì chép video ra ổ khác / Google Drive rồi xoá bớt (xem mục D).
+   - Muốn video nhẹ hơn: trang Ghép video → thiết lập dựng → chọn 720p (khoảng một nửa dung lượng).
+2. Google Chrome, Node.js LTS, không cho máy ngủ, phần mềm điều khiển từ xa, tự đăng nhập Windows:
+   giống hệt app cũ (xem HUONG-DAN-MAY-MOI.txt của MV Prompt Studio, mục A). Máy đã chạy app cũ thì đã có đủ.
 
 
 B. CÀI APP
 ----------
-1. Chép file MV-Prompt-Studio-cai-moi.zip sang máy chạy (USB, Google Drive, Zalo…).
+1. Chép file Christmas-MV-Studio-cai-moi.zip sang máy chạy (USB, Google Drive, Zalo…).
    TRƯỚC KHI GIẢI NÉN: chuột phải vào file zip → Properties (Thuộc tính) → ở dưới cùng tick ô "Unblock" (Bỏ chặn) → OK.
    (File tải từ mạng bị Windows đánh dấu; không bỏ chặn thì Windows 11 "Smart App Control" sẽ chặn các file .bat.)
    Lỡ giải nén rồi: mở PowerShell (bấm Start, gõ PowerShell, Enter) và chạy lệnh
-       Get-ChildItem -Path "C:\MV-Prompt-Studio" -Recurse | Unblock-File
-2. Chuột phải vào file → Extract All (Giải nén tất cả) → ô đường dẫn gõ  C:\  → Extract
-   → được thư mục C:\MV-Prompt-Studio
+       Get-ChildItem -Path "C:\Christmas-MV-Studio" -Recurse | Unblock-File
+2. Chuột phải vào file → Extract All (Giải nén tất cả) → ô đường dẫn gõ  C:\Christmas-MV-Studio  → Extract
+   → được thư mục app C:\Christmas-MV-Studio\Christmas-MV-Studio (cùng kiểu với app cũ).
    - KHÔNG giải nén vào Desktop, Documents (Tài liệu) hay thư mục OneDrive: OneDrive sẽ cố đồng bộ hàng chục GB nhạc và video.
-   - Nếu Windows báo không có quyền tạo thư mục ở C:\ thì giải nén vào thư mục người dùng C:\Users\<tên bạn>\
-     (app chạy y hệt; nhạc sẽ nằm ở C:\Users\<tên bạn>\KHO NHAC).
-3. Mở thư mục C:\MV-Prompt-Studio, bấm đúp Chay-MV-Prompt-Studio.bat
-   Lần đầu app tự cài thư viện và chuẩn bị, mất 5–10 phút (cần mạng). Xong thì trình duyệt tự mở app.
-   Giữ cửa sổ đen mở (thu nhỏ được). Đóng cửa sổ đen là tắt app.
-4. Bấm đúp Bat-tu-chay-khi-mo-may.bat → từ nay mỗi lần đăng nhập Windows, app tự chạy (cửa sổ thu nhỏ)
-   và tự làm tiếp việc đang dở. Muốn thôi: bấm đúp Tat-tu-chay-khi-mo-may.bat
+   - KHÔNG giải nén đè lên thư mục của app cũ.
+3. Mở thư mục C:\Christmas-MV-Studio\Christmas-MV-Studio, bấm đúp Chay-Christmas-MV-Studio.bat
+   Lần đầu app tự cài thư viện và chuẩn bị, mất 5–10 phút (cần mạng). Xong thì trình duyệt tự mở app ở http://127.0.0.1:3100
+   Giữ cửa sổ đen mở (thu nhỏ được). Đóng cửa sổ đen là tắt app (app cũ không bị ảnh hưởng).
+4. Bấm đúp Bat-tu-chay-khi-mo-may.bat → từ nay mỗi lần đăng nhập Windows, app Giáng sinh tự chạy (cửa sổ thu nhỏ)
+   và tự làm tiếp việc đang dở. Lối tắt có tên riêng "Christmas MV Studio", không thay lối tắt của app cũ.
+   Muốn thôi: bấm đúp Tat-tu-chay-khi-mo-may.bat (chỉ tắt app Giáng sinh).
 
-App tự tạo thêm hai thư mục nằm cạnh thư mục app — đừng xoá:
-   C:\KHO NHAC                        nhạc tải từ Google Drive
-   C:\MV-Prompt-Studio-muse-gateway   Chrome riêng của Muse (có phiên đăng nhập Muse) và video Muse tải về
+App tự tạo thêm các thư mục nằm cạnh thư mục app (trong C:\Christmas-MV-Studio) — đừng xoá:
+   KHO NHAC GIANG SINH                  nhạc Giáng sinh tải từ Google Drive
+   KET QUA GIANG SINH                   mỗi video xong một thư mục (video, ảnh bìa, tiêu đề – mô tả)
+   Christmas-MV-Studio-muse-gateway     Chrome riêng của Muse cho app này (có phiên đăng nhập Muse) và video Muse tải về
 
 
 C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm trong gói cài)
 ---------------------------------------------------------------------------
-1. Cài đặt → "API key của Claude" → dán key → Lưu.
+1. Cài đặt → "API key của Claude" → dán key → Lưu.  (Key của app cũ KHÔNG tự sang app mới — dán lại một lần.)
 2. Cài đặt → "Tạo clip bằng Muse" → bấm "Đăng nhập Muse" → cửa sổ Chrome hiện ra → bạn tự đăng nhập tài khoản Meta.
-3. Trang Tự động → thẻ "Kho nhạc trên Google Drive": link thư mục KHO NHẠC ROCK đã điền sẵn → bấm "Đồng bộ ngay".
-   (App cũng tự đồng bộ vài giây sau khi mở lần đầu.) Lần đầu app tải khoảng 3,8 GB nhạc (các bản chưa dùng) về
-   C:\KHO NHAC — dòng "Lưu nhạc vào" trên thẻ cho biết chính xác thư mục. Chờ thanh tiến độ chạy xong.
-   Sau đó app tự đồng bộ mỗi 6 giờ: bài mới bạn đưa lên Drive tự về máy chạy; bản nào bạn ghi "đã dùng" trên Drive
-   thì bản ở máy chạy cũng được đổi tên theo.
-4. Kho ý tưởng đã có sẵn trong gói. Nếu trống: dán file ý tưởng ở thẻ "Thêm việc" → "Đọc bảng" → "Đưa vào kho".
-5. Đổi tài khoản Muse khi tài khoản đang dùng bị lỗi / bị khoá: Cài đặt → thẻ "Tài khoản Muse".
-   - "＋ Thêm tài khoản mới" (gõ tên, vd. TK phụ) → app cất tài khoản đang dùng, mở cửa sổ Chrome trống → đăng nhập tài khoản mới.
-   - "Dùng tài khoản này" ở tài khoản đã lưu → đổi về tài khoản đó (không cần đăng nhập lại nếu phiên còn hạn).
-   - Đang có cảnh Muse đang làm thì app hỏi trước: đổi ngay thì các cảnh đó được gửi lại bằng tài khoản mới (tốn lượt).
-   - Không hồ sơ nào bị xoá. App chỉ dùng một tài khoản mỗi lúc; đừng dùng để luân phiên lách hạn mức tuần.
-6. Tự đổi tài khoản khi bạn không ở máy (cùng thẻ "Tài khoản Muse"):
-   - Thêm sẵn 1–2 tài khoản dự phòng và ĐĂNG NHẬP SẴN từng cái (Thêm tài khoản mới → đăng nhập → "Dùng tài khoản này" để quay
-     về tài khoản chính), rồi tick "Dự phòng" ở các tài khoản đó và tick "Tự đổi sang tài khoản dự phòng…".
-   - App tự đổi khi tài khoản đang dùng bị đăng xuất quá 10 phút (kiểm tra lại vẫn không vào được — thường do bị khoá), hoặc Muse
-     từ chối nhận lệnh 3 lần liên tiếp. Chỉ HẾT LƯỢT tuần thì KHÔNG đổi, app chờ như thường.
-   - Tài khoản lỗi được đánh dấu ⚠ và không được tự dùng lại; hết tài khoản dự phòng thì app dừng chờ bạn.
-   - Mỗi lần tự đổi được ghi ở "Nhật ký tự đổi" và hiện dòng đỏ trên trang theo dõi ở máy chính.
-7. Cảnh Muse bị lỗi (vd. Muse trả lời "Mình không tạo được video đó"):
-   - Tự động: Muse làm xong các cảnh khác mà chỉ còn ít cảnh lỗi (Cài đặt → "Tự bỏ qua cảnh lỗi", mặc định tối đa 20% số
-     cảnh, luôn được ít nhất 1 cảnh) → app tự Kiểm tra lại một lần (không tốn lượt), vẫn lỗi thì BỎ QUA cảnh đó và vẫn dựng MV
-     (đoạn của cảnh lỗi mượn / lặp cảnh khác). Lỗi nhiều cảnh hơn thì app chờ bạn.
-   - Bằng tay: trang Clip Muse → "⤼ Bỏ qua N cảnh lỗi & dựng". Muốn làm lại cảnh đó sau: "↻ Gửi lại N cảnh đã bỏ qua" (tốn lượt).
+   App Giáng sinh có Chrome riêng nên cần đăng nhập riêng. Nên dùng một tài khoản Muse KHÁC tài khoản của app cũ; nếu dùng
+   chung một tài khoản thì hai app chia nhau hạn mức tuần (và đừng cho cả hai app cùng gửi cảnh một lúc).
+3. Kho nhạc Giáng sinh trên Google Drive (làm giống KHO NHẠC của kênh cũ, nhưng là một thư mục RIÊNG cho nhạc Giáng sinh):
+   - Thư mục gốc gồm: các thư mục bài đánh số (1, 2, 3… mỗi thư mục một Google Doc lời bài — câu điệp khúc đầu tiên được dùng làm
+     tên bài trong mô tả YouTube) và một thư mục file nhạc đặt tên theo số: 1.wav, 1 (1).wav (bản thứ hai), 2.mp3, 2_1.mp3…
+   - Chia sẻ thư mục gốc: "Bất kỳ ai có đường liên kết" → copy link.
+   - Trong app: trang Tự động → thẻ "Kho nhạc trên Google Drive" → dán link → bấm "Đồng bộ ngay". App tải các bản chưa dùng về
+     C:\Christmas-MV-Studio\KHO NHAC GIANG SINH (dòng "Lưu nhạc vào" trên thẻ cho biết chính xác thư mục), rồi tự đồng bộ mỗi 6 giờ.
+4. Độ dài video: Cài đặt → "Độ dài video (phút)", mặc định 60. Mỗi video app lấy lần lượt các bài CHƯA DÙNG (mỗi bài một bản,
+   bài số nhỏ trước) cho đủ khoảng chừng ấy phút, nối thành một danh sách nhạc, rồi lặp 20–30 clip Muse cho hết nhạc.
+   Bài đã ghép vào video thì không bao giờ dùng lại (kể cả khi trên Drive chưa ghi "đã dùng"). Thẻ "Kho ý tưởng" cho biết nhạc chưa
+   dùng còn bao nhiêu phút, đủ cho mấy video. Ví dụ: 100 bài × 2 bản, mỗi bài 3 phút → khoảng 10 video 1 tiếng.
+   Muốn ghi "đã dùng" trên Drive cho khớp: thẻ Kho nhạc liệt kê các bài app đã ghép mà Drive chưa ghi (có nút Copy danh sách).
+5. Kho ý tưởng: app mới bắt đầu với kho TRỐNG. Dán bảng ý tưởng ở thẻ "Thêm việc" → "Đọc bảng" → "Đưa vào kho", hoặc bấm
+   "✨ Nhờ Claude đề xuất ngay". Mỗi dòng: số | địa điểm + dịp lễ + năm 1950–1959 | mã chủ đề | dàn ý, ví dụ
+       1 | Rockefeller Center Christmas Eve 1954 | T01 | Cặp đôi trẻ hẹn nhau ở sân băng dưới cây thông khổng lồ.
+       2 | Woodstock Vermont First Snow 1952 | T18 | Chỉ cảnh, không nhân vật chính: làng tuyết, xe trượt ngựa kéo.
+   Dàn ý ghi rõ nhân vật: cặp đôi, gia đình, trẻ em, ông bà… hoặc "Chỉ cảnh, không nhân vật chính".
+   Mã chủ đề T01–T22 xem ở trang Thư viện → Chủ đề.
+6. Tài khoản Muse dự phòng, tự đổi khi tài khoản hỏng, tự bỏ qua cảnh Muse lỗi: giống hệt app cũ (Cài đặt → thẻ "Tài khoản Muse").
+   Không hồ sơ nào bị xoá. App chỉ dùng một tài khoản mỗi lúc; đừng dùng để luân phiên lách hạn mức tuần.
 
 
 D. LƯU Ý QUAN TRỌNG
 -------------------
-- Mỗi tài khoản Muse chỉ chạy app ở MỘT máy. Khi máy chạy đã chạy ổn, tắt app trên máy cũ (đóng cửa sổ đen) để hai máy
-  không cùng gửi cảnh lên một tài khoản Muse và không làm trùng ý tưởng.
-- Video MV dựng xong nằm trong C:\MV-Prompt-Studio\data\media\<mã MV>\ trên máy chạy. Lấy ra bằng nút "Tải MP4" trong app
-  (khi đang điều khiển từ xa), hoặc chép lên Google Drive / tải thẳng lên YouTube từ máy chạy.
-  Đăng xong thì có thể chép thư mục MV đó ra chỗ khác để giải phóng ổ C.
-- Cập nhật app sau này: trên máy có mã nguồn chạy Dong-goi-cap-nhat.bat → được MV-Prompt-Studio-cap-nhat.zip
-  → chép sang máy chạy → tắt app → giải nén vào C:\ (chọn "Replace" / Thay thế các file) → chạy lại app.
-  Dữ liệu ở máy chạy (cài đặt, kho ý tưởng, MV, nhạc) được giữ nguyên.
+- Mỗi tài khoản Muse chỉ chạy ở MỘT nơi mỗi lúc (một máy, một app).
+- Video dựng xong nằm trong thư mục kết quả C:\Christmas-MV-Studio\KET QUA GIANG SINH\<số - địa điểm>\ (và trong
+  C:\Christmas-MV-Studio\Christmas-MV-Studio\data\media\<mã video>\). Lấy ra bằng nút "Tải MP4" trong app, hoặc đặt "Thư mục kết quả"
+  trong ổ Google Drive cho máy tính (giống app cũ, mục F của hướng dẫn cũ) để video tự lên Drive.
+  Đăng xong thì chép video ra chỗ khác để giải phóng ổ C (mỗi video vài GB).
+- Mô tả YouTube (file "Tiêu đề - mô tả.txt") có sẵn danh sách bài kèm mốc thời gian "0:00 Tên bài" — dán nguyên vào YouTube,
+  YouTube tự chia chương.
+- Cập nhật app sau này: trên máy có mã nguồn chạy Dong-goi-cap-nhat.bat → được Christmas-MV-Studio-cap-nhat.zip
+  → chép sang máy chạy → tắt app Giáng sinh → giải nén vào C:\Christmas-MV-Studio (chọn "Replace" / Thay thế các file) → chạy lại.
+  Dữ liệu ở máy chạy (cài đặt, kho ý tưởng, video, nhạc) được giữ nguyên.
 
 
-E. THEO DÕI TIẾN ĐỘ TỪ MÁY CHÍNH (không cần điều khiển từ xa)
---------------------------------------------------------------
-Trang theo dõi CHỈ XEM: MV nào đang ở bước nào, MV đã xong (tải MP4 về máy chính), Muse có đang chạy / hết lượt không,
-kho ý tưởng, dung lượng ổ C, các lỗi cần chú ý. Tự cập nhật 5 giây một lần. Không bấm điều khiển được gì.
-Trang chỉ mở trên mạng riêng Tailscale: chỉ các máy đăng nhập cùng tài khoản Tailscale của bạn mới vào được,
-máy cùng wifi hay người ngoài thì không.
-
-1. Cài Tailscale trên CẢ HAI máy: https://tailscale.com/download → cài → đăng nhập (dùng cùng một tài khoản,
-   vd. tài khoản Google của bạn). Miễn phí cho cá nhân.
-2. Trên máy chạy, trong app: Cài đặt → thẻ "Theo dõi từ máy khác (Tailscale)":
-   - gõ mật khẩu trang theo dõi (ít nhất 6 ký tự, chỉ dùng cho trang này) → "Lưu mật khẩu";
-   - tick "Bật trang theo dõi".
-   Thẻ hiện địa chỉ cần mở, dạng http://100.x.y.z:3300 → bấm Copy.
-   Lần đầu Windows có thể hỏi cho Node.js dùng mạng → bấm "Allow access" (Cho phép).
-3. Trên máy chính: mở trình duyệt, dán địa chỉ đó → trình duyệt hỏi tên đăng nhập và mật khẩu:
-   tên gõ gì cũng được, mật khẩu là mật khẩu vừa đặt. Lưu trang vào Bookmark (dấu trang) để mở lại nhanh.
-   Chấm xanh góc trên = đang nối với máy chạy; chấm đỏ = mất kết nối (máy chạy tắt / ngủ / Tailscale ngắt).
-
-
-F. KẾT QUẢ MỖI MV + TỰ ĐƯA LÊN GOOGLE DRIVE
---------------------------------------------
-Mỗi MV xong, app tự tạo một thư mục kết quả, ví dụ "008 - Santa Monica Moonlight 1959", gồm:
-   - video MP4 (tên file = tiêu đề YouTube, YouTube tự lấy làm tiêu đề khi tải lên),
-   - Ảnh bìa.jpg (1280×720, lấy từ cảnh đẹp nhất của MV, có tên bài và địa điểm · năm),
-   - Tiêu đề - mô tả.txt (tiêu đề, 2 tiêu đề dự phòng, mô tả + hashtag — dán thẳng lên YouTube).
-Mặc định các thư mục này nằm trong thư mục KET QUA, ngay cạnh thư mục app.
-
-Để kết quả TỰ LÊN GOOGLE DRIVE:
-1. Trên máy chạy, cài "Google Drive cho máy tính": https://www.google.com/drive/download/
-   → đăng nhập tài khoản Google của bạn (tài khoản có thư mục Drive nhận MV).
-2. Trên trang web Google Drive, mở thư mục nhận MV. Nếu thư mục do tài khoản khác chia sẻ cho bạn:
-   chuột phải vào thư mục → Sắp xếp (Organize) → Thêm lối tắt (Add shortcut) → Drive của tôi (My Drive).
-3. Mở File Explorer → ổ "Google Drive (G:)" → "My Drive" (Drive của tôi) → mở thư mục đó
-   → bấm vào thanh địa chỉ ở trên cùng → Ctrl+C (đường dẫn dạng G:\My Drive\Tên thư mục).
-4. Trong app: Cài đặt → "Thư mục kết quả" → dán đường dẫn → Lưu.
-Từ đó mỗi MV xong được chép vào thư mục đó và Google Drive tự tải lên (thời gian tải tuỳ mạng).
-Để Google Drive ở chế độ "Stream files" (mặc định) cho đỡ tốn chỗ ổ C.
+E. THEO DÕI TIẾN ĐỘ TỪ MÁY CHÍNH
+---------------------------------
+Giống app cũ (Tailscale + mật khẩu riêng), chỉ khác cổng: app Giáng sinh dùng cổng 3301 (app cũ 3300), nên mở được cả hai trang.
+Trên máy chạy, trong app Giáng sinh: Cài đặt → thẻ "Theo dõi từ máy khác (Tailscale)" → đặt mật khẩu → "Lưu mật khẩu" → tick
+"Bật trang theo dõi". Thẻ hiện địa chỉ dạng http://100.x.y.z:3301 → mở trên máy chính, lưu Bookmark.
+Lần đầu Windows có thể hỏi cho Node.js dùng mạng → bấm "Allow access" (Cho phép).

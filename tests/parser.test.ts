@@ -173,14 +173,16 @@ describe("helpers", () => {
   });
   it("extractYear / matchLocation / baseLocationName", () => {
     const lib = locations as LocationLibrary;
-    expect(extractYear("Hollywood Boulevard Summer 1954")).toBe(1954);
+    expect(extractYear("Rockefeller Center Christmas Eve 1954")).toBe(1954);
     expect(extractYear("Somewhere")).toBeNull();
-    expect(matchLocation("Hollywood Boulevard Summer 1954", lib)).toBe("Hollywood Boulevard");
-    expect(matchLocation("Hollywood Drive-In Night 1956", lib)).toBe("Hollywood Drive-In");
-    expect(matchLocation("Sunset Boulevard Rock & Roll 1957", lib)).toBe("Sunset Boulevard");
-    expect(matchLocation("Hollywood Summer Nights 1958", lib)).toBe("Hollywood");
-    expect(matchLocation("Santa Monica Pier Summer 1954", lib)).toBe("Santa Monica Pier");
+    expect(matchLocation("Rockefeller Center Christmas Eve 1954", lib)).toBe("Rockefeller Center");
+    expect(matchLocation("Woodstock Vermont First Snow 1952", lib)).toBe("Woodstock Vermont");
+    expect(matchLocation("Vermont Village Sleigh Ride 1953", lib)).toBe("Woodstock Vermont");
+    expect(matchLocation("Hollywood Santa Claus Lane Parade 1955", lib)).toBe("Hollywood Boulevard");
+    expect(matchLocation("Grand Central Station Homecoming 1951", lib)).toBe("Grand Central Terminal");
     expect(matchLocation("Atlantis Underwater 1955", lib)).toBeNull();
-    expect(baseLocationName("Hollywood Drive-In Night 1956")).toBe("Hollywood Drive-In");
+    expect(baseLocationName("Portland Maine Christmas Eve 1956")).toBe("Portland Maine");
+    expect(baseLocationName("Lake Placid New Year's Eve 1958")).toBe("Lake Placid");
+    expect(baseLocationName("Savannah Holiday Morning 1957")).toBe("Savannah");
   });
 });

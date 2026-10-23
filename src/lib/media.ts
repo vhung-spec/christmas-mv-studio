@@ -10,16 +10,19 @@ import { DEFAULT_EDIT_OPTIONS, mergeEditOptions } from "./edit";
 import { FONT_EXTENSIONS, LOGO_EXTENSIONS } from "./branding";
 import { decodeMono, probe, renderWaveform } from "./ffmpeg";
 import { MEDIA_DIR, SAFE_ID, renameWithRetry, withLock } from "./store";
-import type { AudioTrack, EditOptions, MediaFile, VideoProject } from "./types";
+import type { AudioTrack, EditOptions, MediaFile, PlaylistTrack, VideoProject } from "./types";
 
 export const VIDEO_EXT = [".mp4", ".mov", ".webm", ".mkv", ".m4v"];
 export const AUDIO_EXT = [".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg", ".opus"];
 const MAX_CLIP_BYTES = 1024 ** 3;
-const MAX_AUDIO_BYTES = 300 * 1024 ** 2;
+/** Video Giáng sinh dài ~1 tiếng: bản mix 1 tiếng dạng WAV đã ~600 MB – 1 GB. */
+const MAX_AUDIO_BYTES = 1536 * 1024 ** 2;
 const MAX_IMAGE_BYTES = 20 * 1024 ** 2;
 const MAX_FONT_BYTES = 50 * 1024 ** 2;
 const SAFE_FILE = /^[a-z0-9][a-z0-9._-]{0,150}$/i;
 const SAMPLE_RATE = 11025;
+/** Nhịp chỉ ước tính trên chừng này giây đầu (nhạc dài 1 tiếng giải mã hết thì tốn bộ nhớ, mà dựng nguyên clip không cần nhịp). */
+const BEAT_SECONDS = 300;
 
 /** Lỗi do file người dùng tải lên (trả 400). */
 export class UploadError extends UserError {}
@@ -106,7 +109,7 @@ async function receive(body: ReadableStream<Uint8Array>, dest: string, maxBytes:
 /** Ước tính nhịp + phách đầu tiên từ file nhạc. */
 async function analyzeBeats(file: string, fixedBpm: number | null) {
   try {
-    const samples = await decodeMono(file, SAMPLE_RATE);
+    const samples = await decodeMono(file, SAMPLE_RATE, BEAT_SECONDS);
     return detectBeats(samples, SAMPLE_RATE, fixedBpm);
   } catch {
     return null;
@@ -119,6 +122,24 @@ export async function addAudio(mvId: string, name: string, body: ReadableStream<
   const file = `song-${id}${ext}`;
   const abs = mediaPath(mvId, file);
   const size = await receive(body, abs, MAX_AUDIO_BYTES);
+  return registerAudio(mvId, id, file, name, size);
+}
+
+/**
+ * Danh sách nhạc đã ghép sẵn (playlist.ts) trong thư mục media của MV → nhạc của MV (đổi tên file, không chép lại).
+ * `tracks` = bài nào bắt đầu ở giây nào (ghi vào mô tả YouTube).
+ */
+export async function addPlaylistAudio(mvId: string, src: string, name: string, tracks: PlaylistTrack[]): Promise<VideoProject> {
+  const id = stamp();
+  const file = `song-${id}${path.extname(src).toLowerCase()}`;
+  await renameWithRetry(src, mediaPath(mvId, file));
+  const { size } = await fs.stat(mediaPath(mvId, file));
+  return registerAudio(mvId, id, file, name, size, tracks);
+}
+
+/** Đo file nhạc vừa vào thư mục MV (thời lượng, nhịp, dạng sóng) và đặt làm nhạc của MV (thay bài cũ). */
+async function registerAudio(mvId: string, id: string, file: string, name: string, size: number, tracks?: PlaylistTrack[]): Promise<VideoProject> {
+  const abs = mediaPath(mvId, file);
   try {
     const info = await probe(abs);
     if (!info.audio) throw new UploadError("File này không có âm thanh.");
@@ -137,6 +158,7 @@ export async function addAudio(mvId: string, name: string, body: ReadableStream<
       beat_offset: beat?.offset ?? 0,
       beat_confidence: beat?.confidence ?? 0,
       waveform,
+      ...(tracks?.length ? { tracks } : {}),
     };
     return await updateProject(mvId, async (p) => {
       await removeFile(mvId, p.audio?.file);

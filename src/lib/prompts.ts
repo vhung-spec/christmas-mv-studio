@@ -1,7 +1,6 @@
-// System prompt (mục 5 của spec) và các user prompt gửi tới Claude.
+// System prompt (mục 5 của spec) và các user prompt gửi tới Claude — bản cho video nhạc Giáng sinh cổ điển thập niên 1950.
 
 import { coreBudget } from "./assemble";
-import type { SeasonPlan } from "./ideaBankTypes";
 import { formatTime } from "./structure";
 import type {
   CharacterBible,
@@ -41,9 +40,10 @@ export interface GenContext {
   settings: Settings;
 }
 
-export const SYSTEM_PROMPT = `You are a music-video director and AI-video prompt engineer specializing in 1950s Americana
-(Doo-Wop, Rock & Roll, Rockabilly). Given one song idea, produce a complete shot list for a
-music video built from short AI-generated clips.
+export const SYSTEM_PROMPT = `You are a music-video director and AI-video prompt engineer specializing in vintage 1950s
+American Christmas (classic crooner Christmas standards, doo-wop and rock & roll Christmas songs, carols).
+Given one video idea, produce a complete shot list for a long Christmas music video built from short
+AI-generated clips: the editor loops these clips for about an hour over a playlist of Christmas songs.
 
 INPUT: world_location, year, theme (name, mood, pacing, signature_shots), outline (Vietnamese),
 duration_sec, clip_len, optional lyrics, character bible (if fixed), location data, era rules,
@@ -51,7 +51,7 @@ style preset, target video model profile.
 
 RULES:
 1. Keep the characters identical across shots by repeating the character bible text verbatim.
-2. Follow the song structure and timing provided; tell the outline as a story arc.
+2. Follow the shot plan and timing provided; tell the outline as a gentle story arc of one Christmas.
 3. One main action per shot; vary shot sizes; respect target model's max prompt length.
 4. Everything must be period-accurate for the given year; no anachronisms.
 5. No real people, brands, logos, copyrighted characters, or on-screen text.
@@ -62,28 +62,41 @@ OUTPUT: valid JSON matching the provided schema only.
 
 HOW THIS TOOL ASSEMBLES YOUR OUTPUT
 - For each shot you write prompt_core. The application builds the final prompt_en from it by
-  (a) replacing every {{ID}} placeholder (for example {{HE}} or {{SHE}}) with that character's
+  (a) replacing every {{ID}} placeholder (for example {{HE}} or {{GIRL}}) with that character's
   bible description, word for word, and (b) appending the style preset, plus an "Audio:" sentence
   when the target video model supports audio. That is how rules 1 and 7 are guaranteed, so never
   paste the bible text or the style preset yourself and never write "[STYLE]".
 - Introduce each on-screen character once with its placeholder where the subject first appears;
-  after that use "he", "she", "the couple" and so on.
+  after that use "he", "she", "the family", "the children" and so on.
 - Order inside prompt_core: [shot size] + [subject with placeholder] + [the one main action or
-  movement] + [setting with period-accurate details] + [light / time of day] + [camera movement]
-  + [emotion].
+  movement] + [setting with period-accurate Christmas details] + [light / time of day] + [camera
+  movement] + [emotion].
 - prompt_core is one or two plain sentences: no line breaks, no quotation marks, no lists.
 - Stay within the character budget given for the shot (it depends on how many characters appear,
   because their descriptions are inserted later).
-- Signs, posters, marquees and screens are described without readable words.
+- Signs, posters, marquees, greeting cards and screens are described without readable words.
 - Car make and model names of period vehicles are fine (e.g. "1954 Chevrolet Bel Air"), but never
   logos, brand signage or product placement, and only model years up to the scene year.
+- Christmas decorations must fit the 1950s: big colored C7/C9 bulbs, bubble lights, glass ornaments,
+  silver tinsel, paper chains, real fir trees, wreaths, candles; never LED, inflatable or projected
+  lights. Santa Claus may appear as an anonymous man in a red suit; never named or copyrighted
+  holiday characters.
+- Every shot carries the season: snow, frost, decorations, colored lights, candles or a warm glow.
+  In warm places (California, Florida, New Orleans) show Christmas through lights on palm trees,
+  decorations and gifts — no snow.
 
-CHARACTER BIBLE (when you have to create it)
-- Usually the couple, with ids "HE" and "SHE". Add a supporting character only when the outline
-  needs one (ids like "FRIEND" or "BANDLEADER").
+CAST (CHARACTER BIBLE)
+- Read the outline to decide who the video follows: a couple (ids "HE" and "SHE"), a family (e.g.
+  "FATHER", "MOTHER", "GIRL", "BOY"), children ("GIRL", "BOY"), grandparents ("GRANDPA", "GRANDMA"),
+  friends, or one lone character — at most 4 characters. Add a supporting character only when the
+  outline needs one (e.g. "SANTA" for a red-suited man, "GRANDMA").
+- When the outline asks for scenery only (no main characters, "chỉ cảnh", "không nhân vật"), return an
+  EMPTY character_bible and never use {{ID}} placeholders: every shot then shows places, decorations,
+  and ordinary unnamed people, like the CHRISTMAS LIFE rows below.
 - Each description is one English noun phrase starting with "a" or "an" that reads naturally as a
-  sentence subject: age, hairstyle and hair color, face, main outfit with colors, and one signature
-  accessory. No names. At most about 220 characters. Period-accurate for the year.
+  sentence subject: age, hairstyle and hair color, face, main winter outfit with colors, and one
+  signature accessory (a red scarf, a knit hat, a sprig of holly). No names. At most about 220
+  characters. Period-accurate for the year.
 - When a fixed character bible is given, copy it exactly (same ids, same descriptions).
 
 SHOTS
@@ -91,28 +104,32 @@ SHOTS
   timing come from the plan and are fixed.
 - Use the row's size class (wide / medium / close); you may refine it (e.g. close → extreme
   close-up). Avoid the same size on consecutive shots.
-- Rows marked MOTION show dancing or strong physical movement; set is_motion true for them.
+- Rows marked MOTION show lively physical movement (skating, sledding, a snowball fight, swing
+  dancing at a holiday party, children running through snow); set is_motion true for them.
 - Rows marked SIGNATURE visibly use that theme signature shot; copy its name into signature_shot
   (otherwise null).
 - When a row has a lyric line, let the image echo it, without writing the words on screen.
-- Rows marked ERA LIFE are nostalgic slices of everyday 1950s American life at this place and year,
-  WITHOUT the main characters: no {{ID}} placeholders, characters_in_shot empty. Show ordinary,
-  unnamed people and period details — for example a soda jerk spinning a milkshake at a chrome
-  counter, teenagers crowding a glowing jukebox, finned cars cruising a neon main street, a family
-  gathered around a small black-and-white television, kids on bicycles with baseball cards, a gas
-  station attendant in a cap wiping a windshield, a drive-in screen glowing at dusk, a dance hall full
-  of swing skirts, a milkman at a picket-fence porch. It must feel like a cherished memory of a golden
-  age — warm, iconic, period-accurate (era rules), clearly tied to this location and year, echoing the
-  section's mood or lyric. Every ERA LIFE row shows a different activity, never repeated; the first
-  shot of the video, when marked, establishes the place and the era. description_vi starts with
-  "Đời sống 50s:".
-- Spread the outline over the whole song as a story with a beginning, a development and an ending
-  (told by the shots with the characters; ERA LIFE shots surround that story with the era).
+- Rows marked CHRISTMAS LIFE are nostalgic slices of everyday 1950s American Christmas at this place and
+  year, WITHOUT the main characters: no {{ID}} placeholders, characters_in_shot empty. Show ordinary,
+  unnamed people and period details — for example carolers with lanterns at a snowy doorstep, a
+  lantern-lit Christmas tree lot, a department-store Santa with a line of children, kids sledding
+  down a hill, skaters circling a frozen pond, a mailman carrying parcels through the snow, a family
+  silhouetted in a glowing picture window, a toy-shop window with a circling electric train, a
+  church choir by candlelight, a horse-drawn sleigh, a steam train crossing a snowy valley. It must
+  feel like a cherished memory of a golden-age Christmas — warm, iconic, period-accurate (era rules),
+  clearly tied to this location and year, echoing the section's mood. Every CHRISTMAS LIFE row shows
+  a different activity, never repeated; the first shot of the video, when marked, establishes the
+  place and the season. description_vi starts with "Giáng sinh 50s:".
+- The clips are looped for about an hour, so every shot must be a beautiful, rewatchable moment
+  with smooth continuous motion that still works when seen again or out of order; no shocks, no
+  sudden action, no two shots alike.
+- Spread the outline over the plan as a story with a beginning, a development and an ending (told by
+  the shots with the characters; CHRISTMAS LIFE shots surround that story with the season).
   Never repeat the same moment; every shot moves the story or the feeling forward.
 - characters_in_shot lists the ids of the placeholders used in prompt_core.
 - description_vi: one natural Vietnamese sentence for the editor.
 - camera: a short English camera move (e.g. "slow crane down", "handheld follow", "slow 360° orbit").
-- transition_to_next: a short English editing idea (e.g. "match cut on marquee lights"); the last
+- transition_to_next: a short English editing idea (e.g. "match cut on the tree lights"); the last
   shot uses "fade out".
 - negative_extra: shot-specific things to avoid, short English phrases, may be empty.
 - audio: only when the target model supports audio — a short English description of music mood,
@@ -120,20 +137,23 @@ SHOTS
 
 EXTRA ASSETS
 - story_arc: one short Vietnamese beat per section of the plan.
-- thumbnail_prompt: one English prompt for a 16:9 YouTube thumbnail still: the couple in the most
-  iconic moment of the story, period-accurate, no text. Use the {{ID}} placeholders for characters;
-  the style preset is appended automatically.
-- youtube_titles: exactly 3 English options in the channel's style, no all-caps clickbait.
+- thumbnail_prompt: one English prompt for a 16:9 YouTube thumbnail still: the most iconic, cozy
+  Christmas moment of the video (the characters if any), period-accurate, no text. Use the {{ID}}
+  placeholders for characters; the style preset is appended automatically.
+- youtube_titles: exactly 3 English options for a long vintage Christmas music video in the channel's
+  style, each naming the place or mood and the video length given in VIDEO LENGTH (e.g. "1 Hour"),
+  no all-caps clickbait.
 - youtube_description: 80–150 English words in the channel voice provided, then a blank line and one line of
-  4–8 relevant hashtags (e.g. #rockandroll #1950s #doowop) — they are also written into the video file as keywords.
-- editing_notes: Vietnamese notes per section — where to cut fast on the beat, where to use slow
-  motion, which transitions to use.`;
+  4–8 relevant hashtags (e.g. #christmasmusic #vintagechristmas #1950s) — they are also written into the
+  video file as keywords. Do not write a tracklist: the application appends the songs with timestamps.
+- editing_notes: Vietnamese notes per section — where to cut on the beat, where to use slow motion,
+  which transitions to use.`;
 
 const TONE_TEXT: Record<Tone, string> = {
   default: "",
-  playful: "TONE OVERRIDE: make the whole video more playful and upbeat — comedic beats, bright daylight, bouncy camera moves, cheeky glances.",
-  melancholy: "TONE OVERRIDE: make the whole video more bittersweet and melancholic — dusk, rain, longing looks, slower camera, quieter moments, still ending with hope.",
-  cinematic: "TONE OVERRIDE: make the whole video more cinematic and epic — sweeping crane and dolly moves, dramatic lighting, grand wide compositions, big-screen romance.",
+  playful: "TONE OVERRIDE: make the whole video more playful and merry — snowball fights, bright snowy days, bouncy camera moves, giggles and mischief.",
+  melancholy: "TONE OVERRIDE: make the whole video more bittersweet — longing for home, candlelit windows, slower camera, quiet snowy nights, still ending warm and hopeful.",
+  cinematic: "TONE OVERRIDE: make the whole video more cinematic and grand — sweeping crane and dolly moves over snowy towns, dramatic glowing lights, big-screen holiday spectacle.",
 };
 
 const bullet = (items: string[] | undefined) => (items?.length ? items.map((x) => `  - ${x}`).join("\n") : "  - (none)");
@@ -151,6 +171,14 @@ export function eraForbiddenFor(rules: EraRules, year: number) {
     globalForbidden: rules.global_forbidden.map((t) => t.term),
     notYetInvented: rules.introduced.filter((i) => i.year > year).map((i) => `${i.term} (from ${i.year})`),
   };
+}
+
+/** Độ dài video (phút) viết cho tiêu đề YouTube: 60 → "1 Hour", 90 → "1.5 Hours", 45 → "45 Minutes". */
+export function videoLengthLabel(minutes: number): string {
+  const m = Math.max(1, Math.round(minutes));
+  if (m < 60) return `${m} Minutes`;
+  const h = Math.round((m / 60) * 2) / 2;
+  return h === 1 ? "1 Hour" : `${h} Hours`;
 }
 
 function budgetLine(ctx: GenContext): string {
@@ -175,7 +203,7 @@ function planRow(s: PlannedShot): string {
     `${formatTime(s.start_sec)}–${formatTime(s.start_sec + s.duration_sec)} (${s.duration_sec}s)`,
     `size: ${s.size_hint}`,
   ];
-  if (s.era_life) parts.push("ERA LIFE");
+  if (s.era_life) parts.push("CHRISTMAS LIFE");
   if (s.must_motion) parts.push("MOTION");
   if (s.signature_shot) parts.push(`SIGNATURE: ${s.signature_shot}`);
   if (s.lyric_line) parts.push(`lyric: ${s.lyric_line}`);
@@ -185,11 +213,11 @@ function planRow(s: PlannedShot): string {
 function contextBlock(ctx: GenContext): string {
   const { idea, theme, location, eraYear } = ctx;
   const lines: string[] = [];
-  lines.push("SONG IDEA");
+  lines.push("VIDEO IDEA");
   lines.push(`- id: ${idea.id}`);
   lines.push(`- world_location: ${idea.world_location}`);
   lines.push(`- year: ${ctx.year}`);
-  if (idea.song_title) lines.push(`- song_title: ${idea.song_title}`);
+  if (idea.song_title) lines.push(`- title: ${idea.song_title}`);
   if (idea.series) lines.push(`- series: ${idea.series}`);
   lines.push(`- theme: ${ctx.themeCode} "${theme.name}" — mood: ${theme.mood}; pacing: ${theme.pacing}; signature_shots: ${theme.signature_shots.join(" | ") || "(none)"}`);
   lines.push(`- outline (Vietnamese): ${idea.outline}`);
@@ -208,7 +236,7 @@ function contextBlock(ctx: GenContext): string {
   lines.push(`- vehicles valid this year:\n${bullet(eraYear.vehicles)}`);
   lines.push(`- hairstyles:\n${bullet(eraYear.hairstyles)}`);
   lines.push(`- fashion:\n${bullet(eraYear.fashion)}`);
-  lines.push(`- props:\n${bullet(eraYear.props)}`);
+  lines.push(`- props and decorations:\n${bullet(eraYear.props)}`);
   lines.push(`- music & dance:\n${bullet(eraYear.music_dance)}`);
   lines.push(`- does not exist yet in ${ctx.year}: ${ctx.notYetInvented.join(", ") || "(none)"}`);
   lines.push(`- never show (modern): ${ctx.globalForbidden.join(", ")}`);
@@ -217,7 +245,10 @@ function contextBlock(ctx: GenContext): string {
 
 function bibleBlock(bible: CharacterBible | null): string {
   if (!bible) {
-    return "CHARACTER BIBLE: create it (see system rules).";
+    return "CHARACTER BIBLE: create it from the outline (see CAST in the system rules) — or leave it empty for a scenery-only video.";
+  }
+  if (!bible.characters.length) {
+    return "CHARACTER BIBLE: none — this video has no main characters (scenery and unnamed people only, no {{ID}} placeholders).";
   }
   return `CHARACTER BIBLE (fixed for the whole series — copy exactly into character_bible):\n${bible.characters
     .map((c) => `- id: ${c.id} · role: ${c.role} · description: ${c.description}`)
@@ -245,10 +276,10 @@ export function buildGenerationPrompt(ctx: GenContext): string {
   if (ctx.settings.loopScenes) {
     out.push("");
     out.push(
-      `LOOPED EDIT: the editor will reuse and repeat these ${plan.shots.length} clips to fill the whole song (a clip may appear several times, in other sections and in any order). ` +
+      `LOOPED EDIT: the editor will play these ${plan.shots.length} clips one after another and repeat them (in shuffled rounds) to fill a Christmas playlist of about ${Math.round(ctx.settings.videoMinutes)} minutes. ` +
         "So every shot must stand on its own as a complete, visually distinct moment that still makes sense when repeated or seen out of order; " +
-        "no two shots may look alike; favour iconic, rewatchable moments with smooth continuous motion. Keep the story arc across the plan for the first pass. " +
-        "In editing_notes, add one note with section \"Lặp cảnh\" saying (in Vietnamese, by shot number) which shots to repeat in which sections.",
+        "no two shots may look alike; favour iconic, rewatchable, calming moments with smooth continuous motion. Keep the story arc across the plan for the first pass. " +
+        "In editing_notes, add one note with section \"Lặp cảnh\" saying (in Vietnamese, by shot number) which shots work best to open the video and which to repeat most.",
     );
   }
   if (ctx.idea.lyrics?.trim()) {
@@ -267,6 +298,7 @@ export function buildGenerationPrompt(ctx: GenContext): string {
     out.push(tone);
   }
   out.push("");
+  out.push(`VIDEO LENGTH for youtube_titles: about ${Math.round(ctx.settings.videoMinutes)} minutes ("${videoLengthLabel(ctx.settings.videoMinutes)}").`);
   out.push(`CHANNEL VOICE for youtube_description: ${ctx.settings.channelVoice}`);
   return out.join("\n");
 }
@@ -313,25 +345,25 @@ export function buildShortenPrompt(items: { shot_no: number; prompt_core: string
 
 export function buildLocationPrompt(worldLocation: string, name: string, year: number): string {
   return [
-    `Describe the place "${name}" (from the song idea "${worldLocation}") as it looked in ${year}, for a 1950s Americana music video.`,
-    "Give period-accurate landmarks (visual descriptions, no brand names, no readable text), period vehicles with model year ≤ the scene year, wardrobe, props and characteristic light.",
-    "In forbidden, list things people often wrongly show for this place in the 1950s (buildings or attractions built later, modern objects).",
+    `Describe the place "${name}" (from the video idea "${worldLocation}") as it looked at Christmastime in ${year}, for a vintage 1950s Christmas music video.`,
+    "Give period-accurate landmarks with their holiday decorations (visual descriptions, no brand names, no readable text), period vehicles with model year ≤ the scene year, winter wardrobe, Christmas props and characteristic light (snow only if it really snows there).",
+    "In forbidden, list things people often wrongly show for this place at Christmas in the 1950s (buildings, attractions or decorations that came later, modern objects).",
   ].join("\n");
 }
 
-export const LOCATION_SYSTEM = "You are a meticulous production designer and historian of 1950s America. Answer only with JSON matching the schema.";
+export const LOCATION_SYSTEM = "You are a meticulous production designer and historian of 1950s America at Christmastime. Answer only with JSON matching the schema.";
 
 export function buildCouplePrompt(series: string, sampleIdea: IdeaRow | null): string {
   return [
-    `Create ONE fixed couple who will star in every music video of the series "${series === "__default__" ? "(default series)" : series}" — 1950s American Doo-Wop / Rock & Roll love songs.`,
+    `Create ONE fixed couple who will star in every video of the series "${series === "__default__" ? "(default series)" : series}" — vintage 1950s American Christmas music videos.`,
     sampleIdea ? `First video of the series: ${sampleIdea.world_location} — ${sampleIdea.outline}` : "",
-    'Return two characters with ids "HE" and "SHE". Each description: one English noun phrase starting with "a"/"an", age, hairstyle and hair color, face, main outfit with colors that suits the whole decade, one signature accessory; no names; at most about 220 characters.',
+    'Return two characters with ids "HE" and "SHE". Each description: one English noun phrase starting with "a"/"an", age, hairstyle and hair color, face, main winter outfit with colors that suits the whole decade, one signature accessory; no names; at most about 220 characters.',
   ]
     .filter(Boolean)
     .join("\n");
 }
 
-export const COUPLE_SYSTEM = "You are a costume designer and casting director for 1950s-style music videos. Answer only with JSON matching the schema.";
+export const COUPLE_SYSTEM = "You are a costume designer and casting director for 1950s-style Christmas music videos. Answer only with JSON matching the schema.";
 
 // ---------- Đề xuất ý tưởng mới (kho ý tưởng sắp hết) ----------
 
@@ -345,35 +377,24 @@ export interface IdeasPromptInput {
   existing: IdeaRow[];
   /** Series đang dở (ý tưởng mới nối tiếp series này), nếu có. */
   series: string | null;
-  /** Số ý tưởng mùa thu / mùa đông (kênh đang nghiêng dần sang thu → đông); không có = mùa nào cũng được. */
-  seasons?: SeasonPlan | null;
 }
 
 export const IDEAS_SYSTEM =
-  "You are the creative lead of a YouTube channel of 1950s American Doo-Wop / Rock & Roll love-song music videos. You invent fresh, specific, period-accurate video ideas. Answer only with JSON matching the schema.";
+  "You are the creative lead of a YouTube channel of hour-long vintage 1950s American Christmas music videos. You invent fresh, specific, period-accurate video ideas. Answer only with JSON matching the schema.";
 
 export function buildIdeasPrompt(input: IdeasPromptInput): string {
   const line = (i: IdeaRow) => `${i.world_location} | ${i.theme_code} | ${i.outline.replace(/\s+/g, " ").slice(0, 160)}`;
-  const s = input.seasons;
-  const cold = s ? s.autumn + s.winter : 0;
   return [
-    `Write ${input.count} NEW music-video ideas for the channel, in the same format and spirit as the examples.`,
+    `Write ${input.count} NEW Christmas video ideas for the channel, in the same format and spirit as the examples.`,
     "Each idea:",
-    '- world_location: English, "<real American place> <moment or season> <year>", year between 1950 and 1959 (e.g. "Santa Monica Pier Summer 1954"). The place must have existed in that year.',
+    '- world_location: English, "<real American place> <Christmas-season moment> <year>", year between 1950 and 1959 (e.g. "Woodstock Vermont Christmas Eve 1952", "Rockefeller Center First Snow 1955"). The place must have existed in that year; the moment falls in the holiday season, from the first snow and the tree lots of late November to New Year\'s Eve.',
     "- theme_code: one code from the theme list. Prefer the least-used themes so the channel stays varied.",
-    "- outline: Vietnamese, one or two sentences — the specific little love story of this video (where they are, what happens, the emotional moment), like the examples.",
-    `Rules: every world_location must be new (not a place + moment already listed below) and every story different from the listed ones; vary regions, ${s ? "" : "seasons, "}years and situations; no brand names, no real people.`,
-    ...(s && cold
-      ? [
-          `Seasons — the channel is moving gradually into autumn and winter (its older videos are mostly summer): exactly ${s.autumn} ideas set in autumn and ${s.winter} set in winter${s.other ? `; the other ${s.other} in any season` : ""}.`,
-          '- Autumn ideas put "Autumn" or "Fall" (or Halloween / Thanksgiving) in world_location: falling leaves, crisp evenings, homecoming dances, football games, hayrides, harvest fairs, Halloween, Thanksgiving.',
-          '- Winter ideas put "Winter", "Christmas", "Snow" or "New Year\'s Eve" in world_location: snow, ice skating, warm diners on cold nights, Christmas lights and shop windows, ski lodges, New Year\'s Eve.',
-          "- In warm regions (California, Florida, Las Vegas, the Southwest) show the season through holidays, light and clothes (Christmas lights on palm trees, New Year's Eve on the Strip), not snow.",
-        ]
-      : []),
+    "- outline: Vietnamese, one or two sentences — who the video follows and the specific little Christmas story (where they are, what happens, the feeling). Say the cast clearly: a couple, a family with children, children, grandparents, friends, someone far from home — or \"Chỉ cảnh, không nhân vật chính: …\" for a scenery-only video.",
+    "Rules: every world_location must be new (not a place + moment already listed below) and every story different from the listed ones; vary regions, years, holiday moments and casts (include a few scenery-only ideas); no brand names, no real people, no copyrighted characters.",
+    "- In warm places (California, Florida, New Orleans) the story shows Christmas through lights, palm trees and gifts, not snow.",
     input.series
       ? `These ideas continue the series "${input.series}": stay with these regions, return series_name as the regions part of that label.`
-      : 'series_name: a short label of the regions these ideas cover, like "California – Las Vegas – Route 66 – New York".',
+      : 'series_name: a short label of the regions these ideas cover, like "New England – New York – Chicago".',
     "",
     "Themes (code · name · times used):",
     ...input.themes.map((t) => `${t.code} · ${t.name} · ${t.used}`),

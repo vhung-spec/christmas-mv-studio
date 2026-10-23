@@ -256,7 +256,7 @@ export default function ExportStyleCard({
           )}
           <div className="grid grid-cols-2 gap-2">
             <Field label="Tên kênh / tác giả">
-              <input className="input py-1" value={options.metadata.artist} placeholder="vd. Bokin Rock & Roll" onChange={(e) => setMeta({ artist: e.target.value })} />
+              <input className="input py-1" value={options.metadata.artist} placeholder="vd. Bokin Christmas" onChange={(e) => setMeta({ artist: e.target.value })} />
             </Field>
             <Field label="Thể loại">
               <input className="input py-1" value={options.metadata.genre} onChange={(e) => setMeta({ genre: e.target.value })} />

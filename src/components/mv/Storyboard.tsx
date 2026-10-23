@@ -72,7 +72,7 @@ export default function Storyboard({ mv, maxChars, onUpdated, manual }: Props) {
                     <div className="mt-1 flex flex-wrap gap-1">
                       <span className="badge">{s.shot_size}</span>
                       <span className="badge">🎥 {s.camera}</span>
-                      {s.era_life && <span className="badge border-amber-500 bg-amber-50">📻 đời sống 50s</span>}
+                      {s.era_life && <span className="badge border-amber-500 bg-amber-50">🎄 Giáng sinh 50s</span>}
                       {s.is_motion && <span className="badge border-cherry/40 bg-cherry/10">💃 chuyển động</span>}
                       {s.signature_shot && <span className="badge border-mint-dark/50 bg-mint/30">★ {s.signature_shot}</span>}
                       {s.edited && <span className="badge border-amber-500 bg-amber-100">✎ đã sửa tay</span>}

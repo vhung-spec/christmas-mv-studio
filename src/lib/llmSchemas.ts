@@ -75,13 +75,13 @@ export const LOCATION_SCHEMA = obj({
 
 export const COUPLE_SCHEMA = obj({ characters: { type: "array", items: CHARACTER_SCHEMA } });
 export const IDEAS_SCHEMA = obj({
-  series_name: str("Short label of the regions these ideas cover, e.g. 'Pacific Coast – Oregon – Washington'"),
+  series_name: str("Short label of the regions these ideas cover, e.g. 'New England – New York – Chicago'"),
   ideas: {
     type: "array",
     items: obj({
-      world_location: str("English: real American place + moment or season + year 1950-1959, e.g. 'Santa Monica Pier Summer 1954'"),
+      world_location: str("English: real American place + Christmas-season moment + year 1950-1959, e.g. 'Woodstock Vermont Christmas Eve 1952'"),
       theme_code: str("One code from the theme list, e.g. T01"),
-      outline: str("Vietnamese, 1-2 sentences: the specific love story of this video"),
+      outline: str("Vietnamese, 1-2 sentences: who the video follows (or 'Chỉ cảnh, không nhân vật chính') and its little Christmas story"),
     }),
   },
 });

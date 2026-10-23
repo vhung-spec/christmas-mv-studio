@@ -294,11 +294,12 @@ function normalizeSpaces(s: string) {
     .trim();
 }
 
-/** Tên địa điểm rút gọn: bỏ năm và các từ chỉ mùa/thời điểm ở cuối. */
+/** Tên địa điểm rút gọn: bỏ năm và các từ chỉ mùa/thời điểm (kể cả dịp lễ: Christmas Eve, New Year's Eve, First Snow…). */
 export function baseLocationName(worldLocation: string): string {
   return worldLocation
     .replace(/\b(19|20)\d{2}\b/g, "")
-    .replace(/\b(summer|winter|spring|autumn|fall|night|nights|day|evening|morning|sunset|dawn)\b/gi, "")
+    .replace(/\bnew year'?s( eve| day)?\b/gi, "")
+    .replace(/\b(summer|winter|spring|autumn|fall|night|nights|day|evening|morning|sunset|dawn|christmas|xmas|eve|holiday|holidays|first snow|snowy|snowfall|carol|tree lot)\b/gi, "")
     .replace(/\s{2,}/g, " ")
     .trim();
 }

@@ -30,8 +30,8 @@ export default function Nav() {
     <header className="border-b-4 border-cherry bg-ink text-cream">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
         <Link href="/" className="flex items-baseline gap-2">
-          <span className="font-display text-2xl text-mint">MV Prompt Studio</span>
-          <span className="hidden text-xs uppercase tracking-[0.2em] text-cream/70 sm:inline">Rock &amp; Roll · Doo-Wop · 1950s</span>
+          <span className="font-display text-2xl text-mint">Christmas MV Studio</span>
+          <span className="hidden text-xs uppercase tracking-[0.2em] text-cream/70 sm:inline">🎄 Vintage Christmas · 1950s</span>
         </Link>
         <nav className="flex flex-wrap gap-1">
           {LINKS.map((l) => {

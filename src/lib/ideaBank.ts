@@ -3,26 +3,17 @@
 // nhờ Claude nghĩ thêm — chờ bạn duyệt, hoặc dùng luôn nếu bật "Tự duyệt". Lưu ở data/ideas.json. Chỉ dùng phía server.
 
 import { randomUUID } from "node:crypto";
-import path from "node:path";
 import { UserError } from "./errors";
 import { generationMode } from "./generate";
-import {
-  BANK_LIMITS,
-  DEFAULT_BANK_CONFIG,
-  ideaSeason,
-  seasonPlan,
-  type BankConfig,
-  type BankStatus,
-  type BankView,
-  type IdeaBank,
-} from "./ideaBankTypes";
+import { BANK_LIMITS, DEFAULT_BANK_CONFIG, type BankConfig, type BankStatus, type BankView, type IdeaBank, type MusicStock } from "./ideaBankTypes";
 import { callStructured, hasCredentials } from "./llm";
 import { IDEAS_SCHEMA, zIdeaBatch, type RawIdeaBatch } from "./llmSchemas";
 import { mockIdeas } from "./mock";
 import { extractYear, splitThemeCell } from "./parser";
+import { ENOUGH_RATIO, pickPlaylist, songDurations } from "./playlist";
 import { IDEAS_SYSTEM, buildIdeasPrompt } from "./prompts";
 import { readSongLibrary } from "./songLibrary";
-import { listSongs, matchSongForIdea } from "./songs";
+import { listSongs } from "./songs";
 import { readUsedSongs, takenBy } from "./songsUsed";
 import { IDEAS_FILE, PIPELINE_FILE, listMVs, readJson, readLibraries, readSettings, withLock, writeJson } from "./store";
 import type { IdeaRow } from "./types";
@@ -126,23 +117,35 @@ export async function takeIdeas(n: number, check?: TakeCheck): Promise<IdeaRow[]
 }
 
 /**
- * Kiểm tra theo Thư mục nhạc: ý tưởng mà mọi bản nhạc cùng số đều ghi "đã dùng" → bỏ qua; `needSong` mà chưa thấy nhạc → chờ.
+ * Nhạc chưa dùng trong Thư mục nhạc (mỗi bài một bản; bài ghi "đã dùng" hoặc đã ghép vào video khác không tính) và đủ cho mấy video.
  * null khi chưa đặt Thư mục nhạc (hoặc không mở được).
  */
-export async function songCheck(songDir: string, needSong: boolean): Promise<TakeCheck | null> {
+export async function musicStock(songDir: string, videoMinutes: number): Promise<MusicStock | null> {
   const files = songDir.trim() ? await listSongs(songDir.trim()).catch(() => null) : null;
   if (!files) return null;
-  // Sổ bài đã dùng: bài đã ghép vào MV nào đó cũng coi như đã ghi "đã dùng".
-  const taken = takenBy(await readUsedSongs());
-  return (idea) => {
-    const song = matchSongForIdea(files, idea, idea.world_location, taken);
-    if (song?.used) {
-      return song.by === "number"
-        ? `Bỏ qua: cả ${song.total} bản nhạc bài số ${song.n} đều đã dùng (ghi “đã dùng” hoặc đã ghép vào MV khác).`
-        : `Bỏ qua: bài “${path.basename(song.file)}” đã dùng (ghi “đã dùng” hoặc đã ghép vào MV khác).`;
-    }
-    return needSong && !song ? "wait" : "take";
-  };
+  // Sổ bài đã dùng: bài đã ghép vào video nào đó cũng coi như đã ghi "đã dùng".
+  const pick = pickPlaylist(await songDurations(files), Infinity, { taken: takenBy(await readUsedSongs()) });
+  const need = Math.max(1, videoMinutes) * 60 * ENOUGH_RATIO;
+  return { minutes: Math.round(pick.available / 60), songs: pick.songs.length, videos: Math.floor(pick.available / need + 1e-9), videoMinutes };
+}
+
+/**
+ * Kiểm tra theo Thư mục nhạc (video Giáng sinh dùng nhiều bài, không gắn bài với số ý tưởng): `needSong` thì chỉ lấy bấy nhiêu ý tưởng
+ * mà nhạc chưa dùng còn đủ (trừ `reserved` video trong dây chuyền đang chờ ghép nhạc), còn lại chờ trong kho.
+ * null khi không lọc (tắt, hoặc chưa đặt Thư mục nhạc).
+ */
+export async function songCheck(songDir: string, needSong: boolean, videoMinutes: number, reserved = 0): Promise<TakeCheck | null> {
+  if (!needSong) return null;
+  const stock = await musicStock(songDir, videoMinutes);
+  if (!stock) return null;
+  let left = stock.videos - reserved;
+  return () => (left-- > 0 ? "take" : "wait");
+}
+
+/** Số video trong dây chuyền chưa xong mà chưa có nhạc (sẽ lấy nhạc trong Thư mục nhạc). */
+export async function waitingForMusic(): Promise<number> {
+  const st = await readJson<{ items: { done_at?: string; steps: { song: { status: string } } }[] }>(PIPELINE_FILE(), { items: [] });
+  return st.items.filter((i) => !i.done_at && i.steps.song.status !== "done").length;
 }
 
 /** Duyệt (đề xuất → chưa dùng) hoặc bỏ ý tưởng. keys = "proposed" → mọi ý tưởng đang chờ duyệt. Trả về số ý tưởng đã đổi. */
@@ -169,7 +172,7 @@ const clamp = (v: unknown, [lo, hi]: readonly [number, number], fallback: number
 export function setBankConfig(patch: Partial<Record<keyof BankConfig, unknown>>): Promise<BankConfig> {
   return updateBank((b) => {
     const c = { ...b.config };
-    for (const k of ["feed", "suggest", "autoApprove", "needSong", "seasonShift"] as const) if (typeof patch[k] === "boolean") c[k] = patch[k];
+    for (const k of ["feed", "suggest", "autoApprove", "needSong"] as const) if (typeof patch[k] === "boolean") c[k] = patch[k];
     if (patch.ahead !== undefined) c.ahead = clamp(patch.ahead, BANK_LIMITS.ahead, c.ahead);
     if (patch.batch !== undefined) c.batch = clamp(patch.batch, BANK_LIMITS.batch, c.batch);
     b.config = c;
@@ -225,9 +228,6 @@ function pickExamples(ideas: IdeaRow[], n = 8): IdeaRow[] {
   return Array.from({ length: n }, (_, k) => good[Math.floor((k * good.length) / n)]);
 }
 
-/** Số ý tưởng Claude đã đề xuất (không tính ý tưởng đã bỏ) — đo độ "nghiêng dần" sang thu → đông. */
-const claudeDone = (b: IdeaBank) => b.ideas.filter((x) => x.source === "claude" && x.status !== "rejected").length;
-
 /** Lọc ý tưởng Claude trả về: năm 1950–1959, mã chủ đề có thật, dàn ý đủ dài, địa điểm + thời điểm chưa có. */
 export function cleanSuggestions(raw: RawIdeaBatch["ideas"], known: IdeaRow[], themes: Set<string>) {
   const seen = new Set(known.map((i) => norm(i.world_location)));
@@ -262,27 +262,20 @@ async function runSuggest(count?: number): Promise<NonNullable<BankView["last"]>
   const { libs, themes } = await themeList(bank);
   const allowed = new Set(themes.map((t) => t.code));
   const known = await knownIdeas(bank);
-  const seasons = bank.config.seasonShift ? seasonPlan(n, claudeDone(bank)) : null;
   let raw: RawIdeaBatch;
   let cost: number | null = null;
   if (mode === "mock") {
-    raw = mockIdeas(n, known, themes, seasons);
+    raw = mockIdeas(n, known, themes);
   } else {
     const res = await callStructured({
       settings,
       system: IDEAS_SYSTEM,
-      user: buildIdeasPrompt({ count: n, themes, examples: pickExamples(known), existing: known, series: seriesOf(known, nextIdeaId(known)), seasons }),
+      user: buildIdeasPrompt({ count: n, themes, examples: pickExamples(known), existing: known, series: seriesOf(known, nextIdeaId(known)) }),
       schema: IDEAS_SCHEMA,
       validator: zIdeaBatch,
       check: (d) => {
         const c = cleanSuggestions(d.ideas, known, allowed);
-        if (c.ideas.length < Math.ceil(n / 2)) return `only ${c.ideas.length} of ${n} ideas are usable: ${c.problems.slice(0, 6).join("; ")}`;
-        // Thiếu ý tưởng thu–đông quá 1 → nhờ Claude sửa một lần (lần hai vẫn thiếu thì dùng luôn).
-        const cold = seasons ? seasons.autumn + seasons.winter : 0;
-        const got = c.ideas.filter((i) => ideaSeason(i.world_location)).length;
-        return got >= cold - 1
-          ? null
-          : `only ${got} ideas are set in autumn or winter, need ${seasons!.autumn} autumn + ${seasons!.winter} winter with the season word in world_location`;
+        return c.ideas.length < Math.ceil(n / 2) ? `only ${c.ideas.length} of ${n} ideas are usable: ${c.problems.slice(0, 6).join("; ")}` : null;
       },
       maxTokens: 16000,
       price: libs.pricing?.models?.[settings.model],
@@ -362,14 +355,16 @@ export async function bankView(): Promise<BankView> {
   const b = await readBank();
   const counts: Record<BankStatus, number> = { new: 0, proposed: 0, used: 0, rejected: 0 };
   for (const x of b.ideas) counts[x.status]++;
-  // Đang bật "chỉ lấy ý tưởng đã có nhạc": sắp tới lượt = các ý tưởng có nhạc (theo thứ tự kho).
-  const check = b.config.needSong ? await songCheck((await readSettings()).songDir, true) : null;
+  // Nhạc chưa dùng còn đủ cho mấy video; đang bật "chỉ lấy ý tưởng khi đủ nhạc" mà chưa đủ thì chưa ý tưởng nào tới lượt.
+  const settings = await readSettings();
+  const music = await musicStock(settings.songDir, settings.videoMinutes);
   const fresh = b.ideas.filter((x) => x.status === "new");
-  const ready = check ? fresh.filter((x) => check(x.idea) === "take") : null;
+  const ready = b.config.needSong && music ? fresh.slice(0, Math.max(0, music.videos - (await waitingForMusic()))) : null;
   return {
     config: b.config,
     counts,
     ready: ready ? ready.length : null,
+    music,
     upcoming: (ready ?? fresh).slice(0, 20),
     proposals: b.ideas.filter((x) => x.status === "proposed"),
     skipped: b.ideas
@@ -379,7 +374,6 @@ export async function bankView(): Promise<BankView> {
     library: (await readSongLibrary()).songs.filter((s) => s.lyrics?.trim()).length,
     suggesting: isSuggesting(),
     error: mem.error,
-    season: b.config.seasonShift ? seasonPlan(b.config.batch, claudeDone(b)) : null,
     last: mem.last,
   };
 }

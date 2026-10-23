@@ -1,911 +1,663 @@
 {
-  "Hollywood Boulevard": {
-    "region": "California",
-    "aliases": [
-      "hollywood blvd"
-    ],
-    "landmarks": [
-      "ornate Chinese-pagoda-style movie palace facade with a forecourt of cement handprints",
-      "art-deco movie theatre marquee framed by chasing light bulbs",
-      "palm-lined sidewalk outside neon movie marquees",
-      "corner newsstand stacked with movie magazines"
-    ],
-    "vehicles": [
-      "1953 Cadillac Eldorado convertible",
-      "1954 Chevrolet Bel Air",
-      "1949 Mercury Eight coupe",
-      "1950 Ford Custom",
-      "yellow checker taxi"
-    ],
-    "wardrobe": [
-      "men in fedoras, camp-collar shirts and pleated trousers",
-      "women in full-skirted sundresses, white gloves and small hats",
-      "teenagers in letterman jackets and saddle shoes"
-    ],
-    "props": [
-      "movie posters",
-      "flashbulb press cameras",
-      "autograph books",
-      "popcorn cart"
-    ],
-    "light": "bright California sun by day, neon marquees and premiere searchlights by night",
-    "notes": "Ngôi sao trên vỉa hè (Walk of Fame) chỉ có từ năm 1960 — không đưa vào cảnh thập niên 1950.",
-    "forbidden": [
-      {
-        "term": "walk of fame",
-        "reason_vi": "Walk of Fame lắp đặt từ năm 1960"
-      },
-      {
-        "term": "star on the sidewalk",
-        "reason_vi": "Ngôi sao trên vỉa hè có từ năm 1960"
-      },
-      {
-        "term": "sidewalk stars",
-        "reason_vi": "Ngôi sao trên vỉa hè có từ năm 1960"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Hollywood Drive-In": {
-    "region": "California",
-    "aliases": [
-      "drive-in hollywood",
-      "hollywood drive in"
-    ],
-    "landmarks": [
-      "giant outdoor movie screen tower against a twilight sky",
-      "rows of metal speaker posts between parked cars",
-      "glowing snack-bar building with a neon trim",
-      "projector beam cutting through the dark from the projection booth"
-    ],
-    "vehicles": [
-      "1956 Ford Fairlane convertible",
-      "1955 Chevrolet Bel Air",
-      "1953 Buick Skylark convertible",
-      "1949 Ford woodie station wagon"
-    ],
-    "wardrobe": [
-      "young men in letterman jackets or leather jackets",
-      "young women in cardigans, neck scarves and capri pants"
-    ],
-    "props": [
-      "window-hook car speakers",
-      "popcorn boxes",
-      "paper soda cups with straws",
-      "car-hop serving trays"
-    ],
-    "light": "dusk sky fading to night, flickering silver-blue screen glow on faces, projector beam",
-    "notes": "Không chiếu chữ hay logo lên màn hình; mô tả hình ảnh phim chung chung (cảnh phim đen trắng, phim viễn tây...).",
-    "forbidden": [],
-    "auto_generated": false
-  },
-  "Sunset Boulevard": {
-    "region": "California",
-    "aliases": [
-      "sunset strip",
-      "sunset blvd"
-    ],
-    "landmarks": [
-      "glamorous nightclub facade with neon script lighting and a striped awning",
-      "valet stand under palm trees with convertibles pulling up",
-      "rock and roll club stage with an upright bass, saxophone and drum kit",
-      "polished dance floor ringed by red leather booths"
-    ],
-    "vehicles": [
-      "1957 Chevrolet Bel Air convertible",
-      "1956 Ford Thunderbird",
-      "1955 Cadillac Coupe de Ville",
-      "1954 Mercury Monterey"
-    ],
-    "wardrobe": [
-      "men in sharp sport coats, skinny ties and two-tone shoes",
-      "women in swing dresses with petticoats, pearls and cat-eye glasses",
-      "dancers in rolled-up jeans, bobby socks and ballet flats"
-    ],
-    "props": [
-      "chrome jukebox",
-      "chrome ribbon microphones",
-      "cocktail glasses",
-      "matchbooks"
-    ],
-    "light": "hot pink and turquoise neon, smoky stage spotlights, warm table lamps",
-    "notes": "Tòa tháp đĩa nhạc hình trụ ở Hollywood chỉ có từ 1956.",
-    "forbidden": [],
-    "auto_generated": false
-  },
-  "Hollywood": {
-    "region": "California",
-    "aliases": [
-      "hollywood hills",
-      "hollywood summer",
-      "hollywood night"
-    ],
-    "landmarks": [
-      "Hollywood Hills overlook above a twinkling grid of city lights",
-      "white art-deco observatory dome on a hilltop",
-      "movie studio backlot gate with a guard booth",
-      "premiere searchlights sweeping the night sky"
-    ],
-    "vehicles": [
-      "1955 Ford Thunderbird",
-      "1956 Cadillac Eldorado Biarritz",
-      "1954 Chevrolet Bel Air convertible",
-      "yellow checker taxi"
-    ],
-    "wardrobe": [
-      "young men in white T-shirts, leather jackets and cuffed jeans",
-      "young women in halter dresses, chiffon scarves and white sunglasses"
-    ],
-    "props": [
-      "movie clapperboard without writing",
-      "director's chairs",
-      "film reels",
-      "picnic blanket"
-    ],
-    "light": "golden-hour haze, warm sodium streetlights and city glow at night",
-    "notes": "Không đưa dòng chữ khổng lồ trên đồi vào cảnh (là chữ trên màn hình). Mô tả đồi Hollywood bằng ánh đèn thành phố.",
-    "forbidden": [
-      {
-        "term": "hollywood sign",
-        "reason_vi": "Là chữ viết trên màn hình — nên tránh"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Santa Monica Pier": {
-    "region": "California",
-    "aliases": [
-      "santa monica"
-    ],
-    "landmarks": [
-      "wooden pier boardwalk stretching over the Pacific",
-      "historic carousel building with arched windows",
-      "fishing railings lined with anglers",
-      "Pacific sunset over gentle surf"
-    ],
-    "vehicles": [
-      "1953 Chevrolet Bel Air convertible",
-      "1949 Ford woodie station wagon",
-      "1950 Studebaker Champion"
-    ],
-    "wardrobe": [
-      "women in high-waisted swimsuits, sun hats and gingham dresses",
-      "men in Hawaiian shirts, linen trousers and straw fedoras"
-    ],
-    "props": [
-      "cotton candy",
-      "carnival game booths",
-      "seagulls",
-      "striped beach umbrellas"
-    ],
-    "light": "bright coastal sun, salty haze, warm amber sunset",
-    "notes": "Vòng đu quay và tàu lượn trên pier hiện nay xây năm 1996 — KHÔNG có trong thập niên 1950. Dùng carousel và boardwalk.",
-    "forbidden": [
-      {
-        "term": "ferris wheel",
-        "reason_vi": "Vòng đu quay trên Santa Monica Pier xây năm 1996"
-      },
-      {
-        "term": "roller coaster",
-        "reason_vi": "Tàu lượn trên Santa Monica Pier xây năm 1996"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Malibu Beach": {
-    "region": "California",
-    "aliases": [
-      "malibu",
-      "california beach",
-      "beach party"
-    ],
-    "landmarks": [
-      "wide golden beach with rolling surf",
-      "wooden lifeguard tower",
-      "beach bonfire ringed by friends at dusk",
-      "rocky point break with longboard surfers"
-    ],
-    "vehicles": [
-      "1947 Ford Super Deluxe woodie wagon",
-      "1956 Ford F-100 pickup",
-      "1955 Chevrolet Nomad"
-    ],
-    "wardrobe": [
-      "young men in board shorts and open short-sleeve shirts",
-      "young women in polka-dot two-piece swimsuits and headscarves"
-    ],
-    "props": [
-      "heavy wooden longboards",
-      "ukulele",
-      "portable picnic radio",
-      "striped beach towels"
-    ],
-    "light": "sparkling midday sun, golden sunset, orange bonfire glow",
-    "notes": "Ván lướt sóng thập niên 1950 là longboard gỗ/balsa dài, không phải ván ngắn hiện đại.",
-    "forbidden": [
-      {
-        "term": "shortboard",
-        "reason_vi": "Ván lướt ngắn xuất hiện cuối thập niên 1960"
-      },
-      {
-        "term": "wetsuit",
-        "reason_vi": "Đồ lặn neoprene chưa phổ biến thập niên 1950"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Palm Springs": {
-    "region": "California",
-    "aliases": [
-      "palm springs desert"
-    ],
-    "landmarks": [
-      "mid-century modern house with a butterfly roof and glass walls",
-      "kidney-shaped swimming pool under palm trees",
-      "jagged desert mountains behind the resort",
-      "poolside cabana with striped lounge chairs"
-    ],
-    "vehicles": [
-      "1955 Ford Thunderbird",
-      "1957 Cadillac Eldorado Biarritz",
-      "1954 Mercedes-Benz 300SL gullwing"
-    ],
-    "wardrobe": [
-      "women in one-piece swimsuits, capri pants and wide sun hats",
-      "men in linen shirts, white trousers and sunglasses"
-    ],
-    "props": [
-      "cocktail shakers",
-      "poolside radio",
-      "inflatable pool float",
-      "patio umbrellas"
-    ],
-    "light": "harsh bright desert sun, turquoise pool reflections, violet desert dusk",
-    "notes": "",
-    "forbidden": [],
-    "auto_generated": false
-  },
-  "San Francisco": {
-    "region": "California",
-    "aliases": [
-      "golden gate",
-      "san francisco bay"
-    ],
-    "landmarks": [
-      "red suspension bridge emerging from rolling fog",
-      "cable car climbing a steep hill street",
-      "rows of pastel Victorian houses",
-      "fisherman's wharf with crab stands and fishing boats"
-    ],
-    "vehicles": [
-      "cable car",
-      "1952 Ford Crestline",
-      "1951 Chevrolet Styleline",
-      "1954 Studebaker Champion"
-    ],
-    "wardrobe": [
-      "women in tweed coats, headscarves and gloves",
-      "men in overcoats, fedoras and knit ties"
-    ],
-    "props": [
-      "bundles of flowers from a street stand",
-      "sourdough loaves",
-      "foghorn on the bay"
-    ],
-    "light": "silvery fog, soft diffused daylight, golden late-afternoon sun breaking through",
-    "notes": "Tòa kim tự tháp chọc trời (1972) không có trong thập niên 1950.",
-    "forbidden": [
-      {
-        "term": "pyramid skyscraper",
-        "reason_vi": "Tòa kim tự tháp xây năm 1972"
-      },
-      {
-        "term": "transamerica",
-        "reason_vi": "Tòa kim tự tháp xây năm 1972"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Las Vegas Strip": {
-    "region": "Las Vegas",
-    "aliases": [
-      "las vegas",
-      "vegas strip",
-      "vegas"
-    ],
-    "landmarks": [
-      "low-rise desert resort hotels with towering neon sign pylons",
-      "casino floor with rows of chrome slot machines and green felt tables",
-      "palm-shaded resort swimming pool in the desert",
-      "showroom stage with feathered showgirls"
-    ],
-    "vehicles": [
-      "1955 Chrysler C-300",
-      "1957 Cadillac Eldorado",
-      "1956 Lincoln Continental Mark II",
-      "1958 Chevrolet Impala"
-    ],
-    "wardrobe": [
-      "men in tuxedos or dinner jackets with bow ties",
-      "women in strapless satin cocktail gowns, stoles and long gloves"
-    ],
-    "props": [
-      "poker chips",
-      "dice",
-      "martini glasses",
-      "silver dollar coins"
-    ],
-    "light": "blazing desert sun by day, dazzling multicolored neon by night",
-    "notes": "Bảng 'Welcome to Fabulous Las Vegas' chỉ có từ năm 1959. Không có tháp cao tầng kiểu hiện đại.",
-    "forbidden": [
-      {
-        "term": "high-rise casino tower",
-        "reason_vi": "Strip thập niên 1950 chủ yếu là resort thấp tầng"
-      },
-      {
-        "term": "eiffel tower replica",
-        "reason_vi": "Bản sao tháp Eiffel xây năm 1999"
-      },
-      {
-        "term": "pyramid hotel",
-        "reason_vi": "Khách sạn kim tự tháp xây năm 1993"
-      },
-      {
-        "term": "volcano show",
-        "reason_vi": "Núi lửa nhân tạo có từ 1989"
-      },
-      {
-        "term": "dancing fountains",
-        "reason_vi": "Đài phun nước nhạc nước có từ 1998"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Fremont Street": {
-    "region": "Las Vegas",
-    "aliases": [
-      "glitter gulch",
-      "downtown las vegas",
-      "downtown vegas"
-    ],
-    "landmarks": [
-      "canyon of wall-to-wall neon casino facades",
-      "giant waving neon cowboy sign above the street",
-      "railroad-era downtown street lined with gambling halls",
-      "neon arrows and chasing bulbs at night"
-    ],
-    "vehicles": [
-      "1951 Ford Victoria",
-      "1955 Chevrolet Bel Air",
-      "1949 Hudson Commodore",
-      "yellow taxi"
-    ],
-    "wardrobe": [
-      "cowboys in western shirts and Stetson-style hats",
-      "tourists in Hawaiian shirts and sundresses"
-    ],
-    "props": [
-      "slot machine levers",
-      "neon-lit wedding chapel",
-      "silver dollars"
-    ],
-    "light": "overwhelming warm neon glow at night, hot white desert sun by day",
-    "notes": "Mái vòm LED (Fremont Street Experience) có từ 1995 — không đưa vào. Biển neon cô gái cao bồi có từ 1980.",
-    "forbidden": [
-      {
-        "term": "LED canopy",
-        "patterns": [
-          "(led|video|screen|light(ed)?|overhead) canopy"
-        ],
-        "reason_vi": "Mái vòm Fremont Street Experience có từ năm 1995"
-      },
-      {
-        "term": "zip line",
-        "reason_vi": "Zip line hiện đại"
-      },
-      {
-        "term": "neon cowgirl",
-        "reason_vi": "Biển neon cô gái cao bồi có từ năm 1980"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Route 66": {
-    "region": "Route 66",
-    "aliases": [
-      "route 66 highway",
-      "mother road",
-      "us 66",
-      "route sixty-six"
-    ],
-    "landmarks": [
-      "two-lane desert highway stretching to the horizon",
-      "wooden telephone poles along the road",
-      "red mesas and buttes under a vast sky",
-      "roadside gas station with glass-globe pumps"
-    ],
-    "vehicles": [
-      "1955 Chevrolet Bel Air convertible",
-      "1949 Ford F-1 pickup",
-      "1954 Buick Roadmaster",
-      "silver long-distance coach bus"
-    ],
-    "wardrobe": [
-      "travelers in sunglasses, light cotton shirts and headscarves",
-      "gas station attendant in a white uniform and cap"
-    ],
-    "props": [
-      "canvas water bag hanging on a car grille",
-      "folded paper road map",
-      "souvenir trading post",
-      "leather suitcases strapped to the car"
-    ],
-    "light": "blazing desert sun, heat shimmer, purple-orange dusk, starry desert night",
-    "notes": "Đường cao tốc liên bang (interstate) chưa thay Route 66 trong thập niên 1950. Biển chữ ven đường là chữ trên màn hình — nên tránh.",
-    "forbidden": [
-      {
-        "term": "interstate",
-        "reason_vi": "Biển interstate xuất hiện từ cuối 1950s; Route 66 chưa bị thay thế"
-      },
-      {
-        "term": "gateway arch",
-        "reason_vi": "Gateway Arch (St. Louis) hoàn thành năm 1965"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Route 66 Diner": {
-    "region": "Route 66",
-    "aliases": [
-      "roadside diner",
-      "diner route 66",
-      "diner"
-    ],
-    "landmarks": [
-      "stainless-steel railcar diner with a neon rooftop sign",
-      "black-and-white checkerboard floor and red vinyl stools",
-      "long chrome counter with a pie display case",
-      "booth with a tabletop jukebox selector"
-    ],
-    "vehicles": [
-      "1956 Chevrolet Bel Air",
-      "1953 Ford F-100 pickup",
-      "1950 Mercury Eight"
-    ],
-    "wardrobe": [
-      "waitress in a pastel uniform with a white apron and small paper cap",
-      "short-order cook in a white T-shirt and paper hat"
-    ],
-    "props": [
-      "tall milkshake glasses with two straws",
-      "chrome napkin dispensers",
-      "malt mixer",
-      "cherry pie"
-    ],
-    "light": "warm fluorescent interior glow, neon spilling through the windows at night",
-    "notes": "",
-    "forbidden": [],
-    "auto_generated": false
-  },
-  "Route 66 Motel": {
-    "region": "Route 66",
-    "aliases": [
-      "motor court",
-      "motel route 66",
-      "wigwam motel",
-      "motel"
-    ],
-    "landmarks": [
-      "neon motel sign with a blinking arrow",
-      "row of tipi-shaped concrete cabins",
-      "motor court with carports beside each room",
-      "small turquoise motel swimming pool"
-    ],
-    "vehicles": [
-      "1957 Ford Fairlane 500",
-      "1955 Pontiac Star Chief",
-      "1952 Chevrolet Styleline"
-    ],
-    "wardrobe": [
-      "young couple in travel clothes: pedal pushers, sneakers, rolled-sleeve shirts"
-    ],
-    "props": [
-      "brass room keys on diamond-shaped fobs",
-      "ice bucket",
-      "postcard rack",
-      "vacancy light"
-    ],
-    "light": "pink and green neon at night, dusty desert daylight",
-    "notes": "",
-    "forbidden": [],
-    "auto_generated": false
-  },
-  "Grand Canyon": {
-    "region": "Route 66",
-    "aliases": [
-      "arizona canyon",
-      "canyon rim"
-    ],
-    "landmarks": [
-      "layered red rock canyon walls at sunrise",
-      "stone watchtower on the canyon rim",
-      "rustic timber lodge with a stone chimney",
-      "mule trail winding down the canyon"
-    ],
-    "vehicles": [
-      "1954 Ford Country Squire wagon",
-      "1956 Chevrolet Bel Air"
-    ],
-    "wardrobe": [
-      "sightseers in sun hats, cardigans and sturdy walking shoes"
-    ],
-    "props": [
-      "binoculars",
-      "box camera",
-      "picnic basket"
-    ],
-    "light": "rose-gold sunrise, deep canyon shadows, vast blue sky",
-    "notes": "Cầu kính Skywalk (2007) không tồn tại.",
-    "forbidden": [
-      {
-        "term": "skywalk",
-        "reason_vi": "Grand Canyon Skywalk xây năm 2007"
-      },
-      {
-        "term": "glass bridge",
-        "reason_vi": "Cầu kính Skywalk xây năm 2007"
-      }
-    ],
-    "auto_generated": false
-  },
-  "Times Square": {
+  "Rockefeller Center": {
     "region": "New York",
     "aliases": [
-      "broadway",
-      "42nd street",
-      "new york times square"
+      "rockefeller plaza",
+      "rockefeller center christmas tree",
+      "rockefeller rink"
     ],
     "landmarks": [
-      "canyon of giant animated neon signs and bulb billboards",
-      "billboard puffing real smoke rings into the night",
-      "Broadway theatre marquees with chasing lights",
-      "crowded crosswalks with rain-slick pavement reflections"
+      "a towering Norway spruce Christmas tree glowing with colored bulb lights above a sunken plaza",
+      "a sunken ice-skating rink below a gilded statue of a flying figure",
+      "a promenade of garden beds lined with glowing holiday figures leading to the tree",
+      "an art-deco skyscraper tower rising into the winter night"
     ],
     "vehicles": [
-      "yellow checker cab",
-      "1955 DeSoto taxi",
+      "yellow checker taxi",
+      "1953 Buick Roadmaster",
+      "1950 Ford Custom sedan",
+      "1955 Chevrolet Bel Air"
+    ],
+    "wardrobe": [
+      "men in wool overcoats, fedoras and plaid scarves",
+      "women in fitted wool coats with fur collars, gloves and small hats",
+      "children in knit caps, mittens and buckled galoshes"
+    ],
+    "props": [
+      "ice skates slung over a shoulder",
+      "shopping bags tied with ribbon",
+      "a roasted chestnut cart",
+      "paper cups of hot cocoa"
+    ],
+    "light": "crisp grey winter daylight, then thousands of colored bulbs and golden reflections on the ice at night",
+    "notes": "Các thiên thần thổi kèn bằng dây kim loại ở lối vào chỉ có từ năm 1954. Ngôi sao pha lê trên đỉnh cây là của thập niên 2000.",
+    "forbidden": [
+      {
+        "term": "crystal star",
+        "reason_vi": "Ngôi sao pha lê trên đỉnh cây Rockefeller có từ năm 2004"
+      },
+      {
+        "term": "swarovski",
+        "reason_vi": "Ngôi sao pha lê (thương hiệu) có từ năm 2004"
+      }
+    ],
+    "auto_generated": false
+  },
+  "Fifth Avenue": {
+    "region": "New York",
+    "aliases": [
+      "fifth avenue new york",
+      "5th avenue",
+      "new york department store windows"
+    ],
+    "landmarks": [
+      "department store windows filled with animated holiday scenes and moving toys",
+      "a neo-Gothic cathedral facade with twin spires across the snowy avenue",
+      "wreaths and evergreen garlands draped across ornate stone storefronts",
+      "a bell ringer beside a red kettle on a busy sidewalk"
+    ],
+    "vehicles": [
+      "yellow checker taxi",
       "green-and-cream city bus",
-      "1953 Chevrolet Bel Air"
+      "1952 Packard sedan",
+      "1949 Cadillac Series 62"
     ],
     "wardrobe": [
-      "men in overcoats, fedoras and narrow ties",
-      "women in swing coats, pillbox hats and gloves",
-      "sailors in white uniforms on shore leave"
+      "men in camel overcoats, fedoras and leather gloves",
+      "women in swing coats, pillbox hats and fur muffs",
+      "children in wool coats with velvet collars"
     ],
     "props": [
-      "newspaper boys with bundles",
-      "hot chestnut cart",
-      "umbrellas",
-      "phone booth"
+      "stacks of wrapped gift boxes",
+      "shopping bags with ribbon handles",
+      "brass bells and red kettles",
+      "hatboxes"
     ],
-    "light": "dazzling multicolored neon night, reflections on wet asphalt",
-    "notes": "Không có màn hình LED/điện tử; chỉ có neon và bóng đèn. Tránh chữ/logo thương hiệu trên biển.",
+    "light": "silvery winter afternoon light, then warm golden shop windows and strings of bulbs at dusk",
+    "notes": "Bông tuyết pha lê khổng lồ treo giữa đại lộ là của thập niên 1980 trở đi — không đưa vào.",
     "forbidden": [
       {
-        "term": "video billboard",
-        "reason_vi": "Biển quảng cáo video hiện đại"
-      },
-      {
-        "term": "jumbotron",
-        "reason_vi": "Màn hình lớn hiện đại"
+        "term": "giant snowflake",
+        "reason_vi": "Bông tuyết khổng lồ treo trên Fifth Avenue có từ thập niên 1980"
       }
     ],
-    "auto_generated": false
-  },
-  "Coney Island": {
-    "region": "New York",
-    "aliases": [
-      "coney island boardwalk",
-      "brooklyn beach"
-    ],
-    "landmarks": [
-      "giant eccentric Ferris wheel with swinging cars",
-      "wooden roller coaster with a white lattice frame",
-      "tall parachute-drop tower",
-      "crowded wooden boardwalk beside a packed beach"
-    ],
-    "vehicles": [
-      "1950 Plymouth Special Deluxe",
-      "1954 Chevrolet Bel Air",
-      "subway elevated train"
-    ],
-    "wardrobe": [
-      "women in one-piece swimsuits and bathing caps",
-      "men in tank tops, rolled trousers and straw boaters"
-    ],
-    "props": [
-      "hot dogs",
-      "frozen custard cones",
-      "carnival prize teddy bears",
-      "shooting gallery"
-    ],
-    "light": "bright summer haze over the beach, carnival lights at dusk",
-    "notes": "Vòng đu quay và tàu lượn gỗ ở Coney Island có từ thập niên 1920 — hợp lệ.",
-    "forbidden": [],
     "auto_generated": false
   },
   "Central Park": {
     "region": "New York",
     "aliases": [
       "central park new york",
-      "manhattan park"
+      "wollman rink",
+      "central park lake"
     ],
     "landmarks": [
-      "elegant cast-iron footbridge over the lake",
-      "grand fountain terrace with an angel statue",
-      "rowboats drifting on the lake",
-      "tree-lined mall with park benches and lampposts"
+      "a snow-covered cast-iron bridge arching over a frozen lake",
+      "an outdoor ice rink with the city skyline glowing behind the trees",
+      "horse-drawn carriages along a snowy park drive",
+      "old-fashioned lampposts glowing along tree-lined paths"
     ],
     "vehicles": [
-      "horse-drawn carriage",
-      "yellow checker cab",
-      "1953 Buick Roadmaster"
+      "horse-drawn carriage with a plaid blanket",
+      "yellow checker taxi",
+      "1954 Mercury Monterey"
     ],
     "wardrobe": [
-      "women in A-line coats, berets and kitten heels",
-      "men in tweed sport coats and flat caps"
+      "skaters in wool sweaters, pleated skirts and long scarves",
+      "men in duffle coats and earmuffs",
+      "children in snowsuits and knit hats"
     ],
     "props": [
-      "rowboat oars",
-      "balloon vendor",
-      "pretzel cart",
-      "ice skates in winter"
+      "wooden sleds",
+      "ice skates with white boots",
+      "thermos of hot cocoa",
+      "paper bags of roasted chestnuts"
     ],
-    "light": "dappled sunlight through leaves, golden autumn afternoon, soft snowfall in winter",
-    "notes": "",
+    "light": "soft blue snow light by day, warm lamplight and a glowing skyline at dusk",
+    "notes": "Sân băng Wollman mở tháng 12/1950; trước đó người ta trượt băng trên mặt hồ đóng băng.",
     "forbidden": [],
     "auto_generated": false
   },
-  "Brooklyn Bridge": {
+  "Times Square": {
     "region": "New York",
     "aliases": [
-      "manhattan skyline",
-      "east river",
-      "new york skyline"
+      "times square new york",
+      "times square new year's eve"
     ],
     "landmarks": [
-      "gothic stone towers and web of steel cables",
-      "wooden pedestrian promenade",
-      "1950s Manhattan skyline with art-deco spires",
-      "tugboats and ferries on the East River"
+      "an illuminated time ball on a mast atop a narrow tower",
+      "walls of neon billboards and theater marquees without readable words",
+      "a packed crowd in overcoats with paper hats and noisemakers",
+      "steam rising from street grates under the neon glow"
     ],
     "vehicles": [
-      "yellow checker cab",
-      "1952 Ford Crestline",
-      "1956 Chevrolet Bel Air"
+      "yellow checker taxi",
+      "1955 Buick Century",
+      "1953 Chevrolet Bel Air"
     ],
     "wardrobe": [
-      "women in trench coats with chiffon scarves",
-      "men in overcoats and fedoras"
+      "men in overcoats and fedoras with party hats on top",
+      "women in fur stoles, cocktail dresses under wool coats and gloves"
     ],
     "props": [
-      "street lamps",
-      "pigeons",
-      "newspapers"
+      "paper party hats",
+      "tin noisemakers and paper horns",
+      "streamers and confetti",
+      "champagne coupes at a nearby party"
     ],
-    "light": "misty dawn, golden sunset behind the skyline, twinkling city lights at night",
-    "notes": "Tòa tháp đôi WTC hoàn thành 1973 — không có trong đường chân trời thập niên 1950.",
+    "light": "a blaze of neon and incandescent bulbs at night, confetti glittering in the glow",
+    "notes": "Quả cầu thời gian thập niên 50 là quả cầu sắt và nhôm gắn bóng đèn tròn, không phải quả cầu pha lê LED.",
     "forbidden": [
       {
-        "term": "twin towers",
-        "reason_vi": "Tháp đôi WTC hoàn thành năm 1973"
-      },
-      {
-        "term": "world trade center",
-        "reason_vi": "World Trade Center hoàn thành năm 1973"
+        "term": "crystal ball drop",
+        "reason_vi": "Quả cầu pha lê ở Times Square có từ năm 2000"
       }
     ],
     "auto_generated": false
   },
-  "Harlem Ballroom": {
+  "Grand Central Terminal": {
     "region": "New York",
     "aliases": [
-      "harlem",
-      "ballroom",
-      "dance hall"
+      "grand central",
+      "grand central station"
     ],
     "landmarks": [
-      "grand ballroom with a sprung wooden dance floor",
-      "raised bandstand with a big band in matching jackets",
-      "art-deco wall sconces and mirrored columns",
-      "balcony overlooking the dancers"
+      "a vaulted main concourse under a painted constellation ceiling",
+      "a four-faced brass clock above the information booth",
+      "tall arched windows with beams of winter light",
+      "travelers with suitcases and wrapped presents crossing the marble floor"
     ],
     "vehicles": [
-      "1955 Cadillac Fleetwood",
+      "streamlined passenger train at the platform",
+      "yellow checker taxi at the curb"
+    ],
+    "wardrobe": [
+      "travelers in overcoats and hats carrying leather suitcases",
+      "red-capped porters with luggage carts",
+      "women in traveling suits and gloves"
+    ],
+    "props": [
+      "leather suitcases and hatboxes",
+      "train tickets",
+      "porter luggage carts",
+      "a large evergreen wreath"
+    ],
+    "light": "dusty shafts of sunlight through tall windows, warm chandeliers at night",
+    "notes": "Không ghi tên bảng quảng cáo ảnh lớn treo ở sảnh thời đó (thương hiệu).",
+    "forbidden": [],
+    "auto_generated": false
+  },
+  "State Street Chicago": {
+    "region": "Illinois",
+    "aliases": [
+      "state street",
+      "chicago state street",
+      "chicago loop",
+      "chicago"
+    ],
+    "landmarks": [
+      "department store windows with animated holiday scenes along a busy street",
+      "a great ornate clock on a department store corner",
+      "elevated train tracks above snowy downtown streets",
+      "a vaulted tea room with a towering decorated tree"
+    ],
+    "vehicles": [
+      "green-and-cream streetcar",
+      "1953 Ford Customline",
+      "checker taxi",
+      "1951 Chevrolet Styleline"
+    ],
+    "wardrobe": [
+      "shoppers in heavy wool coats, fur hats and galoshes",
+      "children in snowsuits holding a parent's hand"
+    ],
+    "props": [
+      "stacks of wrapped boxes",
+      "paper shopping bags",
+      "toy trains in a window display",
+      "red kettles and bells"
+    ],
+    "light": "cold lake-wind daylight, then golden shop windows and garlands of bulbs at dusk",
+    "notes": "Xe điện mặt đất (streetcar) ở Chicago chạy tới năm 1958.",
+    "forbidden": [],
+    "auto_generated": false
+  },
+  "Beacon Hill Boston": {
+    "region": "Massachusetts",
+    "aliases": [
+      "beacon hill",
+      "boston common",
+      "boston"
+    ],
+    "landmarks": [
+      "gas-lit lamps along narrow brick lanes in the snow",
+      "candles glowing in every window of red-brick row houses",
+      "carolers with handbells on a cobblestone street",
+      "a gold-domed statehouse above a snowy common"
+    ],
+    "vehicles": [
+      "1951 Chevrolet Styleline",
+      "1954 Ford Customline",
       "1950 Buick Super"
     ],
     "wardrobe": [
-      "men in zoot-style or sharp double-breasted suits",
-      "women in swing dresses that flare when spinning, saddle shoes"
+      "carolers in long wool coats, scarves and mittens",
+      "families in Sunday-best coats and hats"
     ],
     "props": [
-      "brass horn section",
-      "music stands",
-      "spotlights"
+      "handbells",
+      "candle lanterns",
+      "printed carol sheets",
+      "evergreen wreaths with red bows"
     ],
-    "light": "warm golden spotlights, glittering mirror-ball sparkles",
-    "notes": "",
+    "light": "blue winter dusk, warm candlelight in every window, gas lamps glowing on fresh snow",
+    "notes": "Đêm Giáng sinh ở Beacon Hill có truyền thống thắp nến ở mọi cửa sổ và đi hát mừng.",
     "forbidden": [],
     "auto_generated": false
   },
-  "Greenwich Village": {
-    "region": "New York",
+  "Woodstock Vermont": {
+    "region": "Vermont",
     "aliases": [
-      "the village",
-      "washington square",
-      "new york jazz club"
+      "woodstock",
+      "vermont village",
+      "vermont",
+      "new england village"
     ],
     "landmarks": [
-      "basement jazz club with brick walls and candlelit tables",
-      "brownstone stoops on a leafy street",
-      "white marble arch in a city park",
-      "small coffeehouse with poetry readings"
+      "a red covered bridge dusted with snow over a frozen river",
+      "a white church steeple on a snowy village green",
+      "a general store with a porch, a wood stove and barrels inside",
+      "rolling snowy hills and maple woods around the village"
     ],
     "vehicles": [
-      "yellow checker cab",
-      "1951 Studebaker Commander"
+      "horse-drawn sleigh with jingling bells",
+      "1949 Ford pickup truck",
+      "1950 Willys Jeep station wagon",
+      "1952 Plymouth Cranbrook"
     ],
     "wardrobe": [
-      "young artists in black turtlenecks, berets and slim trousers",
-      "women in striped boat-neck tops and capri pants"
+      "villagers in plaid wool jackets, knit hats and boots",
+      "women in long wool coats and hand-knit scarves",
+      "children in snowsuits and mittens on strings"
     ],
     "props": [
-      "bongo drums",
-      "espresso cups",
-      "upright bass",
-      "paperback books"
+      "sleigh bells",
+      "balsam wreaths",
+      "kerosene lanterns",
+      "wooden snowshoes"
     ],
-    "light": "smoky candlelight, cool blue streetlamps, rainy evening reflections",
-    "notes": "Phong trào beatnik nổi lên từ khoảng 1958.",
+    "light": "soft blue snow light by day, golden windows and lanterns at dusk, starry sky at night",
+    "notes": "Làng New England kiểu tấm thiệp Giáng sinh; giữ đường đất phủ tuyết, không cột đèn đường hiện đại.",
     "forbidden": [],
     "auto_generated": false
   },
-  "Drive-In Theater": {
-    "region": "Generic",
+  "Stowe Ski Lodge": {
+    "region": "Vermont",
     "aliases": [
-      "drive-in",
-      "drive in",
-      "outdoor movie"
+      "stowe",
+      "ski lodge",
+      "mount mansfield"
     ],
     "landmarks": [
-      "huge white outdoor screen under the stars",
-      "rows of speaker posts between cars",
-      "snack bar glowing in the dark",
-      "projector beam overhead"
+      "a timber ski lodge with a roaring stone fireplace",
+      "a single-seat chairlift climbing a snowy mountain",
+      "racks of wooden skis planted in the snow outside the lodge",
+      "a village church steeple against white mountains"
     ],
     "vehicles": [
-      "1955 Chevrolet Bel Air convertible",
-      "1957 Ford Fairlane",
-      "1953 Buick Skylark"
+      "1950 Ford Country Squire woodie wagon with skis on the roof",
+      "1953 Chevrolet 3100 pickup",
+      "horse-drawn sleigh"
     ],
     "wardrobe": [
-      "young men in leather or letterman jackets",
-      "young women in cardigans and ponytails tied with scarves"
+      "skiers in Nordic patterned wool sweaters and gabardine ski pants",
+      "women in fitted ski jackets, headbands and mittens",
+      "après-ski crowds in cable-knit sweaters"
     ],
     "props": [
-      "window-hook speakers",
-      "popcorn",
-      "soda cups",
-      "blanket on the hood"
+      "wooden skis with cable bindings",
+      "bamboo ski poles",
+      "mugs of mulled cider",
+      "leather lace-up ski boots"
     ],
-    "light": "screen glow flickering on faces, starry night sky",
-    "notes": "",
-    "forbidden": [],
-    "auto_generated": false
-  },
-  "Sock Hop": {
-    "region": "Generic",
-    "aliases": [
-      "sock hop",
-      "school dance",
-      "high school gym",
-      "prom"
-    ],
-    "landmarks": [
-      "high school gymnasium decorated with crepe-paper streamers and balloons",
-      "small stage with a rock and roll band",
-      "punch bowl table",
-      "polished gym floor full of dancers in socks"
-    ],
-    "vehicles": [
-      "1955 Chevrolet Bel Air",
-      "1956 Ford Fairlane"
-    ],
-    "wardrobe": [
-      "girls in poodle skirts, bobby socks and saddle shoes, ponytails with ribbons",
-      "boys in letterman sweaters, cuffed jeans and slicked hair"
-    ],
-    "props": [
-      "45 rpm records",
-      "crepe-paper streamers",
-      "punch bowl",
-      "corsages"
-    ],
-    "light": "colored gels on gym lights, mirror-ball sparkles",
-    "notes": "",
-    "forbidden": [],
-    "auto_generated": false
-  },
-  "Roller Rink": {
-    "region": "Generic",
-    "aliases": [
-      "roller rink",
-      "roller skating",
-      "skating rink"
-    ],
-    "landmarks": [
-      "polished maple roller rink oval",
-      "rental skate counter",
-      "organ or jukebox booth by the rink",
-      "railing where couples lean between laps"
-    ],
-    "vehicles": [
-      "1954 Chevrolet Bel Air",
-      "1950 Ford Custom"
-    ],
-    "wardrobe": [
-      "skaters in circle skirts, cardigans, cuffed jeans and quad roller skates"
-    ],
-    "props": [
-      "quad roller skates with wooden wheels",
-      "skate keys",
-      "soda fountain counter"
-    ],
-    "light": "colored rink lights, sparkling mirror ball",
-    "notes": "Giày trượt thập niên 1950 là giày patin 4 bánh (quad), không phải patin một hàng (inline).",
+    "light": "dazzling white mountain sun, then firelight and amber windows at dusk",
+    "notes": "Ván trượt tuyết (snowboard), cáp treo cabin và giày trượt nhựa đều là đồ sau thập niên 50.",
     "forbidden": [
       {
-        "term": "inline skates",
-        "reason_vi": "Patin một hàng phổ biến từ thập niên 1980"
+        "term": "gondola",
+        "reason_vi": "Cáp treo cabin ở Stowe có từ năm 1968"
       },
       {
-        "term": "rollerblades",
-        "reason_vi": "Patin một hàng phổ biến từ thập niên 1980"
+        "term": "plastic ski boots",
+        "reason_vi": "Giày trượt tuyết nhựa có từ cuối thập niên 1960"
+      },
+      {
+        "term": "quad chairlift",
+        "reason_vi": "Ghế cáp 4 người là đồ hiện đại"
       }
     ],
     "auto_generated": false
   },
-  "Soda Fountain": {
-    "region": "Generic",
+  "Bethlehem Pennsylvania": {
+    "region": "Pennsylvania",
     "aliases": [
-      "soda fountain",
-      "malt shop",
-      "milk bar",
-      "ice cream parlor",
-      "drugstore"
+      "bethlehem",
+      "christmas city"
     ],
     "landmarks": [
-      "marble soda fountain counter with chrome taps",
-      "row of spinning red stools",
-      "glass candy jars and ice cream tubs",
-      "jukebox glowing in the corner"
+      "a giant illuminated star glowing on the mountain above town",
+      "single white candles shining in every window",
+      "many-pointed paper stars hanging over doorways",
+      "historic stone buildings along a snowy main street"
     ],
     "vehicles": [
-      "1953 Chevrolet Bel Air",
-      "1951 Ford Victoria"
+      "1954 Dodge Coronet",
+      "1950 Chevrolet Fleetline",
+      "city bus with a wreath on the front"
     ],
     "wardrobe": [
-      "soda jerk in a white jacket and paper cap",
-      "teens in sweaters, pleated skirts and penny loafers"
+      "townsfolk in wool coats and knitted caps",
+      "steelworkers in heavy work jackets heading home"
     ],
     "props": [
-      "banana splits",
-      "malted milkshakes with two straws",
-      "cherry cola glasses",
-      "comic books"
+      "many-pointed paper star lanterns",
+      "beeswax candles",
+      "nativity figurines",
+      "evergreen garlands"
     ],
-    "light": "warm afternoon sun through big shop windows, glowing jukebox",
-    "notes": "",
+    "light": "steel-grey winter sky, then candlelit windows and the glowing star on the hill at night",
+    "notes": "Ngôi sao lớn trên núi South Mountain có từ năm 1937.",
+    "forbidden": [],
+    "auto_generated": false
+  },
+  "Main Street": {
+    "region": "Thị trấn nhỏ",
+    "aliases": [
+      "small town",
+      "small-town main street",
+      "hometown",
+      "town square"
+    ],
+    "landmarks": [
+      "garlands of colored bulbs strung across a snowy main street",
+      "a town square with a lit Christmas tree beside a bandstand",
+      "a five-and-dime store window full of toys",
+      "a movie theater marquee glowing through the falling snow"
+    ],
+    "vehicles": [
+      "1955 Chevrolet Bel Air",
+      "1953 Ford F-100 pickup with a Christmas tree in the bed",
+      "1950 Studebaker Champion",
+      "1956 Ford Fairlane"
+    ],
+    "wardrobe": [
+      "men in wool car coats and fedoras",
+      "women in swing coats, headscarves and gloves",
+      "teenagers in letterman sweaters and earmuffs"
+    ],
+    "props": [
+      "a Christmas tree lot with lanterns",
+      "red kettles and bells",
+      "wooden toy sleds",
+      "paper shopping bags"
+    ],
+    "light": "pale winter afternoon light, then colored bulbs, glowing shop windows and falling snow at dusk",
+    "notes": "Thị trấn Mỹ thập niên 50 chung chung — hợp với ý tưởng không ghi địa danh cụ thể.",
+    "forbidden": [],
+    "auto_generated": false
+  },
+  "Suburban Home": {
+    "region": "Ngoại ô",
+    "aliases": [
+      "suburb",
+      "suburbs",
+      "suburban",
+      "levittown",
+      "family home"
+    ],
+    "landmarks": [
+      "rows of ranch houses with colored lights along the eaves and snowy lawns",
+      "a big picture window framing a glowing Christmas tree",
+      "a living room with a console radio-phonograph, a decorated tree and a fireplace mantel",
+      "plywood cut-out reindeer and snowmen on a front lawn"
+    ],
+    "vehicles": [
+      "1955 Chevrolet Bel Air station wagon",
+      "1956 Ford Country Squire wagon",
+      "1954 Plymouth Belvedere"
+    ],
+    "wardrobe": [
+      "fathers in cardigan sweaters and slacks",
+      "mothers in shirtwaist dresses and aprons",
+      "children in flannel pajamas and slippers"
+    ],
+    "props": [
+      "bubble lights on the tree",
+      "silver tinsel and glass ornaments",
+      "Christmas cards strung along the mantel",
+      "a toy electric train circling the tree"
+    ],
+    "light": "warm lamplight and colored bulbs indoors, blue snow light through the picture window",
+    "notes": "Nhà ngoại ô thập niên 50: đèn tròn C7/C9 nhiều màu, đèn bọt (bubble light), dây kim tuyến bạc.",
+    "forbidden": [],
+    "auto_generated": false
+  },
+  "Midwest Farmhouse": {
+    "region": "Trung Tây",
+    "aliases": [
+      "farmhouse",
+      "farm",
+      "iowa farm",
+      "wisconsin farm",
+      "midwest farm"
+    ],
+    "landmarks": [
+      "a red barn and white farmhouse under deep snow",
+      "a farm kitchen with a wood-burning cook stove",
+      "a frozen pond behind the barn with kids skating",
+      "a long snowy lane lined with fence posts"
+    ],
+    "vehicles": [
+      "1949 Ford 8N tractor",
+      "1951 Chevrolet 3100 pickup",
+      "horse-drawn bobsled loaded with hay"
+    ],
+    "wardrobe": [
+      "farmers in barn coats, overalls and flap caps",
+      "women in calico dresses, aprons and wool shawls",
+      "children in hand-knit sweaters and boots"
+    ],
+    "props": [
+      "steel milk cans",
+      "kerosene lamps",
+      "popcorn and cranberry garlands",
+      "hand-knit stockings"
+    ],
+    "light": "low golden winter sun over white fields, lamplit kitchen windows at night",
+    "notes": "Trang trí tự làm: chuỗi bỏng ngô, quả nam việt quất, cây thông chặt từ rừng.",
+    "forbidden": [],
+    "auto_generated": false
+  },
+  "Snowy Train Station": {
+    "region": "Ga tàu",
+    "aliases": [
+      "train station",
+      "railroad depot",
+      "depot",
+      "railway station"
+    ],
+    "landmarks": [
+      "a small-town brick depot with a snow-covered platform",
+      "a steam locomotive exhaling white clouds into the cold air",
+      "a platform clock and hanging lanterns",
+      "baggage carts piled with trunks and wrapped presents"
+    ],
+    "vehicles": [
+      "steam locomotive with passenger cars",
+      "streamlined diesel passenger train",
+      "1952 Ford taxi waiting at the curb"
+    ],
+    "wardrobe": [
+      "travelers in long coats and hats with suitcases",
+      "a conductor in a navy uniform and cap",
+      "soldiers in dress uniforms coming home on leave"
+    ],
+    "props": [
+      "leather suitcases",
+      "paper-wrapped parcels with string",
+      "a conductor's pocket watch",
+      "lanterns"
+    ],
+    "light": "steam glowing in grey winter light, warm station lamps at dusk",
+    "notes": "Cuối thập niên 50 nhiều tuyến đã chuyển sang đầu máy diesel; tàu hơi nước vẫn hợp với đầu thập niên.",
+    "forbidden": [],
+    "auto_generated": false
+  },
+  "Hollywood Boulevard": {
+    "region": "California",
+    "aliases": [
+      "hollywood blvd",
+      "santa claus lane",
+      "hollywood"
+    ],
+    "landmarks": [
+      "palm trees wrapped in strings of colored lights",
+      "an evening holiday parade with floats and a sleigh float pulled down the boulevard",
+      "art-deco movie theatre marquees framed by chasing light bulbs",
+      "lampposts topped with small tinsel Christmas trees"
+    ],
+    "vehicles": [
+      "1953 Cadillac Eldorado convertible",
+      "1954 Chevrolet Bel Air",
+      "1949 Mercury Eight coupe"
+    ],
+    "wardrobe": [
+      "men in light suits and fedoras",
+      "women in cardigans over party dresses, white gloves",
+      "children on their parents' shoulders watching the parade"
+    ],
+    "props": [
+      "parade floats",
+      "tinsel garlands",
+      "flashbulb press cameras",
+      "candy canes"
+    ],
+    "light": "warm California sunshine by day, neon marquees and searchlights at night — no snow",
+    "notes": "Diễu hành 'Santa Claus Lane' có từ năm 1928. Ngôi sao trên vỉa hè (Walk of Fame) chỉ có từ năm 1960.",
+    "forbidden": [
+      {
+        "term": "walk of fame",
+        "reason_vi": "Walk of Fame lắp đặt từ năm 1960"
+      },
+      {
+        "term": "sidewalk stars",
+        "reason_vi": "Ngôi sao trên vỉa hè có từ năm 1960"
+      },
+      {
+        "term": "snow",
+        "reason_vi": "Los Angeles không có tuyết — thể hiện Giáng sinh qua đèn, cây cọ, diễu hành"
+      }
+    ],
+    "auto_generated": false
+  },
+  "Miami Beach": {
+    "region": "Florida",
+    "aliases": [
+      "miami",
+      "florida"
+    ],
+    "landmarks": [
+      "palm trees wrapped in colored lights along an ocean drive",
+      "pastel art-deco hotels with neon trim and wreaths",
+      "a beach at sunset with a small decorated tree in the sand",
+      "a hotel courtyard pool lit with strings of bulbs"
+    ],
+    "vehicles": [
+      "1955 Ford Thunderbird convertible",
+      "1956 Cadillac Series 62 convertible",
+      "1954 Chevrolet Bel Air"
+    ],
+    "wardrobe": [
+      "men in light linen suits and straw hats",
+      "women in sundresses with light cardigans and sunglasses"
+    ],
+    "props": [
+      "tropical drinks with paper umbrellas",
+      "beach umbrellas",
+      "wrapped gifts in a convertible's back seat",
+      "seashell ornaments"
+    ],
+    "light": "warm tropical sunshine, pastel sunset, neon and colored bulbs by night — no snow",
+    "notes": "Giáng sinh vùng nắng ấm: thể hiện mùa lễ qua đèn, cây thông nhỏ, quà, không có tuyết.",
+    "forbidden": [
+      {
+        "term": "snow",
+        "reason_vi": "Miami không có tuyết — thể hiện Giáng sinh qua đèn và cây cọ"
+      }
+    ],
+    "auto_generated": false
+  },
+  "New Orleans French Quarter": {
+    "region": "Louisiana",
+    "aliases": [
+      "french quarter",
+      "new orleans"
+    ],
+    "landmarks": [
+      "wrought-iron balconies draped with evergreen garlands and candles",
+      "a white triple-spired cathedral above a square with a lit tree",
+      "gas lamps flickering on narrow streets",
+      "a candlelit dining room set for a Christmas Eve feast"
+    ],
+    "vehicles": [
+      "green streetcar",
+      "1953 Chevrolet Bel Air",
+      "horse-drawn carriage"
+    ],
+    "wardrobe": [
+      "jazz musicians in suits and porkpie hats",
+      "women in cocktail dresses and gloves"
+    ],
+    "props": [
+      "brass instruments",
+      "candles in hurricane glasses",
+      "poinsettias",
+      "pralines on a plate"
+    ],
+    "light": "mild misty evening, gas lamps and candlelight, warm jazz-club glow",
+    "notes": "Đêm Giáng sinh ở New Orleans: nến, gas lamp, nhạc jazz; tuyết hiếm khi rơi.",
+    "forbidden": [],
+    "auto_generated": false
+  },
+  "San Francisco Union Square": {
+    "region": "California",
+    "aliases": [
+      "union square",
+      "san francisco",
+      "san francisco cable car"
+    ],
+    "landmarks": [
+      "a tall Christmas tree glowing in a palm-lined city square",
+      "cable cars with wreaths on the front climbing a steep hill",
+      "department store windows with holiday displays",
+      "fog rolling between old hotels with garlands"
+    ],
+    "vehicles": [
+      "cable car with a wreath on the front",
+      "1955 Chevrolet Bel Air",
+      "1950 Hudson Commodore"
+    ],
+    "wardrobe": [
+      "shoppers in trench coats and hats",
+      "women in wool suits and gloves"
+    ],
+    "props": [
+      "shopping bags",
+      "bags of roasted chestnuts",
+      "wreaths",
+      "flower stand poinsettias"
+    ],
+    "light": "cool foggy daylight, then glowing shop windows and bulbs reflected on wet streets",
+    "notes": "San Francisco ít khi có tuyết; dùng sương mù, đèn và xe cáp.",
     "forbidden": [],
     "auto_generated": false
   }

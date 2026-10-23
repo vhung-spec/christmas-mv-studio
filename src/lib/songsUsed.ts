@@ -40,28 +40,38 @@ const mvTitle = (idea: { id: string; song_title?: string; world_location: string
 
 /** Ghi vào sổ: bài `file` đã ghép vào MV `mvId`. */
 export function recordUsedSong(mvId: string, file: string, title: string): Promise<void> {
-  const name = path.basename(file);
-  const key = songKey(name);
+  return recordUsedSongs(mvId, [file], title);
+}
+
+/** Ghi vào sổ nhiều bài một lần (danh sách nhạc của một video dài). */
+export function recordUsedSongs(mvId: string, files: string[], title: string): Promise<void> {
+  const at = new Date().toISOString();
   return update((s) => {
-    if (s.songs.some((x) => x.key === key && x.mv_id === mvId)) return;
-    s.songs.push({ key, file: name, mv_id: mvId, title, at: new Date().toISOString() });
+    for (const file of files) {
+      const name = path.basename(file);
+      const key = songKey(name);
+      if (s.songs.some((x) => x.key === key && x.mv_id === mvId)) continue;
+      s.songs.push({ key, file: name, mv_id: mvId, title, at });
+    }
   });
 }
 
-/** Bài hiện đang nằm trong mỗi MV còn trong lịch sử. */
-type Current = Map<string, UsedSong>;
+/** Bài hiện đang nằm trong các MV còn trong lịch sử (video dùng danh sách nhạc: mỗi bài một dòng). */
+type Current = UsedSong[];
 
 /** Đọc sổ và bài hiện có của mọi MV; bài chưa có trong sổ (MV cũ, nhạc tự tải lên / đổi) thì thêm vào sổ. */
 async function scan(): Promise<{ songs: UsedSong[]; current: Current }> {
   const book = await readFile();
   const have = new Set(book.songs.map(entryId));
-  const current: Current = new Map();
+  const current: Current = [];
   for (const mv of await listMVs()) {
     const audio = (await loadProject(mv.id).catch(() => null))?.audio;
     if (!audio?.name) continue;
-    current.set(mv.id, { key: songKey(audio.name), file: audio.name, mv_id: mv.id, title: mvTitle(mv.idea), at: audio.uploaded_at || mv.created_at });
+    const at = audio.uploaded_at || mv.created_at;
+    const names = audio.tracks?.length ? audio.tracks.map((t) => t.name) : [audio.name];
+    for (const name of new Set(names)) current.push({ key: songKey(name), file: name, mv_id: mv.id, title: mvTitle(mv.idea), at });
   }
-  const found = [...current.values()].filter((x) => !have.has(entryId(x)));
+  const found = current.filter((x) => !have.has(entryId(x)));
   const songs = found.length
     ? await update((s) => {
         const ids = new Set(s.songs.map(entryId));
@@ -115,7 +125,7 @@ export async function usedSongsView(songDir: string): Promise<UsedSongsView> {
   }
   const rows = [...byKey.values()].sort((a, b) => Number(a.marked) - Number(b.marked) || b.at.localeCompare(a.at));
   const now = new Map<string, UsedSong[]>();
-  for (const x of current.values()) now.set(x.key, [...(now.get(x.key) ?? []), x]);
+  for (const x of current) now.set(x.key, [...(now.get(x.key) ?? []), x]);
   const duplicates = [...now.values()]
     .filter((list) => list.length > 1)
     .map((list) => ({ file: list[0].file, mvs: list.sort((a, b) => a.at.localeCompare(b.at)).map((x) => ({ mv_id: x.mv_id, title: x.title })) }));

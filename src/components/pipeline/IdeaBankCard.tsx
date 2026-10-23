@@ -6,7 +6,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Card, ErrorBox, Spinner } from "@/components/ui";
 import { formatUsd } from "@/lib/cost";
-import { BANK_LIMITS, ideaSeason, type BankConfig, type BankIdea, type BankView } from "@/lib/ideaBankTypes";
+import { BANK_LIMITS, type BankConfig, type BankIdea, type BankView } from "@/lib/ideaBankTypes";
 
 export type BankData = BankView & { mode: "claude" | "mock" | "manual" };
 
@@ -34,16 +34,12 @@ function NumberBox({ value, range, onCommit, disabled }: { value: number; range:
   );
 }
 
-const SEASON_ICON = { autumn: "🍂", winter: "❄️" } as const;
-
 function IdeaLine({ x, children }: { x: BankIdea; children?: ReactNode }) {
   const i = x.idea;
-  const season = ideaSeason(i.world_location);
   return (
     <li className="flex flex-wrap items-start gap-2 border-t border-ink/10 py-1.5 first:border-t-0">
       <div className="min-w-0 flex-1">
-        <b>#{i.id}</b> {season && `${SEASON_ICON[season]} `}
-        {i.world_location} · {i.theme_code}
+        <b>#{i.id}</b> {i.world_location} · {i.theme_code}
         {i.theme_name ? ` ${i.theme_name}` : ""}
         <div className="text-xs text-muted">{i.outline}</div>
         {x.source === "claude" && i.series && <div className="text-xs text-muted">Series: {i.series}</div>}
@@ -78,22 +74,22 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
         <p>
           Chưa dùng <b>{bank.counts.new}</b> · Đã dùng <b>{bank.counts.used}</b> · Claude đề xuất chờ duyệt <b>{bank.counts.proposed}</b>
           {bank.counts.rejected ? ` · Đã bỏ ${bank.counts.rejected}` : ""}
-          {bank.ready !== null && bank.counts.new > 0 && (
-            <span className="text-muted">
-              {" "}
-              (đã có nhạc <b>{bank.ready}</b>, chờ nhạc {bank.counts.new - bank.ready})
-            </span>
-          )}
         </p>
+        {bank.music && (
+          <p className={bank.music.videos > 0 ? "text-xs text-muted" : "text-xs text-cherry-dark"}>
+            🎵 Nhạc chưa dùng trong Thư mục nhạc: <b>{bank.music.songs}</b> bài · khoảng <b>{bank.music.minutes}</b> phút — đủ cho <b>{bank.music.videos}</b> video
+            {` ${bank.music.videoMinutes} phút`}
+            {bank.music.videos === 0 && " (thêm bài vào kho nhạc trên Drive hoặc giảm “Độ dài video” trong Cài đặt)"}.
+          </p>
+        )}
         {bank.library > 0 && (
           <p className="text-xs text-muted">
-            Thư viện lời bài hát: <b>{bank.library}</b> bài — ý tưởng cùng số và cùng địa điểm tự lấy lời khi viết kịch bản; nhạc lấy theo số trong Thư mục nhạc (bỏ
-            qua bản có chữ “đã dùng”).
+            Thư viện lời bài hát: <b>{bank.library}</b> bài — tên bài (câu điệp khúc) được dùng cho danh sách bài trong mô tả YouTube.
           </p>
         )}
         {bank.skipped.length > 0 && (
           <details className="text-xs">
-            <summary className="cursor-pointer text-muted">Đã bỏ qua {bank.skipped.length} ý tưởng (nhạc đã dùng hết)</summary>
+            <summary className="cursor-pointer text-muted">Đã bỏ qua {bank.skipped.length} ý tưởng</summary>
             <ul className="mt-1">
               {bank.skipped.map((x) => (
                 <li key={x.key}>
@@ -109,11 +105,11 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
             <input type="checkbox" checked={c.feed} disabled={busy} onChange={(e) => setConfig({ feed: e.target.checked })} />
             Dây chuyền tự lấy ý tưởng trong kho, mỗi lúc
             <NumberBox value={c.ahead} range={BANK_LIMITS.ahead} disabled={busy} onCommit={(ahead) => setConfig({ ahead })} />
-            MV (đang viết kịch bản hoặc chờ clip Muse)
+            video (đang viết kịch bản hoặc chờ clip Muse)
           </label>
           <label className="flex flex-wrap items-center gap-2 pl-6">
             <input type="checkbox" checked={c.needSong} disabled={busy} onChange={(e) => setConfig({ needSong: e.target.checked })} />
-            Chỉ lấy ý tưởng đã có nhạc trong Thư mục nhạc (ý tưởng chưa có nhạc nằm chờ trong kho, có nhạc là tự chạy)
+            Chỉ lấy ý tưởng khi Thư mục nhạc còn đủ bài chưa dùng cho một video (chưa đủ thì ý tưởng nằm chờ trong kho, thêm nhạc là tự chạy)
           </label>
           <label className="flex flex-wrap items-center gap-2">
             <input type="checkbox" checked={c.suggest} disabled={busy} onChange={(e) => setConfig({ suggest: e.target.checked })} />
@@ -131,18 +127,9 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
               Dùng luôn, không cần duyệt
             </label>
           </div>
-          <label className="flex flex-wrap items-center gap-2 pl-6">
-            <input type="checkbox" checked={c.seasonShift} disabled={busy} onChange={(e) => setConfig({ seasonShift: e.target.checked })} />
-            Ý tưởng mới nghiêng dần sang 🍂 mùa thu rồi ❄️ mùa đông
-            {bank.season && (
-              <span className="text-xs text-muted">
-                (lần tới: {bank.season.autumn} thu · {bank.season.winter} đông · {bank.season.other} mùa khác — càng về sau càng nhiều mùa đông)
-              </span>
-            )}
-          </label>
           <p className="text-xs text-muted">
-            Mỗi MV tốn tiền Claude viết kịch bản (khoảng 0,10–0,20 USD) và lượt Muse cho từng cảnh; mỗi lần đề xuất ý tưởng chỉ tốn vài cent. Dây chuyền chỉ lấy ý
-            tưởng mới khi các MV đang làm đã đủ clip, nên tự đi theo tốc độ của Muse.
+            Mỗi video tốn tiền Claude viết kịch bản (khoảng 0,10–0,30 USD) và lượt Muse cho từng cảnh (20–30 cảnh); mỗi lần đề xuất ý tưởng chỉ tốn vài cent. Dây
+            chuyền chỉ lấy ý tưởng mới khi các video đang làm đã đủ clip, nên tự đi theo tốc độ của Muse.
           </p>
           {manual && (
             <p className="text-xs text-cherry-dark">

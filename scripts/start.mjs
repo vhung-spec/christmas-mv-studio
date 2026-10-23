@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Khởi động MV Prompt Studio bằng một lệnh: cài thư viện (nếu cần) → build (nếu mã nguồn đổi) → chạy → mở trình duyệt.
-// Được gọi từ "Chay-MV-Prompt-Studio.bat" (Windows) và "Chay-MV-Prompt-Studio.command" (macOS / Linux).
+// Khởi động Christmas MV Studio bằng một lệnh: cài thư viện (nếu cần) → build (nếu mã nguồn đổi) → chạy → mở trình duyệt.
+// Được gọi từ "Chay-Christmas-MV-Studio.bat" (Windows) và "Chay-Christmas-MV-Studio.command" (macOS / Linux).
+// Cổng mặc định 3100 (app cũ MV Prompt Studio dùng 3000) để hai app chạy song song trên cùng máy.
 
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readdirSync, statSync } from "node:fs";
@@ -81,7 +82,7 @@ if (major < 20 || (major === 20 && minor < 9)) {
   fail(`Cần Node.js 20.9 trở lên (máy đang có ${process.versions.node}). Tải bản LTS tại https://nodejs.org rồi chạy lại.`);
 }
 
-console.log("\n\x1b[1m🎙️  MV Prompt Studio\x1b[0m\n");
+console.log("\n\x1b[1m🎄  Christmas MV Studio\x1b[0m\n");
 
 // 2. Cài thư viện lần đầu / khi package-lock thay đổi
 const lock = path.join(ROOT, "package-lock.json");
@@ -97,7 +98,7 @@ if (!existsSync(buildId) || Math.max(...SOURCES.map((f) => newestMtime(path.join
 }
 
 // 4. Chạy và mở trình duyệt (Muse chạy ngay trong app — không còn cổng riêng)
-const port = await freePort(Number(process.env.PORT) || 3000);
+const port = await freePort(Number(process.env.PORT) || 3100);
 const url = `http://${HOST}:${port}`;
 log(`Đang khởi động tại ${url} …`);
 const nextBin = path.join(ROOT, "node_modules", "next", "dist", "bin", "next");

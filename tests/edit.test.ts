@@ -207,12 +207,20 @@ describe("buildEdit — ghép nguyên clip, lặp tới hết bài (mặc địn
     return input;
   };
 
-  it("mặc định là ghép nguyên clip", () => {
+  it("mặc định là ghép nguyên clip, các vòng sau được xáo (video ~1 tiếng lặp hơn chục vòng)", () => {
     expect(DEFAULT_EDIT_OPTIONS.mode).toBe("full");
+    expect(DEFAULT_EDIT_OPTIONS.seed).toBeGreaterThan(0);
+    const input = fullInput(() => 8, 3600);
+    const order = buildEdit(input).segments.map((s) => s.shot_no);
+    const shots = input.shots.map((s) => s.shot_no);
+    const n = shots.length;
+    expect(order.slice(0, n)).toEqual(shots);
+    expect(order.slice(n, 2 * n)).not.toEqual(shots);
+    expect(new Set(order.slice(n, 2 * n)).size).toBe(n);
   });
 
-  it("mỗi clip phát trọn vẹn từ giây 0, theo thứ tự 1 → N, rồi lặp lại", () => {
-    const input = fullInput(() => 8);
+  it("mỗi clip phát trọn vẹn từ giây 0, theo thứ tự 1 → N, rồi lặp lại (không xáo)", () => {
+    const input = fullInput(() => 8, 187.3, { seed: 0 });
     const plan = buildEdit(input);
     expectContiguous(plan);
     const order = plan.segments.map((s) => s.shot_no);

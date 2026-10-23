@@ -179,7 +179,7 @@ describe("generateMV qua Claude (giả lập)", () => {
     expect(sys.text).toContain("music-video director");
     expect(sys.cache_control).toEqual({ type: "ephemeral" });
     expect((requests[0].body.messages as any[])[0].content).toContain("LOOPED EDIT");
-    expect(mv.shots.length).toBeLessThanOrEqual(20);
+    expect(mv.shots.length).toBeLessThanOrEqual(30);
     expect(mv.editing_notes.some((n) => n.section === "Lặp cảnh")).toBe(true);
     expect((requests[1].body.messages as any[])[0].content).toContain("too long");
     const he = mv.character_bible.characters[0].description;
@@ -205,7 +205,7 @@ describe("generateMV qua Claude (giả lập)", () => {
       return JSON.stringify(full);
     };
     replies = [fewer, fewer];
-    const mv = await gen.generateMV({ id: "2", world_location: "Santa Monica Pier Summer 1954", theme_code: "T01", outline: "Gặp nhau", series: "S" });
+    const mv = await gen.generateMV({ id: "2", world_location: "Rockefeller Center Christmas Eve 1954", theme_code: "T01", outline: "Gặp nhau", series: "S" });
     expect(requests).toHaveLength(2);
     expect((requests[1].body.messages as any[])[0].content).toMatch(/Expected exactly \d+ shots/);
     expect(mv.shots.length).toBe(mv.structure.total_shots);

@@ -1,28 +1,26 @@
-// DÂY CHUYỀN TỰ ĐỘNG — mỗi việc là một MV (có sẵn, hoặc viết từ một dòng ý tưởng) chạy qua 4 bước:
-//   1. Kịch bản: Claude viết (cần API key; chế độ Demo cũng chạy được) — làm lần lượt từng MV.
-//   2. Bài hát: MV chưa có bài → tìm file trùng tên bài trong Thư mục nhạc (Cài đặt), không có tên bài thì theo số ý tưởng
-//      (kho nhạc đánh số: ý tưởng 12 → "12.wav", "12 (1).wav"; bỏ qua bản có chữ "đã dùng" và bản đã ghép vào MV khác —
-//      sổ bài đã dùng, songsUsed.ts) và đưa vào MV.
+// DÂY CHUYỀN TỰ ĐỘNG — mỗi việc là một video (có sẵn, hoặc viết từ một dòng ý tưởng) chạy qua 4 bước:
+//   1. Kịch bản: Claude viết một vòng 20–30 cảnh (cần API key; chế độ Demo cũng chạy được) — làm lần lượt từng video.
+//   2. Nhạc: video chưa có nhạc → lấy lần lượt các bài chưa dùng trong Thư mục nhạc (Cài đặt) cho đủ Độ dài video (~1 tiếng),
+//      mỗi bài một bản, bỏ qua bản có chữ "đã dùng" và bản đã ghép vào video khác (sổ bài đã dùng, songsUsed.ts), nối thành
+//      một file (playlist.ts) và đưa vào video.
 //   3. Clip: gửi các cảnh chưa có clip sang Muse (Muse trong app), clip xong tự vào đúng cảnh (museJobs).
-//   4. Dựng: đủ clip + có bài hát → thêm vào hàng chờ dựng, chạy, chờ ra MP4.
+//   4. Dựng: đủ clip + có nhạc → thêm vào hàng chờ dựng (clip lặp lại cho hết nhạc), chạy, chờ ra MP4.
 // Kho ý tưởng (ideaBank.ts): dây chuyền tự lấy dần ý tưởng chưa dùng, kho sắp hết thì nhờ Claude đề xuất thêm.
 // Lưu ở data/pipeline.json; tắt app giữa chừng thì mở lại chạy tiếp. Chỉ dùng phía server.
 
-import { createReadStream } from "node:fs";
+import { promises as fs } from "node:fs";
 import path from "node:path";
-import { Readable } from "node:stream";
 import { UserError } from "./errors";
-import { probe } from "./ffmpeg";
 import { generateMV, generationMode } from "./generate";
-import { isSuggesting, markIdeasUsed, readBank, sameIdea, songCheck, startSuggest, takeIdeas } from "./ideaBank";
-import { addAudio, loadProject } from "./media";
+import { isSuggesting, markIdeasUsed, readBank, sameIdea, songCheck, startSuggest, takeIdeas, waitingForMusic } from "./ideaBank";
+import { addPlaylistAudio, loadProject, mediaDir } from "./media";
 import { museCounts } from "./muse";
 import { ensureMuseWatch, readMuse, sendToMuse } from "./museJobs";
+import { buildPlaylistAudio, libraryHooks, minutesLabel, pickPlaylist, songDurations } from "./playlist";
 import { addToQueue, readQueue, startQueue } from "./queue";
 import { isRendering } from "./render";
-import { librarySongFor } from "./songLibrary";
-import { findSongForIdea, songKey } from "./songs";
-import { readUsedSongs, recordUsedSong, takenBy } from "./songsUsed";
+import { listSongs } from "./songs";
+import { readUsedSongs, recordUsedSongs, takenBy } from "./songsUsed";
 import type { AddResult, PipelineItem, PipelineState, PipelineStep, PipelineView, StepName } from "./pipelineSteps";
 import { PIPELINE_FILE, listMVs, loadMV, readJson, readSettings, withLock, writeJson } from "./store";
 import type { IdeaRow } from "./types";
@@ -133,27 +131,14 @@ export async function retryPipeline(id: string): Promise<void> {
 }
 
 /**
- * Viết kịch bản cho một việc (chạy nền, mỗi lúc một MV). Ý tưởng chưa có lời mà thư viện lời bài hát có bài cùng số + địa điểm → lấy lời đó
- * (kịch bản bám đúng các đoạn của bài). Có bài hát trong Thư mục nhạc → lấy luôn độ dài bài.
+ * Viết kịch bản cho một việc (chạy nền, mỗi lúc một video). Kịch bản là một vòng cảnh (Cài đặt → Độ dài một vòng cảnh), không theo
+ * độ dài nhạc: khi dựng, vòng cảnh lặp lại cho hết danh sách nhạc.
  */
-function startScript(item: PipelineItem, songDir: string) {
+function startScript(item: PipelineItem) {
   mem.generating = item.id;
   void (async () => {
     try {
-      const idea = { ...item.idea! };
-      if (!idea.lyrics?.trim()) {
-        const lib = await librarySongFor(idea).catch(() => null);
-        if (lib) idea.lyrics = lib.lyrics;
-      }
-      if (!idea.duration_sec) {
-        const taken = takenBy(await readUsedSongs().catch(() => []));
-        const song = await findSongForIdea(songDir, idea, undefined, taken).catch(() => null);
-        if (song && !song.used) {
-          const d = (await probe(song.file).catch(() => null))?.duration;
-          if (d && d >= 10) idea.duration_sec = Math.min(1200, Math.round(d));
-        }
-      }
-      const mv = await generateMV(idea);
+      const mv = await generateMV({ ...item.idea! });
       await patch(item.id, (it) => {
         it.mv_id = mv.id;
         it.steps.script = { status: "done", message: `${mv.shots.length} cảnh` };
@@ -188,7 +173,7 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
     if (generationMode(settings) === "manual") {
       steps.script = { status: "error", message: "Cần Claude API key để tự viết kịch bản (Cài đặt → API key của Claude)." };
     } else if (!mem.generating) {
-      startScript(item, settings.songDir);
+      startScript(item);
       steps.script = { status: "running", message: "Claude đang viết kịch bản…" };
     } else if (mem.generating !== item.id) {
       steps.script = { status: "waiting", message: "Chờ tới lượt viết kịch bản" };
@@ -199,38 +184,38 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
   if (!mv) return { steps: { ...steps, script: { status: "error", message: "MV đã bị xoá." } } };
   const project = await loadProject(mv.id);
 
-  // 2. Bài hát
+  // 2. Nhạc: danh sách nhạc ghép từ các bài chưa dùng cho đủ Độ dài video.
   if (project.audio) {
-    if (steps.song.status !== "done") steps.song = { status: "done", message: project.audio.name };
+    const n = project.audio.tracks?.length ?? 0;
+    if (steps.song.status !== "done") steps.song = { status: "done", message: n > 1 ? `${n} bài · ${minutesLabel(project.audio.duration)}` : project.audio.name };
   } else if (!settings.songDir.trim()) {
-    steps.song = { status: "waiting", message: "Chưa có bài hát — tải lên ở trang Ghép video, hoặc đặt “Thư mục nhạc” trong Cài đặt để app tự tìm." };
+    steps.song = { status: "waiting", message: "Chưa có nhạc — tải lên ở trang Ghép video, hoặc đặt “Thư mục nhạc” trong Cài đặt để app tự ghép danh sách nhạc." };
   } else if (!isRendering(mv.id)) {
-    const title = mv.idea.song_title || item.title;
+    const title = `${/^\d+$/.test(mv.idea.id) ? `#${mv.idea.id} · ` : ""}${mv.idea.song_title || item.title}`;
     try {
-      // Sổ bài đã dùng: bài đã ghép vào MV khác thì không lấy lại (dù tên file chưa ghi "đã dùng").
+      // Sổ bài đã dùng: bài đã ghép vào video khác thì không lấy lại (dù tên file chưa ghi "đã dùng").
       const used = await readUsedSongs();
-      const song = await findSongForIdea(settings.songDir, mv.idea, item.title, takenBy(used, mv.id));
-      if (!song) {
-        const num = /^\d+$/.test(mv.idea.id) ? ` (hoặc file số ${mv.idea.id})` : "";
-        steps.song = { status: "waiting", message: `Chưa thấy bài “${title}”${num} trong thư mục nhạc — thêm file vào thư mục, hoặc tải lên ở trang Ghép video.` };
-      } else if (song.used) {
-        const by = used.find((x) => x.key === songKey(song.file) && x.mv_id !== mv.id);
-        const what = song.by === "number" ? `Bài số ${song.n}: cả ${song.total} bản trong thư mục nhạc` : `Bài “${path.basename(song.file)}”`;
+      const target = settings.videoMinutes * 60;
+      const pick = pickPlaylist(await songDurations(await listSongs(settings.songDir.trim())), target, { first: mv.idea.song_title, taken: takenBy(used, mv.id) });
+      if (!pick.enough) {
         steps.song = {
           status: "waiting",
-          message: `${what} đều đã dùng (ghi “đã dùng”${by ? `, hoặc đã ghép vào MV “${by.title}”` : " hoặc đã ghép vào MV khác"}) — thêm bản mới, hoặc tải bài lên ở trang Ghép video.`,
+          message: pick.songs.length
+            ? `Chưa đủ nhạc: các bài chưa dùng trong thư mục nhạc chỉ có ${minutesLabel(pick.available)} (${pick.songs.length} bài), cần khoảng ${minutesLabel(target)} — thêm bài (hoặc đồng bộ kho nhạc từ Drive), hoặc giảm “Độ dài video” trong Cài đặt.`
+            : "Thư mục nhạc không còn bài nào chưa dùng (mọi bài đã ghi “đã dùng” hoặc đã ghép vào video khác) — thêm bài mới, hoặc tải nhạc lên ở trang Ghép video.",
         };
       } else {
-        const name = path.basename(song.file);
-        await addAudio(mv.id, name, Readable.toWeb(createReadStream(song.file)) as ReadableStream<Uint8Array>);
-        await recordUsedSong(mv.id, name, `${/^\d+$/.test(mv.idea.id) ? `#${mv.idea.id} · ` : ""}${title}`);
-        const note =
-          song.by === "number"
-            ? ` (bài số ${song.n}${song.free > 1 ? `, còn ${song.free - 1} bản chưa dùng khác` : ""})`
-            : song.ties
-              ? ` (có ${song.ties + 1} file trùng tên, đã chọn file này)`
-              : "";
-        steps.song = { status: "done", message: `Tự ghép: ${name}${note}` };
+        await fs.mkdir(mediaDir(mv.id), { recursive: true });
+        const tmp = path.join(mediaDir(mv.id), `playlist-${Date.now().toString(36)}.flac`);
+        try {
+          const tracks = await buildPlaylistAudio(pick.songs, tmp, await libraryHooks());
+          const name = pick.songs.length === 1 ? path.basename(pick.songs[0].file) : `Danh sách nhạc ${pick.songs.length} bài.flac`;
+          await addPlaylistAudio(mv.id, tmp, name, pick.songs.length > 1 ? tracks : []);
+        } finally {
+          await fs.rm(tmp, { force: true }).catch(() => undefined);
+        }
+        await recordUsedSongs(mv.id, pick.songs.map((s) => path.basename(s.file)), title);
+        steps.song = { status: "done", message: `Tự ghép ${pick.songs.length} bài · ${minutesLabel(pick.total)}` };
       }
     } catch (err) {
       steps.song = { status: "error", message: (err as Error).message };
@@ -315,8 +300,9 @@ async function feedFromBank(): Promise<boolean> {
   const settings = await readSettings();
   if (generationMode(settings) === "manual") return false;
   const busy = (await readPipeline()).items.filter((i) => !finished(i) && (i.steps.script.status !== "done" || i.steps.clips.status !== "done")).length;
-  // Ý tưởng mà mọi bản nhạc cùng số đều đã ghi "đã dùng" (đã làm MV) → bỏ qua; bật "chỉ lấy ý tưởng đã có nhạc" thì ý tưởng chưa có nhạc chờ trong kho.
-  const ideas = busy < cfg.ahead ? await takeIdeas(cfg.ahead - busy, (await songCheck(settings.songDir, cfg.needSong)) ?? undefined) : [];
+  // Bật "chỉ lấy ý tưởng khi đủ nhạc": chỉ lấy bấy nhiêu ý tưởng mà nhạc chưa dùng còn đủ (trừ video đang chờ ghép nhạc), còn lại chờ trong kho.
+  const check = busy < cfg.ahead ? await songCheck(settings.songDir, cfg.needSong, settings.videoMinutes, await waitingForMusic()) : null;
+  const ideas = busy < cfg.ahead ? await takeIdeas(cfg.ahead - busy, check ?? undefined) : [];
   if (ideas.length) await addToPipeline({ ideas });
   const left = bank.ideas.filter((x) => x.status === "new").length - ideas.length;
   const waiting = bank.ideas.some((x) => x.status === "proposed");

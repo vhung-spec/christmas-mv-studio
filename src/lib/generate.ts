@@ -112,7 +112,7 @@ function resolveTheme(idea: IdeaRow, libs: Libraries, notes: Issue[]): { code: s
   notes.push(note("warning", "structure", `Mã chủ đề ${code} chưa có trong thư viện — dùng cấu hình mặc định. Hãy thêm vào Thư viện › Chủ đề.`));
   return {
     code,
-    theme: { name: idea.theme_name || code, mood: "romantic, nostalgic, heartfelt", pacing: "mid", signature_shots: [] },
+    theme: { name: idea.theme_name || code, mood: "warm, nostalgic, festive Christmas", pacing: "mid", signature_shots: [] },
   };
 }
 
@@ -478,9 +478,13 @@ async function finalize(prep: Prepared, raw: RawGeneration, usage: Usage, signal
     const fixedIds = new Set(ctx.fixedBible.characters.map((c) => c.id));
     bible = { characters: [...ctx.fixedBible.characters, ...bible.characters.filter((c) => !fixedIds.has(c.id))] };
   }
-  if (!bible.characters.length) {
+  // Không có nhân vật: video chỉ có cảnh (ý tưởng "chỉ cảnh") — trừ khi các cảnh vẫn dùng placeholder thì lấy cặp đôi mẫu.
+  const usesCast = [raw.thumbnail_prompt ?? "", ...raw.shots.map((s) => s.prompt_core)].some((t) => placeholdersIn(t).length > 0);
+  if (!bible.characters.length && usesCast) {
     bible = normalizeBible(mockCouple(idea.id));
-    notes.push(note("warning", "character", "Claude không trả về Character Bible — đã dùng cặp đôi mẫu."));
+    notes.push(note("warning", "character", "Claude không trả về Character Bible mà các cảnh vẫn có nhân vật — đã dùng cặp đôi mẫu."));
+  } else if (!bible.characters.length) {
+    notes.push(note("info", "character", "Video chỉ có cảnh, không có nhân vật chính (Character Bible trống)."));
   }
 
   const got = raw.shots.length;

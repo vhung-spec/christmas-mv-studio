@@ -22,7 +22,7 @@ interface Candidate {
 }
 
 type View = PipelineView & {
-  settings: { mode: "claude" | "mock" | "manual"; songDir: string; museMode: "gateway" | "haohao"; minShots: number; maxShots: number };
+  settings: { mode: "claude" | "mock" | "manual"; songDir: string; museMode: "gateway" | "haohao"; minShots: number; maxShots: number; videoMinutes: number };
 };
 
 const CHIP: Record<StepStatus, string> = {
@@ -100,12 +100,12 @@ export default function PipelinePage() {
     const chosen = (mvs ?? []).filter((m) => payload.mvIds?.includes(m.id));
     const shots = chosen.reduce((n, m) => n + Math.max(0, m.shot_count - m.clip_count), 0);
     const cfg = view?.settings;
-    const range = cfg ? (cfg.minShots === cfg.maxShots ? `${cfg.minShots}` : `${cfg.minShots}–${cfg.maxShots}`) : "15–20";
+    const range = cfg ? (cfg.minShots === cfg.maxShots ? `${cfg.minShots}` : `${cfg.minShots}–${cfg.maxShots}`) : "20–30";
     const lines = [
-      ideas ? (cfg?.mode === "mock" ? `• Chế độ Demo ghép ${ideas} kịch bản từ mẫu (không tốn phí).` : `• Claude viết ${ideas} kịch bản (khoảng 0,10–0,20 USD mỗi MV qua API).`) : "",
-      ideas ? `• Mỗi MV mới ${range} cảnh = ${range} lượt Muse.` : "",
-      chosen.length ? `• ${chosen.length} MV có sẵn: khoảng ${shots} cảnh thiếu clip = ${shots} lượt Muse.` : "",
-      "• Đủ clip + có bài hát thì tự dựng MP4.",
+      ideas ? (cfg?.mode === "mock" ? `• Chế độ Demo ghép ${ideas} kịch bản từ mẫu (không tốn phí).` : `• Claude viết ${ideas} kịch bản (khoảng 0,10–0,30 USD mỗi video qua API).`) : "",
+      ideas ? `• Mỗi video mới ${range} cảnh = ${range} lượt Muse.` : "",
+      chosen.length ? `• ${chosen.length} video có sẵn: khoảng ${shots} cảnh thiếu clip = ${shots} lượt Muse.` : "",
+      `• Nhạc: ghép các bài chưa dùng cho đủ khoảng ${cfg?.videoMinutes ?? 60} phút; đủ clip + có nhạc thì tự dựng MP4 (clip lặp lại cho hết nhạc).`,
     ].filter(Boolean);
     const muse = cfg?.museMode === "gateway" ? "Lượt Muse tính vào hạn mức tuần của tài khoản Meta." : "Đang dùng cách dán tay vào HaoHao: bước Clip Muse chờ bạn dán prompt ở trang Clip Muse.";
     if (!confirm(`Chạy tự động ${ideas + chosen.length} việc?\n\n${lines.join("\n")}\n\n${muse}`)) return;
@@ -127,13 +127,13 @@ export default function PipelinePage() {
   async function addToBank(ideas: IdeaRow[]) {
     const c = bank?.config;
     const cfg = view?.settings;
-    const range = cfg ? (cfg.minShots === cfg.maxShots ? `${cfg.minShots}` : `${cfg.minShots}–${cfg.maxShots}`) : "15–20";
+    const range = cfg ? (cfg.minShots === cfg.maxShots ? `${cfg.minShots}` : `${cfg.minShots}–${cfg.maxShots}`) : "20–30";
     const lines = [
       c?.feed
-        ? `• Dây chuyền tự lấy lần lượt, mỗi lúc ${c.ahead} MV.`
+        ? `• Dây chuyền tự lấy lần lượt, mỗi lúc ${c.ahead} video.`
         : "• “Tự lấy ý tưởng” đang tắt: ý tưởng nằm chờ trong kho cho tới khi bạn bật.",
-      cfg?.mode === "mock" ? "• Chế độ Demo: kịch bản ghép từ mẫu (không tốn phí)." : "• Mỗi MV: Claude viết kịch bản (khoảng 0,10–0,20 USD qua API).",
-      `• Mỗi MV ${range} cảnh = ${range} lượt Muse.`,
+      cfg?.mode === "mock" ? "• Chế độ Demo: kịch bản ghép từ mẫu (không tốn phí)." : "• Mỗi video: Claude viết kịch bản (khoảng 0,10–0,30 USD qua API).",
+      `• Mỗi video ${range} cảnh = ${range} lượt Muse.`,
       c?.suggest ? `• Kho sắp hết: Claude đề xuất thêm ${c.batch} ý tưởng (${c.autoApprove ? "dùng luôn" : "chờ bạn duyệt"}).` : "",
     ].filter(Boolean);
     if (!confirm(`Đưa ${ideas.length} ý tưởng vào kho?\n\n${lines.join("\n")}`)) return;
@@ -166,8 +166,9 @@ export default function PipelinePage() {
       <div>
         <h1 className="text-3xl uppercase">Tự động: ý tưởng → MP4</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          Mỗi việc chạy qua 4 bước: <b>Kịch bản</b> (Claude viết) → <b>Bài hát</b> (tự tìm trong thư mục nhạc) → <b>Clip Muse</b> (tự gửi từng cảnh, clip xong tự
-          vào đúng cảnh) → <b>Dựng MP4</b>. Tắt app giữa chừng không sao: mở lại là chạy tiếp.
+          Mỗi việc chạy qua 4 bước: <b>Kịch bản</b> (Claude viết một vòng 20–30 cảnh) → <b>Nhạc</b> (ghép các bài chưa dùng trong thư mục nhạc cho đủ độ dài
+          video, ~1 tiếng) → <b>Clip Muse</b> (tự gửi từng cảnh, clip xong tự vào đúng cảnh) → <b>Dựng MP4</b> (clip lặp lại cho hết nhạc). Tắt app giữa chừng
+          không sao: mở lại là chạy tiếp.
         </p>
       </div>
       <ErrorBox error={error} />
@@ -195,10 +196,10 @@ export default function PipelinePage() {
               )}
             </p>
             <p>
-              <b>Bài hát:</b>{" "}
+              <b>Nhạc:</b>{" "}
               {s.songDir ? (
                 <span>
-                  tự tìm trong <code>{s.songDir}</code>
+                  ghép các bài chưa dùng trong <code>{s.songDir}</code> cho đủ khoảng <b>{s.videoMinutes} phút</b> mỗi video
                 </span>
               ) : (
                 <span className="text-amber-800">
@@ -206,7 +207,7 @@ export default function PipelinePage() {
                   <Link href="/settings" className="underline">
                     Cài đặt
                   </Link>{" "}
-                  — MV nào chưa có bài sẽ chờ bạn tải bài lên.
+                  — video nào chưa có nhạc sẽ chờ bạn tải nhạc lên.
                 </span>
               )}
             </p>
@@ -236,10 +237,16 @@ export default function PipelinePage() {
           <div className="space-y-3">
             <p className="text-xs text-muted">
               Dán bảng ý tưởng như ở trang Nhập ý tưởng (mỗi dòng: id | địa điểm + năm | chủ đề | dàn ý | tên bài | …; copy thẳng từ Google Docs / Sheets cũng được).
-              Ghi đúng <b>tên bài</b> để app tự tìm bài hát trong thư mục nhạc; không ghi thời lượng thì app lấy độ dài của bài. <b>Đưa vào kho</b>: dây chuyền lấy dần
-              từng ít một, kho sắp hết thì Claude đề xuất thêm. <b>Chạy ngay</b>: đưa cả bảng vào dây chuyền một lúc.
+              Dàn ý ghi rõ nhân vật (cặp đôi, gia đình, trẻ em… hoặc “Chỉ cảnh, không nhân vật chính”). Nhạc không cần ghi: app ghép các bài chưa dùng trong thư
+              mục nhạc (ghi <b>tên bài</b> thì bài đó được đặt lên đầu). <b>Đưa vào kho</b>: dây chuyền lấy dần từng ít một, kho sắp hết thì Claude đề xuất thêm.{" "}
+              <b>Chạy ngay</b>: đưa cả bảng vào dây chuyền một lúc.
             </p>
-            <textarea className="input min-h-28 font-mono text-xs" value={text} onChange={(e) => setText(e.target.value)} placeholder="1 | Santa Monica Pier Summer 1955 | T01 | Hai người gặp nhau bên vòng đu quay | Đèn Khuya" />
+            <textarea
+              className="input min-h-28 font-mono text-xs"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="1 | Rockefeller Center Christmas Eve 1955 | T02 | Cặp đôi trẻ trượt băng dưới cây thông khổng lồ"
+            />
             <div className="flex flex-wrap items-center gap-2">
               <button className="btn-ghost btn-sm" disabled={busy || !text.trim()} onClick={() => void parse()}>
                 Đọc bảng

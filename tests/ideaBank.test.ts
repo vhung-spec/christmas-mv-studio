@@ -103,7 +103,7 @@ describe("kho ý tưởng", () => {
     expect(v.proposals.map((x) => x.idea.id)).toEqual(["51", "52", "53", "54"]);
     for (const x of v.proposals) {
       expect(x.source).toBe("claude");
-      expect(x.idea.series).toBe("51–100 · Demo – California – New York – Miami");
+      expect(x.idea.series).toBe("51–100 · Demo – New York – New England – Chicago");
       expect(x.idea.world_location).toMatch(/195\d$/);
       expect(x.idea.theme_name).toBeTruthy();
     }
@@ -112,67 +112,30 @@ describe("kho ý tưởng", () => {
     const all = (await bank.readBank()).ideas.map((x) => x.idea);
     expect(new Set(all.map((i) => i.world_location.toLowerCase())).size).toBe(all.length);
     expect(all.slice(-3).map((i) => [i.id, i.series])).toEqual([
-      ["55", "51–100 · Demo – California – New York – Miami"],
-      ["56", "51–100 · Demo – California – New York – Miami"],
-      ["57", "51–100 · Demo – California – New York – Miami"],
+      ["55", "51–100 · Demo – New York – New England – Chicago"],
+      ["56", "51–100 · Demo – New York – New England – Chicago"],
+      ["57", "51–100 · Demo – New York – New England – Chicago"],
     ]);
     expect(await bank.setIdeas("proposed", "approve")).toBe(7);
     expect((await bank.bankView()).counts).toMatchObject({ new: 10, proposed: 0 });
   });
 
-  it("mùa của ý tưởng đề xuất nghiêng dần sang thu → đông", async () => {
-    const { seasonPlan, ideaSeason, SEASON_RAMP } = await import("@/lib/ideaBankTypes");
-    // Lúc đầu 4/10 thu–đông (chủ yếu thu) → tăng dần → gần hết là mùa đông.
-    expect(seasonPlan(10, 0)).toEqual({ autumn: 3, winter: 1, other: 6 });
-    expect(seasonPlan(10, SEASON_RAMP / 2)).toEqual({ autumn: 3, winter: 4, other: 3 });
-    expect(seasonPlan(10, SEASON_RAMP)).toEqual({ autumn: 2, winter: 7, other: 1 });
-    expect(seasonPlan(10, SEASON_RAMP * 5)).toEqual(seasonPlan(10, SEASON_RAMP));
-    expect(seasonPlan(3, 0)).toEqual({ autumn: 1, winter: 0, other: 2 });
-    let cold = 0;
-    for (let done = 0; done <= SEASON_RAMP; done += 10) {
-      const p = seasonPlan(10, done);
-      expect(p.autumn + p.winter).toBeGreaterThanOrEqual(cold);
-      cold = p.autumn + p.winter;
-    }
-    expect(ideaSeason("Vermont Covered Bridge Autumn 1953")).toBe("autumn");
-    expect(ideaSeason("Harvard Football Homecoming 1955")).toBe("autumn");
-    expect(ideaSeason("Rockefeller Center Christmas Eve 1954")).toBe("winter");
-    expect(ideaSeason("Sun Valley Ski Lodge 1956")).toBe("winter");
-    expect(ideaSeason("Times Square New Year's Eve 1957")).toBe("winter");
-    expect(ideaSeason("Niagara Falls Honeymoon 1952")).toBeNull();
-    expect(ideaSeason("Hollywood Boulevard Summer 1954")).toBeNull();
-
-    // Prompt gửi Claude ghi rõ số ý tưởng thu / đông; tắt thì như cũ (đa dạng mùa).
+  it("ý tưởng Giáng sinh: prompt dặn dịp lễ 1950–1959 và đa dạng nhân vật; Demo đề xuất đủ kiểu nhân vật", async () => {
     const { buildIdeasPrompt } = await import("@/lib/prompts");
-    const input = { count: 10, themes: [{ code: "T01", name: "Sét ái tình", used: 0 }], examples: [], existing: [], series: null };
-    const on = buildIdeasPrompt({ ...input, seasons: seasonPlan(10, 0) });
-    expect(on).toContain("exactly 3 ideas set in autumn and 1 set in winter; the other 6 in any season");
-    expect(on).not.toContain("vary regions, seasons,");
-    const off = buildIdeasPrompt(input);
-    expect(off).toContain("vary regions, seasons, years");
-    expect(off).not.toContain("autumn");
+    const input = { count: 10, themes: [{ code: "T01", name: "Đêm Giáng sinh lãng mạn", used: 0 }], examples: [], existing: [], series: null };
+    const p = buildIdeasPrompt(input);
+    expect(p).toContain("Christmas-season moment");
+    expect(p).toContain("Chỉ cảnh, không nhân vật chính");
+    expect(p).not.toMatch(/autumn|summer/i);
 
-    // Demo: đề xuất đúng số ý tưởng thu / đông; càng về sau càng nhiều mùa đông.
     const bank = await import("@/lib/ideaBank");
-    await bank.addIdeas([idea("1", "Hollywood Boulevard Summer 1954")]);
-    expect((await bank.bankView()).season).toEqual({ autumn: 3, winter: 1, other: 6 });
-    const seasonsOf = async () => (await bank.bankView()).proposals.map((x) => ideaSeason(x.idea.world_location));
+    const { castKind } = await import("@/lib/mock");
+    await bank.addIdeas([idea("1", "Rockefeller Center Christmas Eve 1954")]);
     await bank.suggestIdeas(10);
-    expect(await seasonsOf()).toEqual(["autumn", "autumn", "autumn", "winter", null, null, null, null, null, null]);
-    await bank.setIdeas("proposed", "approve");
-    for (let k = 0; k < 5; k++) {
-      await bank.suggestIdeas(10);
-      await bank.setIdeas("proposed", "approve");
-    }
-    expect((await bank.bankView()).season).toEqual({ autumn: 2, winter: 7, other: 1 });
-    await bank.suggestIdeas(10);
-    const late = await seasonsOf();
-    expect(late.filter((s) => s === "winter")).toHaveLength(7);
-    expect(late.filter((s) => s === "autumn")).toHaveLength(2);
-    // Ý tưởng đã bỏ không tính; tắt thì không chia mùa.
-    await bank.setIdeas("proposed", "reject");
-    await bank.setBankConfig({ seasonShift: false });
-    expect((await bank.bankView()).season).toBeNull();
+    const proposals = (await bank.bankView()).proposals.map((x) => x.idea);
+    expect(proposals).toHaveLength(10);
+    for (const i of proposals) expect(i.world_location).toMatch(/(Christmas|Snow|Tree Lot|Carol|New Year's).* 195\d$/);
+    expect(new Set(proposals.map((i) => castKind(i.outline)))).toEqual(new Set(["couple", "family", "kids", "none", "grandparents"]));
   });
 
   it("dây chuyền tự lấy ý tưởng mỗi lúc `ahead` MV; kho sắp hết → tự đề xuất, chờ duyệt mới dùng", async () => {
@@ -241,47 +204,82 @@ describe("kho ý tưởng", () => {
     await expect(bank.suggestIdeas()).rejects.toThrow(/API key/);
   });
 
-  it("kho nhạc đánh số: bỏ qua ý tưởng nhạc đã dùng hết, ý tưởng chưa có nhạc chờ trong kho, ghép đúng bài, lấy lời từ thư viện", async () => {
+  it("kho nhạc: lấy ý tưởng theo số video mà nhạc chưa dùng còn đủ; ghép nhiều bài thành danh sách nhạc, mỗi bài một bản", async () => {
     const bank = await import("@/lib/ideaBank");
     const pl = await import("@/lib/pipeline");
     const store = await import("@/lib/store");
+    const media = await import("@/lib/media");
     const songs = path.join(tmp, "kho-nhac");
     mkdirSync(songs, { recursive: true });
-    // Bài 1: cả hai bản đã dùng. Bài 2: bản đầu đã dùng, bản "(1)" chưa dùng (file nhạc thật 12 giây).
-    for (const f of ["1 đã dùng.wav", "1 (2)đã dùng.wav", "2 đã dùng.wav"]) writeFileSync(path.join(songs, f), "x");
     const bin = (await import("@/lib/ffmpeg")).findFfmpeg().path!;
-    const r = spawnSync(bin, ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "sine=frequency=330:duration=12", "-c:a", "libmp3lame", path.join(songs, "2 (1).mp3")]);
-    expect(r.status).toBe(0);
-    const lyrics = "[Intro - bright, hand claps in]\nSha-la-la\n[Verse 1]\nMet you on the pier\n[Chorus]\nFind you on the pier";
-    const lib = { songs: [{ n: 2, world_location: "Santa Monica Pier Summer 1954", theme_code: "T01", theme_name: "Sét ái tình", outline: "o", hook: "Find You on the Pier", mood: "", lyrics }] };
+    const tone = (name: string, seconds: number) => {
+      const r = spawnSync(bin, ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", `sine=frequency=330:duration=${seconds}`, "-c:a", "libmp3lame", path.join(songs, name)]);
+      expect(r.status).toBe(0);
+    };
+    // Bài 1: bản đầu đã dùng (ghi "đã dùng"), bản "(1)" chưa dùng. Bài 2 có hai bản. Bài 3 một bản. Video dài 1 phút.
+    writeFileSync(path.join(songs, "1 đã dùng.wav"), "x");
+    tone("1 (1).mp3", 25);
+    tone("2.mp3", 25);
+    tone("2 (1).mp3", 25);
+    tone("3.mp3", 20);
+    const lib = { songs: [{ n: 2, world_location: "Main Street Christmas 1954", theme_code: "T10", theme_name: "Phố đèn Giáng sinh", outline: "o", hook: "Snow On Main Street", mood: "", lyrics: "[Chorus]\nSnow on Main Street" }] };
     writeFileSync(path.join(tmp, "song_library.json"), JSON.stringify(lib));
-    setSettings({ songDir: songs });
+    setSettings({ songDir: songs, videoMinutes: 1 });
     await bank.setBankConfig({ ahead: 2, suggest: false });
-    await bank.addIdeas([idea("1", "Hollywood Boulevard Summer 1954"), idea("2", "Santa Monica Pier Summer 1954"), idea("3", "Las Vegas Strip 1955")]);
-    expect((await bank.bankView()).ready).toBe(1);
+    await bank.addIdeas([idea("1", "Rockefeller Center Christmas Eve 1954"), idea("2", "Woodstock Vermont First Snow 1952")]);
+    let v = await bank.bankView();
+    // Chưa dùng: 1 (1), 2, 3 (bản "2 (1)" là bài 2 — chỉ tính một bản mỗi bài) = 70 giây → đủ cho 1 video 1 phút.
+    expect(v.music).toMatchObject({ songs: 3, videos: 1 });
+    expect(v.ready).toBe(1);
 
+    // Chỉ lấy 1 ý tưởng (nhạc chỉ đủ một video); ý tưởng 2 chờ trong kho.
     await pl.pipelineTick();
     await pl.pipelineIdle();
-    const items = (await pl.readPipeline()).items;
-    expect(items.map((i) => i.idea?.id)).toEqual(["2"]);
-    const v = await bank.bankView();
-    expect(v.library).toBe(1);
-    // Ý tưởng 3 chưa có nhạc: vẫn chờ trong kho, chưa vào dây chuyền.
-    expect(v.counts).toMatchObject({ new: 1, used: 2 });
-    expect(v.ready).toBe(0);
-    expect(v.skipped.map((x) => [x.idea.id, x.note])).toEqual([["1", expect.stringMatching(/bài số 1 đều đã dùng \(ghi “đã dùng” hoặc đã ghép vào MV khác\)/)]]);
-    const mv = (await store.loadMV(items[0].mv_id!))!;
-    expect(mv.idea.lyrics).toBe(lyrics);
-    expect(mv.idea.duration_sec).toBe(12);
+    expect((await pl.readPipeline()).items.map((i) => i.idea?.id)).toEqual(["1"]);
+    expect((await bank.bankView()).counts).toMatchObject({ new: 1, used: 1 });
+    expect((await bank.bankView()).ready).toBe(0);
 
+    // Bước nhạc: nối 1 (1) + 2 + 3 (đủ 1 phút), bài số nhỏ trước, tên bài theo thư viện lời.
     await pl.pipelineTick();
-    const song = (await pl.readPipeline()).items[0].steps.song;
-    expect(song).toMatchObject({ status: "done", message: expect.stringMatching(/2 \(1\)\.mp3 \(bài số 2\)/) });
-    // Tắt "chỉ lấy ý tưởng đã có nhạc" → ý tưởng 3 được lấy (bước bài hát sẽ chờ).
-    await bank.setBankConfig({ needSong: false });
+    const item = (await pl.readPipeline()).items[0];
+    expect(item.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/Tự ghép 3 bài/) });
+    const audio = (await media.loadProject(item.mv_id!)).audio!;
+    expect(audio.name).toBe("Danh sách nhạc 3 bài.flac");
+    expect(audio.duration).toBeCloseTo(70, 0);
+    expect(audio.tracks!.map((t) => [t.name, t.title])).toEqual([
+      ["1 (1).mp3", "Christmas Song No. 1"],
+      ["2.mp3", "Snow On Main Street"],
+      ["3.mp3", "Christmas Song No. 3"],
+    ]);
+    expect(audio.tracks![1].start).toBeCloseTo(25, 0);
+    expect(audio.tracks![2].start).toBeCloseTo(50, 0);
+    const used = await (await import("@/lib/songsUsed")).readUsedSongs();
+    expect(used.map((x) => x.file).sort()).toEqual(["1 (1).mp3", "2.mp3", "3.mp3"]);
+    const mv = (await store.loadMV(item.mv_id!))!;
+    expect(mv.structure.total_shots).toBeGreaterThanOrEqual(20);
+
+    // Còn mỗi "2 (1)" (25 giây) → chưa đủ; thêm bài 4 (40 giây) → đủ cho video thứ hai.
+    v = await bank.bankView();
+    expect(v.music).toMatchObject({ songs: 1, videos: 0 });
+    tone("4.mp3", 40);
+    v = await bank.bankView();
+    expect(v.music).toMatchObject({ songs: 2, videos: 1 });
     await pl.pipelineTick();
     await pl.pipelineIdle();
-    expect((await pl.readPipeline()).items.map((i) => i.idea?.id).sort()).toEqual(["2", "3"]);
+    await pl.pipelineTick();
+    const second = (await pl.readPipeline()).items.find((i) => i.idea?.id === "2")!;
+    expect(second.steps.song).toMatchObject({ status: "done" });
+    const audio2 = (await media.loadProject(second.mv_id!)).audio!;
+    expect(audio2.tracks!.map((t) => t.name)).toEqual(["2 (1).mp3", "4.mp3"]);
+
+    // Hết nhạc: video mới (tắt "chỉ lấy khi đủ nhạc") chờ ở bước nhạc, báo rõ lý do.
+    await bank.setBankConfig({ needSong: false, ahead: 3 });
+    await bank.addIdeas([idea("3", "Beacon Hill Boston Carol Night 1953")]);
+    await pl.pipelineTick();
+    await pl.pipelineIdle();
+    await pl.pipelineTick();
+    const third = (await pl.readPipeline()).items.find((i) => i.idea?.id === "3")!;
+    expect(third.steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/không còn bài nào chưa dùng/) });
     rmSync(path.join(tmp, "song_library.json"));
   }, 120000);
 

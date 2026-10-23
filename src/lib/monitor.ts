@@ -185,7 +185,7 @@ async function handle(req: http.IncomingMessage, res: http.ServerResponse) {
   }
   if (!(await authorized(req))) {
     await new Promise((r) => setTimeout(r, 600)); // chậm lại khi đoán mật khẩu
-    res.writeHead(401, { "WWW-Authenticate": 'Basic realm="MV Prompt Studio - theo doi", charset="UTF-8"', "Content-Type": "text/plain; charset=utf-8" });
+    res.writeHead(401, { "WWW-Authenticate": 'Basic realm="Christmas MV Studio - theo doi", charset="UTF-8"', "Content-Type": "text/plain; charset=utf-8" });
     res.end("Cần mật khẩu trang theo dõi (đặt trong app ở máy chạy: Cài đặt → Theo dõi từ máy khác).");
     return;
   }

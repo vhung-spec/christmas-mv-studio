@@ -21,7 +21,7 @@ export interface BankConfig {
   feed: boolean;
   /** Số MV làm cùng lúc (đang viết kịch bản hoặc chờ clip Muse). */
   ahead: number;
-  /** Chỉ lấy ý tưởng đã có nhạc trong Thư mục nhạc (ý tưởng chưa có nhạc nằm chờ trong kho). */
+  /** Chỉ lấy ý tưởng khi Thư mục nhạc còn đủ bài chưa dùng cho một video (chưa đủ thì ý tưởng nằm chờ trong kho). */
   needSong: boolean;
   /** Kho sắp hết thì nhờ Claude đề xuất thêm. */
   suggest: boolean;
@@ -29,8 +29,6 @@ export interface BankConfig {
   autoApprove: boolean;
   /** Số ý tưởng mỗi lần đề xuất. */
   batch: number;
-  /** Ý tưởng Claude đề xuất nghiêng dần sang mùa thu rồi mùa đông (xem seasonPlan). */
-  seasonShift: boolean;
 }
 
 export interface IdeaBank {
@@ -38,49 +36,24 @@ export interface IdeaBank {
   config: BankConfig;
 }
 
-export const DEFAULT_BANK_CONFIG: BankConfig = { feed: true, ahead: 2, needSong: true, suggest: true, autoApprove: false, batch: 10, seasonShift: true };
+export const DEFAULT_BANK_CONFIG: BankConfig = { feed: true, ahead: 2, needSong: true, suggest: true, autoApprove: false, batch: 10 };
 export const BANK_LIMITS = { ahead: [1, 10], batch: [3, 50] } as const;
 
-// ---------- Mùa của ý tưởng đề xuất: nghiêng dần sang thu → đông ----------
-
-/** Sau chừng ấy ý tưởng Claude đề xuất (không tính ý tưởng đã bỏ) thì đạt mức cuối: gần hết là thu–đông, phần lớn mùa đông. */
-export const SEASON_RAMP = 60;
-
-export interface SeasonPlan {
-  autumn: number;
-  winter: number;
-  /** Mùa nào cũng được. */
-  other: number;
-}
-
-/**
- * Số ý tưởng mùa thu / mùa đông / mùa khác cho một lần đề xuất `count` ý tưởng, khi đã có `done` ý tưởng Claude đề xuất.
- * Lúc đầu 40% thu–đông (chủ yếu mùa thu) → tăng dần tới 90% sau SEASON_RAMP ý tưởng, trong đó mùa đông từ 20% lên 80%.
- * Vd. 10 ý tưởng: lần đầu 3 thu · 1 đông · 6 mùa khác; về sau 2 thu · 7 đông · 1 mùa khác.
- */
-export function seasonPlan(count: number, done: number): SeasonPlan {
-  const p = Math.min(1, Math.max(0, done) / SEASON_RAMP);
-  const cold = Math.min(count, Math.round(count * (0.4 + 0.5 * p)));
-  const winter = Math.round(cold * (0.2 + 0.6 * p));
-  return { autumn: cold - winter, winter, other: count - cold };
-}
-
-const WINTER_RE = /\b(winter|december|january|february|christmas|xmas|snow\w*|new year'?s?|ski)\b/i;
-const AUTUMN_RE = /\b(autumn|fall|september|october|november|halloween|thanksgiving|harvest|homecoming)\b/i;
-
-/** Mùa của ý tưởng theo world_location (vd. "Vermont Covered Bridge Autumn 1953"); null = không ghi mùa thu / đông. */
-export function ideaSeason(worldLocation: string): "autumn" | "winter" | null {
-  if (/\bwinter\b/i.test(worldLocation)) return "winter";
-  if (/\b(autumn|fall)\b/i.test(worldLocation)) return "autumn";
-  if (WINTER_RE.test(worldLocation)) return "winter";
-  return AUTUMN_RE.test(worldLocation) ? "autumn" : null;
+/** Nhạc chưa dùng trong Thư mục nhạc: tổng số phút (mỗi bài một bản) và đủ cho mấy video (theo Độ dài video). */
+export interface MusicStock {
+  minutes: number;
+  songs: number;
+  videos: number;
+  videoMinutes: number;
 }
 
 export interface BankView {
   config: BankConfig;
   counts: Record<BankStatus, number>;
-  /** Số ý tưởng chưa dùng đã có nhạc trong Thư mục nhạc; null = không lọc theo nhạc (tắt, hoặc chưa đặt Thư mục nhạc). */
+  /** Số ý tưởng chưa dùng lấy được ngay (nhạc đủ cho ít nhất một video thì là mọi ý tưởng, chưa đủ thì 0); null = không lọc theo nhạc. */
   ready: number | null;
+  /** Nhạc chưa dùng trong Thư mục nhạc; null = chưa đặt Thư mục nhạc (hoặc không mở được). */
+  music: MusicStock | null;
   /** Các ý tưởng chưa dùng sắp tới lượt (tối đa 20). */
   upcoming: BankIdea[];
   proposals: BankIdea[];
@@ -92,8 +65,6 @@ export interface BankView {
   suggesting: boolean;
   /** Lỗi lần đề xuất gần nhất. */
   error: string | null;
-  /** Mùa của lần đề xuất tới (khi bật nghiêng dần sang thu → đông); null = tắt. */
-  season: SeasonPlan | null;
   /** Lần đề xuất gần nhất: số ý tưởng thêm được và chi phí. */
   last: { at: string; added: number; dropped: number; cost_usd: number | null } | null;
 }

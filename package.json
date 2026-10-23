@@ -1,8 +1,8 @@
 {
-  "name": "mv-prompt-studio",
+  "name": "christmas-mv-studio",
   "version": "0.1.0",
   "private": true,
-  "description": "Công cụ tạo prompt video cho MV Rock & Roll 1950s",
+  "description": "Làm video nhạc Giáng sinh cổ điển thập niên 1950 (~1 tiếng): kịch bản Claude, clip Muse, ghép danh sách nhạc",
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",

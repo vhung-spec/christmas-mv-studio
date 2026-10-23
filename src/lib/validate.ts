@@ -15,7 +15,7 @@ export function shotClass(size: string): ShotClass {
 const SIZE_VI: Record<ShotClass, string> = { wide: "toàn cảnh", medium: "trung cảnh", close: "cận cảnh" };
 
 export const MOTION_RE =
-  /\b(danc\w*|spin\w*|twirl\w*|jitterbug\w*|jiv\w*|swing(s|ing)?|run(s|ning)?|leap\w*|jump\w*|chas\w*|driv\w*|racing|whirl\w*|dips?|lifts?|stomp\w*|bop\w*|rock(s|ing)? and roll\w*|hand jive|cartwheel\w*|skat\w*|sprint\w*)\b/i;
+  /\b(danc\w*|spin\w*|twirl\w*|jitterbug\w*|jiv\w*|swing(s|ing)?|run(s|ning)?|leap\w*|jump\w*|chas\w*|driv\w*|racing|race(s)?|whirl\w*|dips?|lifts?|stomp\w*|bop\w*|rock(s|ing)? and roll\w*|hand jive|cartwheel\w*|skat\w*|sprint\w*|sled\w*|snowball\w*|toboggan\w*|ski(s|ing|er|ers)?|glid\w*)\b/i;
 
 export interface ValidateContext {
   rules: EraRules;
@@ -64,7 +64,7 @@ export function validateMV(mv: MVResult, ctx: ValidateContext): Issue[] {
         shot_no: n,
         severity: "warning",
         category: "structure",
-        message_vi: "Cảnh đời sống thập niên 50 nhưng có cặp đôi trong khung hình — cảnh này nên chỉ có người thường và phố xá thời đó.",
+        message_vi: "Cảnh đời sống Giáng sinh 50s nhưng có nhân vật chính trong khung hình — cảnh này nên chỉ có người thường và phố xá mùa lễ thời đó.",
       });
     }
     for (const id of shot.characters_in_shot) {

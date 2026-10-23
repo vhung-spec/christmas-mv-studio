@@ -73,7 +73,7 @@ describe("trang theo dõi", () => {
     expect((await fetch(url, { headers: auth("sai-mat-khau") })).status).toBe(401);
     const page = await fetch(url, { headers: auth("matkhau1") });
     expect(page.status).toBe(200);
-    expect(await page.text()).toContain("MV Prompt Studio — theo dõi");
+    expect(await page.text()).toContain("Christmas MV Studio — theo dõi");
 
     const status = await (await fetch(`${url}/api/status`, { headers: auth("matkhau1") })).json();
     expect(status.pipeline.items[0]).toMatchObject({ title: "Santa Monica Pier Summer 1954", video: `/file/${mvId}/mv-1-test.mp4` });

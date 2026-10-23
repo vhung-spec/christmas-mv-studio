@@ -58,7 +58,7 @@ describe("chế độ claude.ai", () => {
     const { prompt } = await gen.buildDraftPrompt(d1.id);
     expect(prompt).toContain("music-video director");
     expect(prompt).toContain("RESPONSE FORMAT");
-    expect(prompt).toMatch(/produce exactly (1[5-9]|20) shots/);
+    expect(prompt).toMatch(/produce exactly (2\d|30) shots/);
     expect(prompt).toContain("JSON Schema:");
     expect(prompt).not.toContain("CHARACTER BIBLE (fixed");
 

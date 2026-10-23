@@ -46,10 +46,19 @@ describe("checkText", () => {
   });
 
   it("quy tắc riêng của địa điểm", () => {
-    expect(msgs("The couple rides the Ferris wheel above the pier.", 1954, "Santa Monica Pier")).toEqual(["error:location:Ferris wheel"]);
-    expect(msgs("The couple rides the Ferris wheel above the boardwalk.", 1954, "Coney Island")).toEqual([]);
-    expect(msgs("Hand-in-hand under the canopy of palm trees.", 1955, "Fremont Street")).toEqual([]);
-    expect(msgs("Neon glow under the LED canopy.", 1955, "Fremont Street").some((x) => x.startsWith("error:location"))).toBe(true);
+    expect(msgs("The giant tree is crowned with a crystal star above the rink.", 1954, "Rockefeller Center")).toEqual(["error:location:crystal star"]);
+    expect(msgs("The giant tree is crowned with a crystal star above the square.", 1954, "Main Street")).toEqual([]);
+    expect(msgs("Skiers ride the gondola up the mountain.", 1955, "Stowe Ski Lodge")).toEqual(["error:location:gondola"]);
+    expect(msgs("Snow falls on the palm trees along the parade.", 1955, "Hollywood Boulevard")).toEqual(["error:location:Snow"]);
+    expect(msgs("Snowflakes are painted on the shop window, no snow on the palms.", 1955, "Hollywood Boulevard")).toEqual([]);
+  });
+
+  it("đồ Giáng sinh hiện đại và đồ chưa có trong năm của cảnh", () => {
+    expect(msgs("An inflatable snowman glows on the lawn under icicle lights.", 1955).filter((x) => x.startsWith("error:era"))).toHaveLength(2);
+    expect(msgs("A silver aluminum Christmas tree turns under a rotating color wheel.", 1955).filter((x) => x.startsWith("error:era"))).toHaveLength(2);
+    expect(msgs("A silver aluminum Christmas tree turns under a rotating color wheel.", 1959)).toEqual([]);
+    expect(msgs("Children watch Rudolph on a toy shelf.")).toEqual(["warning:brand:Rudolph"]);
+    expect(msgs("Bubble lights and glass ornaments glow on a real fir tree, colored C9 bulbs along the eaves.")).toEqual([]);
   });
 
   it("thương hiệu, người thật, chữ trên màn hình", () => {

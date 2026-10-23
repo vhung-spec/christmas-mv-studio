@@ -1,8 +1,8 @@
-// ẢNH BÌA + THÔNG TIN YOUTUBE cho MV vừa dựng (không tốn lượt Muse):
-//   - ảnh bìa 1280×720: một khung hình đẹp lấy từ chính clip của MV (cảnh có cả cặp đôi, ưu tiên điệp khúc / cảnh signature),
-//     màu ấm hơn, tên bài thật to + dòng "địa điểm · năm" ở dưới, logo kênh ở góc nếu có. Chữ đọc từ file (không chèn vào
-//     filtergraph), font có dấu tiếng Việt như intro;
-//   - file .txt: tiêu đề (gợi ý số 1), các tiêu đề khác, mô tả + hashtag — dán thẳng lên YouTube.
+// ẢNH BÌA + THÔNG TIN YOUTUBE cho video vừa dựng (không tốn lượt Muse):
+//   - ảnh bìa 1280×720: một khung hình đẹp lấy từ chính clip của video (cảnh có nhân vật, ưu tiên điệp khúc / cảnh signature),
+//     màu ấm hơn, tên video thật to + dòng "địa điểm · năm · 1 Hour" ở dưới, logo kênh ở góc nếu có. Chữ đọc từ file (không chèn
+//     vào filtergraph), font có dấu tiếng Việt như intro;
+//   - file .txt: tiêu đề (gợi ý số 1), các tiêu đề khác, mô tả (kèm danh sách bài + mốc thời gian) + hashtag — dán thẳng lên YouTube.
 // Chỉ dùng phía server.
 
 import { promises as fs } from "node:fs";
@@ -11,6 +11,7 @@ import { cleanText } from "./branding";
 import { ffmpegOrThrow, hasFilter } from "./ffmpeg";
 import { defaultFont } from "./fonts";
 import { mediaPath } from "./media";
+import { videoLengthLabel } from "./prompts";
 import type { MVResult, Shot, VideoProject } from "./types";
 
 const W = 1280;
@@ -18,7 +19,7 @@ const H = 720;
 
 type ClipRef = { file: string; duration: number; owner?: string };
 
-/** Cảnh làm ảnh bìa: có clip; cả cặp đôi > một người; điệp khúc / signature / cận-trung cảnh được cộng điểm; cảnh đời sống 50s bị trừ. */
+/** Cảnh làm ảnh bìa: có clip; hai nhân vật > một người; điệp khúc / signature / cận-trung cảnh được cộng điểm; cảnh đời sống Giáng sinh 50s bị trừ. */
 export function pickCoverShot(mv: Pick<MVResult, "shots">, clips: Record<string, ClipRef>): Shot | null {
   const score = (s: Shot) =>
     (s.characters_in_shot.length >= 2 ? 4 : s.characters_in_shot.length ? 2 : 0) +
@@ -31,10 +32,17 @@ export function pickCoverShot(mv: Pick<MVResult, "shots">, clips: Record<string,
   return withClip.sort((a, b) => score(b) - score(a) || a.shot_no - b.shot_no)[0] ?? null;
 }
 
-/** Chữ trên ảnh bìa: tên bài (hoặc phần đầu tiêu đề YouTube) chia tối đa 2 dòng + dòng "địa điểm · năm". */
-export function coverText(mv: Pick<MVResult, "idea" | "youtube_titles">, hook?: string): { lines: string[]; sub: string } {
-  const titlePart = (mv.youtube_titles ?? [])[0]?.split(/\s+[|—–:]\s+|\s*\(/)[0] ?? "";
-  const big = cleanText(mv.idea.song_title || hook || titlePart || mv.idea.world_location, 60);
+/**
+ * Chữ trên ảnh bìa: tên video (hoặc phần đầu tiêu đề YouTube) chia tối đa 2 dòng + dòng "địa điểm · năm", thêm độ dài với video dài
+ * (`seconds` ≥ 20 phút, vd. "· 1 Hour").
+ */
+export function coverText(mv: Pick<MVResult, "idea" | "youtube_titles">, hook?: string, seconds?: number): { lines: string[]; sub: string } {
+  // Phần đầu tiêu đề YouTube: cắt ở " | ", " — ", " : ", "(" hoặc biểu tượng (🎄 — font chữ không vẽ được emoji).
+  const titlePart = (mv.youtube_titles ?? [])[0]?.split(/\s+[|—–:•·]\s+|\s*\(|\s*\p{Extended_Pictographic}/u)[0] ?? "";
+  const raw = (mv.idea.song_title || titlePart || hook || mv.idea.world_location).replace(/[\p{Extended_Pictographic}\u{FE0F}]/gu, "").trim();
+  // Dài quá 60 ký tự thì bỏ cả từ bị cắt dở, không cắt giữa chữ.
+  const cut = raw.slice(0, 60);
+  const big = cleanText(raw.length <= 60 || /\s/.test(raw[60]) ? cut : cut.replace(/\s+\S*$/, ""), 60);
   const words = big.split(/\s+/);
   const lines: string[] = [];
   if (big.length <= 22 || words.length < 2) lines.push(big);
@@ -51,7 +59,8 @@ export function coverText(mv: Pick<MVResult, "idea" | "youtube_titles">, hook?: 
   }
   const loc = mv.idea.world_location.trim();
   const year = loc.match(/\b(19\d\d)\b/)?.[1];
-  const sub = cleanText(year ? `${loc.replace(/\s*\b19\d\d\b\s*/, " ").trim()} · ${year}` : loc, 80);
+  const length = seconds && seconds >= 20 * 60 ? ` · ${videoLengthLabel(seconds / 60)}` : "";
+  const sub = cleanText(`${year ? `${loc.replace(/\s*\b19\d\d\b\s*/, " ").trim()} · ${year}` : loc}${length}`, 80);
   return { lines, sub };
 }
 
@@ -76,7 +85,7 @@ export function youtubeInfo(mv: Pick<MVResult, "youtube_titles" | "youtube_descr
  */
 export async function makeCoverAndInfo(
   mv: MVResult,
-  project: Pick<VideoProject, "clips" | "logo" | "font">,
+  project: Pick<VideoProject, "clips" | "logo" | "font"> & Partial<Pick<VideoProject, "audio">>,
   videoFile: string,
   work: string,
   hook?: string,
@@ -93,7 +102,7 @@ export async function makeCoverAndInfo(
   const at = Math.max(0, Math.min((clip.duration || 4) * 0.45, (clip.duration || 4) - 0.2));
 
   // Font + chữ chép vào thư mục làm việc, ffmpeg đọc bằng tên tương đối.
-  const { lines, sub } = coverText(mv, hook);
+  const { lines, sub } = coverText(mv, hook, project.audio?.duration);
   const fontSrc = project.font ? mediaPath((project.font as ClipRef).owner ?? mv.id, project.font.file) : defaultFont();
   const canText = Boolean(fontSrc) && (await hasFilter("drawtext"));
   let text = "";

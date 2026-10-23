@@ -18,9 +18,9 @@ import { FfmpegError, ffmpegOrThrow, findFfmpeg, hasFilter, probe, type RunOptio
 import { defaultFont, readFontInfo } from "./fonts";
 import { EBUR128_FILTER, MAX_AAC_ATTEMPTS, gainDecision, parseEbur128, retryGain, volumeFilter } from "./loudness";
 import { loadProject, mediaDir, mediaPath, updateProject } from "./media";
+import { withTracklist } from "./playlist";
 import { AUDIO_BITRATE, videoEncoderArgs } from "./quality";
 import { exportResult } from "./results";
-import { librarySongFor } from "./songLibrary";
 import { loadMV, readSettings } from "./store";
 import type { EditOptions, EditPlan, EditSegment, LoudnessReport, LoudnessStats, MVResult, RenderInfo, RenderJob, Verification, VideoProject } from "./types";
 
@@ -411,7 +411,9 @@ async function runJob(job: JobState, mv: MVResult, project: VideoProject, plan: 
     job.stage = "Ghép hình với tiếng";
     const partial = path.join(tmp, "out.mp4");
     // Thông tin MP4 điền tự động từ gợi ý YouTube lúc dựng kịch bản (tên kênh, thể loại: thiết lập chung).
-    const tags = mvTags(mv, opts.metadata);
+    // Video dùng danh sách nhạc: mô tả kèm danh sách bài + mốc thời gian (YouTube tự tạo chương).
+    const told: MVResult = { ...mv, youtube_description: withTracklist(mv.youtube_description ?? "", project.audio?.tracks) };
+    const tags = mvTags(told, opts.metadata);
     await ffmpegOrThrow(
       ["-hide_banner", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", "list.txt", "-i", audio.file,
         "-map", "0:v:0", "-map", "1:a:0", "-map_metadata", "-1", "-map_chapters", "-1", "-c:v", "copy", "-c:a", "copy",
@@ -433,8 +435,7 @@ async function runJob(job: JobState, mv: MVResult, project: VideoProject, plan: 
     const stat = await fs.stat(mediaPath(mv.id, outName));
     // Ảnh bìa + tiêu đề / mô tả YouTube cạnh file MP4 (lỗi thì bỏ qua — video vẫn xong).
     job.stage = "Ảnh bìa + tiêu đề YouTube";
-    const hook = (await librarySongFor(mv.idea).catch(() => null))?.hook;
-    const extras = await makeCoverAndInfo(mv, project, outName, tmp, hook).catch((err) => {
+    const extras = await makeCoverAndInfo(told, project, outName, tmp).catch((err) => {
       console.error("[cover]", (err as Error).message);
       return null;
     });

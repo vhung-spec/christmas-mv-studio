@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title MV Prompt Studio
+title Christmas MV Studio
 cd /d "%~dp0"
 where node >nul 2>nul
 if errorlevel 1 (

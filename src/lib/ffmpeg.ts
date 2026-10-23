@@ -185,9 +185,10 @@ export async function probe(file: string, opts: { still?: boolean } = {}): Promi
   return info;
 }
 
-/** Giải mã âm thanh thành mẫu mono float32 (để ước tính nhịp). */
-export async function decodeMono(file: string, sampleRate = 11025): Promise<Float32Array> {
-  const res = await ffmpegOrThrow(["-hide_banner", "-loglevel", "error", "-i", file, "-vn", "-ac", "1", "-ar", String(sampleRate), "-f", "f32le", "-"], "Đọc âm thanh", {
+/** Giải mã âm thanh thành mẫu mono float32 (để ước tính nhịp). `maxSeconds` = chỉ đọc chừng này giây đầu. */
+export async function decodeMono(file: string, sampleRate = 11025, maxSeconds?: number): Promise<Float32Array> {
+  const limit = maxSeconds && maxSeconds > 0 ? ["-t", String(maxSeconds)] : [];
+  const res = await ffmpegOrThrow(["-hide_banner", "-loglevel", "error", "-i", file, ...limit, "-vn", "-ac", "1", "-ar", String(sampleRate), "-f", "f32le", "-"], "Đọc âm thanh", {
     collectStdout: true,
   });
   const buf = res.stdout;

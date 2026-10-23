@@ -154,8 +154,10 @@ export interface Settings {
   /** Trang theo dõi (chỉ xem) cho máy khác của bạn, chỉ mở trên địa chỉ Tailscale của máy này, cần mật khẩu. */
   monitorEnabled: boolean;
   monitorPort: number;
-  /** Phần trăm số cảnh là "đời sống thập niên 50" (không có cặp đôi), 0 = tắt. */
+  /** Phần trăm số cảnh là "đời sống Giáng sinh thập niên 50" (không có nhân vật chính), 0 = tắt. */
   eraShare: number;
+  /** Độ dài video (phút): app ghép các bài nhạc chưa dùng trong Thư mục nhạc cho đủ khoảng chừng này, clip lặp lại cho hết nhạc. */
+  videoMinutes: number;
   /** Thư mục kết quả: mỗi MV xong một thư mục con (video, ảnh bìa, tiêu đề). Không kèm ổ đĩa = cạnh thư mục app; "" = không tạo. */
   resultsDir: string;
 }
@@ -233,7 +235,7 @@ export interface PlannedShot {
   must_motion: boolean;
   signature_shot: string | null;
   lyric_line: string | null;
-  /** Cảnh đời sống thập niên 50 (không có cặp đôi): người thường, phố xá, quán xá… để MV gợi hoài niệm. */
+  /** Cảnh đời sống Giáng sinh thập niên 50 (không có nhân vật chính): hát mừng, chợ cây thông, phố đèn… để video gợi hoài niệm. */
   era_life?: boolean;
 }
 
@@ -269,7 +271,7 @@ export interface Shot {
   audio: string | null;
   signature_shot: string | null;
   is_motion: boolean;
-  /** Cảnh đời sống thập niên 50 (không có cặp đôi). */
+  /** Cảnh đời sống Giáng sinh thập niên 50 (không có nhân vật chính). */
   era_life?: boolean;
   /** true nếu người dùng đã sửa tay prompt_en. */
   edited?: boolean;
@@ -396,6 +398,18 @@ export interface AudioTrack extends MediaFile {
   beat_confidence: number;
   /** Ảnh dạng sóng âm (PNG) để hiển thị dưới timeline. */
   waveform?: string;
+  /** Nhạc ghép từ nhiều bài (danh sách nhạc của video dài): bài nào, bắt đầu ở giây nào — ghi vào mô tả YouTube. */
+  tracks?: PlaylistTrack[];
+}
+
+/** Một bài trong danh sách nhạc đã ghép của video. */
+export interface PlaylistTrack {
+  /** Tên file nhạc gốc trong Thư mục nhạc. */
+  name: string;
+  /** Tên bài hiện trong mô tả YouTube. */
+  title: string;
+  start: number;
+  duration: number;
 }
 
 export type CutPace = "slow" | "normal" | "fast";
