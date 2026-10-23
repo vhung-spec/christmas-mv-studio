@@ -19,10 +19,18 @@ interface Status {
   mode: "claude" | "mock" | "manual";
 }
 
-const MODEL_SUGGESTIONS = ["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"];
+/** Model Claude chọn sẵn (có trong bảng giá); model khác thì chọn "Khác" rồi gõ tên. */
+const MODEL_CHOICES = [
+  { id: "claude-sonnet-5-5", label: "Claude Sonnet 5.5 — nhanh, rẻ (mặc định)" },
+  { id: "claude-opus-5-5", label: "Claude Opus 5.5 — mạnh hơn, giá gấp đôi Sonnet" },
+  { id: "claude-haiku-5-5", label: "Claude Haiku 5.5 — rẻ nhất, viết đơn giản hơn" },
+];
+const OTHER_MODEL = "__other";
 
 export default function SettingsPage() {
   const [s, setS] = useState<Settings | null>(null);
+  // Đang chọn "Khác — tự gõ tên model".
+  const [otherModel, setOtherModel] = useState(false);
   const [styles, setStyles] = useState<StyleLibrary>({});
   const [models, setModels] = useState<VideoModelLibrary>({});
   const [couples, setCouples] = useState<Couples>({});
@@ -101,13 +109,26 @@ export default function SettingsPage() {
         <ApiKeyCard onChanged={() => api<Status>("/api/status").then(setStatus).catch(() => {})} />
         <Card title="Claude API — model">
           <div className="grid gap-3 md:grid-cols-2">
-            <Field label="Model" hint="Mặc định claude-sonnet-5-5.">
-              <input className="input" list="model-suggestions" value={s.model} onChange={(e) => set("model", e.target.value)} />
-              <datalist id="model-suggestions">
-                {MODEL_SUGGESTIONS.map((m) => (
-                  <option key={m} value={m} />
+            <Field label="Model" hint="Dùng cho mọi việc Claude làm: kịch bản, prompt từng cảnh, tiêu đề YouTube, đề xuất ý tưởng. Giá ở bảng giá bên dưới.">
+              <select
+                className="input"
+                value={otherModel || !MODEL_CHOICES.some((m) => m.id === s.model) ? OTHER_MODEL : s.model}
+                onChange={(e) => {
+                  setOtherModel(e.target.value === OTHER_MODEL);
+                  if (e.target.value !== OTHER_MODEL) set("model", e.target.value);
+                }}
+                data-testid="model-select"
+              >
+                {MODEL_CHOICES.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
                 ))}
-              </datalist>
+                <option value={OTHER_MODEL}>Khác — tự gõ tên model…</option>
+              </select>
+              {(otherModel || !MODEL_CHOICES.some((m) => m.id === s.model)) && (
+                <input className="input mt-2" value={s.model} placeholder="vd. claude-fable-5-1" onChange={(e) => set("model", e.target.value.trim())} />
+              )}
             </Field>
             <Field label="Mức effort" hint="Cao hơn = kỹ hơn nhưng chậm và tốn token hơn.">
               <select className="input" value={s.effort} onChange={(e) => set("effort", e.target.value as Settings["effort"])}>
