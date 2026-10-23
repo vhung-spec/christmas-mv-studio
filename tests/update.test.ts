@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, describe, expect, it, vi } from "vitest";
 // @ts-expect-error — script JS thuần của trình khởi động
-import { applyUpdate, planUpdate, pruneOld, rollbackUpdate } from "../scripts/cap-nhat.mjs";
+import { applyUpdate, moveStale, planUpdate, pruneOld, rollbackUpdate } from "../scripts/cap-nhat.mjs";
 
 const tmp = mkdtempSync(path.join(tmpdir(), "mvps-update-"));
 const dataDir = path.join(tmp, "data");
@@ -84,6 +84,20 @@ describe("cài bản mới lên thư mục app", () => {
     // File bản mới thêm vào không bị xoá: nằm trong dự phòng.
     expect(read(path.join(backup, "_them-moi", "src/moi.ts"))).toBe("file mới");
     expect(read(path.join(root, "data/settings.json"))).toBe('{"cua":"ban"}');
+  });
+
+  it("cài tay (giải nén gói đè lên): file bản cũ không còn trong gói sang dự phòng", () => {
+    const root = path.join(tmp, "app-tay", "Christmas-MV-Studio");
+    put(root, { "src/a.ts": "v2", "src/lib/songsUsed.ts": "bản cũ", "data/settings.json": "{}" });
+    const backup = path.join(tmp, "app-tay", "thua");
+    // Chưa có danh sách file (máy phát triển / gói cũ) → không động vào gì.
+    expect(moveStale(root, backup)).toEqual([]);
+    put(root, { "ban-cai.json": JSON.stringify({ commit: "x", files: ["src/a.ts", "ban-cai.json"] }) });
+    expect(moveStale(root, backup)).toEqual(["src/lib/songsUsed.ts"]);
+    expect(existsSync(path.join(root, "src/lib/songsUsed.ts"))).toBe(false);
+    expect(read(path.join(backup, "src/lib/songsUsed.ts"))).toBe("bản cũ");
+    expect(read(path.join(root, "src/a.ts"))).toBe("v2");
+    expect(read(path.join(root, "data/settings.json"))).toBe("{}");
   });
 
   it("giữ 3 bản dự phòng mới nhất, cũ hơn vào Thùng rác", () => {

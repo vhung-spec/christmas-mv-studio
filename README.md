@@ -26,7 +26,9 @@ kênh dùng chung kho nhạc, mỗi kênh có lịch sử nhạc và kho ý tư�
 | Số cảnh | 15–20 | 20–30 (một vòng, khi dựng lặp lại — các vòng sau xáo thứ tự) |
 | Chủ đề | T01–T30 tình yêu | T01–T22 Giáng sinh (Đêm Giáng sinh lãng mạn, Trang trí cây thông, Tuyết đầu mùa…) |
 | Kho ý tưởng | một kho, nghiêng dần sang thu → đông | **mỗi kênh một kho**; bỏ nghiêng mùa (ý tưởng nào cũng là mùa lễ, từ tuyết đầu mùa tới Giao thừa) |
-| Cổng | 3000 · trang theo dõi 3300 | **3100** · trang theo dõi **3301** (chạy song song được trên cùng máy) |
+| Cổng | 3000 · trang theo dõi 3300 | **3100** · cổng từ xa **3301** (chạy song song được trên cùng máy) |
+| Từ xa | trang theo dõi chỉ xem | **điều khiển cả app từ điện thoại** qua Tailscale (kể cả đăng nhập Muse ngay trên trang) |
+| Cập nhật | giải nén gói cập nhật bằng tay | **tự cập nhật từ GitHub** khi app rảnh, lỗi thì tự quay về bản cũ |
 | Dữ liệu Muse | `…-muse-gateway` cạnh app cũ | thư mục riêng cạnh app mới (vd. `D:\bokin-christmas-muse-gateway`) — đăng nhập Muse riêng |
 | File chạy | `Chay-MV-Prompt-Studio.bat` | `Chay-Christmas-MV-Studio.bat` |
 
@@ -376,8 +378,9 @@ app mới bắt đầu với kho trống). Ý tưởng trùng (cùng địa đi�
 
 ## 2e. Chạy trên máy khác (máy chạy riêng, điều khiển từ xa)
 
-App có thể chạy suốt trên một máy Windows khác; bạn điều khiển bằng phần mềm xem màn hình (UltraViewer, Chrome Remote Desktop).
-App vẫn chỉ mở trong chính máy đó (127.0.0.1). Hướng dẫn từng bước cho người không rành máy: **`HUONG-DAN-MAY-MOI.txt`**.
+App có thể chạy suốt trên một máy Windows khác; bạn **điều khiển cả app qua trang web từ điện thoại / máy khác** (cổng từ xa qua
+Tailscale, kể cả đăng nhập Muse — mục dưới), app **tự cập nhật từ GitHub** nên không phải cài tay mỗi lần. App vẫn chỉ mở trong chính máy đó
+(127.0.0.1). Hướng dẫn từng bước cho người không rành máy: **`HUONG-DAN-MAY-MOI.txt`**.
 
 - **Đóng gói**: bấm đúp `Dong-goi-cai-moi.bat` → `Christmas-MV-Studio-cai-moi.zip` (thư mục `<tên thư mục app>-goi` cạnh thư mục app, vd. `D:\bokin-christmas-goi`):
   mã nguồn + dữ liệu của bạn (cài đặt, chủ đề, địa điểm, cặp đôi, thư viện lời, kênh + lịch sử nhạc từng kênh, kho ý tưởng). **Không** có API key (`.env*`),
@@ -394,11 +397,31 @@ App vẫn chỉ mở trong chính máy đó (127.0.0.1). Hướng dẫn từng b
   (không dùng chung với MV Prompt Studio): nên đăng nhập một tài khoản Muse khác; dùng chung một tài khoản thì hai app chia nhau hạn mức tuần.
 - **Máy chỉ có ổ C**: Thư mục nhạc ghi không kèm ổ đĩa (vd. `KHO NHAC GIANG SINH`) = thư mục cạnh thư mục app, vd. app ở
   `C:\Christmas-MV-Studio\Christmas-MV-Studio` → nhạc ở `C:\Christmas-MV-Studio\KHO NHAC GIANG SINH`. Video 1 tiếng nặng 3–5 GB: để ý chỗ trống ổ C.
-- **Theo dõi từ máy chính** (Cài đặt → *Theo dõi từ máy khác (Tailscale)*): trang **chỉ xem** — dây chuyền, MV đã xong (tải MP4),
-  Muse, kho ý tưởng, dung lượng ổ, lỗi cần chú ý; tự cập nhật 5 giây/lần. Đây là một cổng riêng (mặc định **3301**; app cũ dùng 3300) **chỉ mở trên
-  địa chỉ Tailscale** của máy chạy (100.64.0.0/10) nên máy cùng wifi / người ngoài không vào được, và cần mật khẩu (HTTP Basic;
-  lưu dạng băm scrypt trong `.env.local` = `MONITOR_PASSWORD_HASH`, không commit). App chính vẫn chỉ ở 127.0.0.1. Chưa đặt
-  mật khẩu thì không mở. Mã: `src/lib/monitor.ts`, `src/lib/monitorPage.ts`.
+- **Điều khiển từ xa** (Cài đặt → *Điều khiển từ xa (Tailscale)*): một cổng riêng (mặc định **3301**; app cũ dùng 3300) **chỉ mở trên địa chỉ
+  Tailscale** của máy chạy (100.64.0.0/10) — máy cùng wifi / người ngoài không vào được; ở đâu cũng dùng được (4G, wifi khác) từ điện thoại / máy
+  tính đã cài Tailscale cùng tài khoản. Vào cổng phải **đăng nhập bằng mật khẩu** (trang đăng nhập riêng; thiết bị nhớ 30 ngày bằng cookie
+  HttpOnly; chỉ lưu bản băm của mã phiên trong `data/remote_sessions.json`; sai 5 lần thì khoá 15 phút; đổi mật khẩu = đăng xuất mọi thiết bị;
+  mật khẩu lưu dạng băm scrypt trong `.env.local` = `MONITOR_PASSWORD_HASH`, không commit).
+  - Tick **Cho phép điều khiển app** → mở được **mọi trang, mọi chức năng** như ngồi tại máy (cổng chuyển tiếp tới app ở 127.0.0.1; tải MP4 về,
+    tải nhạc / clip lên); thanh menu hiện “🌐 Từ xa · Đăng xuất”, trên điện thoại menu gập thành nút ☰. Không tick = chỉ xem tiến độ
+    (`/_remote/`: dây chuyền, MV đã xong + tải MP4, Muse, kênh, dung lượng ổ, lỗi cần chú ý; 5 giây/lần).
+  - **Đăng nhập Muse từ xa**: bấm *Đăng nhập Muse* (trang Clip Muse / Tự động / Cài đặt) → khung **Cửa sổ Chrome của Muse** hiện ngay trong
+    trang: ảnh cửa sổ tự làm mới, bấm vào ảnh = bấm vào trang, ô gõ chữ (che được, cho mật khẩu / mã 2 bước), phím Enter / Xoá / Tab, cuộn, quay
+    lại, tải lại, theo cả tab đăng nhập bật lên; *Hiện trang kiểu điện thoại* cho trang đăng nhập vừa màn hình nhỏ (tự tắt khi đăng nhập xong).
+    Chữ gõ chuyển thẳng vào trang Muse, app không lưu. Mã: `src/lib/museEngine/screen.ts`, `src/components/muse/MuseScreen.tsx`.
+  - Chống giả mạo: lệnh (POST…) chỉ nhận từ chính trang của app / của cổng (kiểm tra Origin; trang web lạ mở trên máy chạy cũng không gửi lệnh
+    vào 127.0.0.1 được), tên máy lạ bị chặn (chống đổi DNS), trang không cho nhúng vào trang khác. Chưa đặt mật khẩu thì cổng không mở.
+    Mã: `src/lib/monitor.ts` (máy chủ cổng), `src/lib/remote.ts` (đăng nhập, chuyển tiếp), `src/lib/monitorPage.ts` (trang theo dõi).
+- **Tự cập nhật** (Cài đặt → *Cập nhật app*): mã nguồn để ở một **repo GitHub riêng tư** (mặc định `vhung-spec/christmas-mv-studio`, nhánh
+  `christmas`); máy chạy giữ một **token chỉ-đọc** của repo đó trong `.env.local` (`GITHUB_UPDATE_TOKEN`, bạn tự dán; không bao giờ gửi lại cho
+  trang). Mỗi giờ app hỏi GitHub; có bản mới thì tải về, giải nén vào thư mục `<thư mục app>-cap-nhat` cạnh thư mục app, kiểm tra; **khi app rảnh**
+  (không dựng video / còn hàng chờ dựng, không viết kịch bản, không chạy batch, không gửi cảnh Muse, không đồng bộ Drive, không chờ đăng nhập Muse)
+  thì app tự tắt (mã 75) → `scripts/start.mjs` cài (`scripts/cap-nhat.mjs`: chép mã mới; giữ `data/`, `.env*`, thư viện, bản build và file .bat;
+  file bản mới bỏ thì chuyển sang thư mục dự phòng, không xoá), cài lại thư viện nếu `package-lock.json` đổi, build, chạy lại, kiểm tra app lên được.
+  Build lỗi / app không chạy → **tự quay về bản cũ** và nhớ bản lỗi (không tự cài lại). Giữ 3 bản dự phòng gần nhất, cũ hơn vào Thùng rác. Dự
+  phòng: tải gói `.zip` lên ở thẻ *Cập nhật app* (gói `Dong-goi-cap-nhat.bat` hoặc file zip tải từ GitHub). Gói cài có `ban-cai.json` (mã commit) để
+  biết bản đang chạy. Máy phát triển (thư mục app là kho git) không tự cập nhật. Chỉ chạy được khi mở app bằng `Chay-Christmas-MV-Studio.bat`.
+  Giải nén gói cập nhật đè lên bằng tay cũng được: lúc khởi động app tự chuyển file của bản cũ không còn trong gói sang dự phòng (kẻo build lỗi).
 
 ## 3. Logic sinh MV
 
@@ -505,11 +528,15 @@ src/lib/
   pipeline.ts           dây chuyền tự động: kịch bản → bài hát → clip Muse → MP4 (data/pipeline.json); pipelineSteps.ts = kiểu + nhãn
   haohao.ts             đọc (chỉ đọc) hàng đợi tasks.json và thư mục lưu của tool HaoHao (cách dán tay)
   museJobs.ts           theo dõi các cảnh (data/muse.json), dò chạy nền, đưa clip vào đúng cảnh, tự thêm vào hàng chờ dựng
+  monitor.ts, remote.ts  cổng từ xa qua Tailscale: đăng nhập (cookie phiên), chống giả mạo, chuyển tiếp mọi trang tới app; monitorPage.ts = trang theo dõi
+  museEngine/screen.ts  khung xem cửa sổ Chrome của Muse (chụp tab, bấm / gõ qua CDP) để đăng nhập Muse ngay trên trang
+  updater.ts            tự cập nhật phía app: hỏi GitHub, tải, giải nén, kiểm tra, chờ rảnh rồi tự tắt mã 75 để trình khởi động cài
   loudness.ts           cân bằng âm lượng (chuyển từ loop_music/loudness.py của Bokin Studio Music)
   quality.ts            preset YouTube (chuyển từ loop_music/quality.py)
   branding.ts, fonts.ts logo kênh, intro tiêu đề, thông tin MP4 (chuyển từ loop_music/branding.py, mp4meta.py)
 src/app/                các trang: Nhập ý tưởng, Chạy batch, claude.ai (/manual), Kết quả (/mv/[id]), Ghép video (/mv/[id]/video), Clip Muse (/muse),
                         Hàng chờ dựng (/render-queue), Lịch sử, Thư viện, Cài đặt; API trong src/app/api/
-scripts/start.mjs       khởi động một lệnh (dùng bởi Chay-Christmas-MV-Studio.bat / .command)
+scripts/start.mjs       khởi động một lệnh (dùng bởi Chay-Christmas-MV-Studio.bat / .command); vòng chạy: app tự tắt mã 75 → cài bản mới → chạy lại
+scripts/cap-nhat.mjs    tự cập nhật phía trình khởi động: chép bản mới, giữ dữ liệu, file thừa sang dự phòng, quay về bản cũ khi lỗi
 tests/                  vitest (fakeMuse.ts = "Muse giả" điều khiển được, cho test)
 ```

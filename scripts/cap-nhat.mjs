@@ -103,6 +103,23 @@ export function applyUpdate(root, newRoot, backup) {
   return manifest;
 }
 
+/**
+ * File thừa so với danh sách file của bản đang cài (ban-cai.json do gói cài / lần cập nhật ghi): giải nén gói cập nhật đè lên bằng tay
+ * thì file bản cũ mà bản mới đã bỏ vẫn còn (vd. src/lib/songsUsed.ts) và làm build lỗi → chuyển sang `backup` (không xoá).
+ */
+export function moveStale(root, backup) {
+  const v = readJsonSafe(path.join(root, VERSION_FILE), null);
+  if (!Array.isArray(v?.files) || !v.files.length) return [];
+  const want = new Set(v.files);
+  const stale = OWNED_DIRS.flatMap((d) => listFiles(path.join(root, d)).map((r) => `${d}/${r}`)).filter((rel) => !want.has(rel));
+  for (const rel of stale) {
+    const to = path.join(backup, rel);
+    mkdirSync(path.dirname(to), { recursive: true });
+    renameSync(path.join(root, rel), to);
+  }
+  return stale;
+}
+
 /** Quay về bản cũ: chép lại file cũ từ `backup`; file bản mới thêm vào thì chuyển sang `backup/_them-moi` (không xoá). */
 export function rollbackUpdate(root, backup) {
   const m = readJsonSafe(path.join(backup, "cap-nhat.json"), null);

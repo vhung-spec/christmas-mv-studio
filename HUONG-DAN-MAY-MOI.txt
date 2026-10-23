@@ -5,8 +5,10 @@ Christmas MV Studio là app RIÊNG cho video nhạc Giáng sinh (~1 tiếng), t�
 được trên cùng một máy: app cũ ở cổng 3000, app Giáng sinh ở cổng 3100. Cài app mới KHÔNG đụng tới app cũ
 (C:\MV-Prompt-Studio\MV-Prompt-Studio): mỗi app có thư mục, dữ liệu, kho nhạc và Chrome đăng nhập Muse riêng.
 
-"Máy chạy" là một máy Windows 10/11 để mở suốt cho app tự làm video. Bạn điều khiển nó từ xa bằng phần mềm xem màn hình.
-App chỉ mở trong chính máy chạy (địa chỉ 127.0.0.1): không ai trên mạng vào được app.
+"Máy chạy" là một máy Windows 10/11 để mở suốt cho app tự làm video. Bạn điều khiển app từ điện thoại / máy khác ngay trên trang
+web của app (mục E, kể cả đăng nhập Muse), hoặc bằng phần mềm xem màn hình như trước. App tự cập nhật bản mới (mục F).
+App chỉ mở trong chính máy chạy (địa chỉ 127.0.0.1): không ai trên mạng vào được app. Riêng cổng điều khiển từ xa chỉ mở cho các
+thiết bị đăng nhập Tailscale của bạn, và phải có mật khẩu.
 Hướng dẫn này viết cho máy chỉ có ổ C. Máy có ổ D thì làm y hệt, chỉ thay C:\ bằng D:\.
 
 
@@ -43,6 +45,7 @@ App tự tạo thêm các thư mục nằm cạnh thư mục app (trong C:\Chris
    KHO NHAC GIANG SINH                  nhạc Giáng sinh tải từ Google Drive
    KET QUA GIANG SINH                   mỗi kênh một thư mục, mỗi video xong một thư mục (video, ảnh bìa, tiêu đề – mô tả)
    Christmas-MV-Studio-muse-gateway     Chrome riêng của Muse cho app này (có phiên đăng nhập Muse) và video Muse tải về
+   Christmas-MV-Studio-cap-nhat         bản mới tải về và bản cũ dự phòng của việc tự cập nhật (mục F)
 
 
 C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm trong gói cài)
@@ -97,14 +100,54 @@ D. LƯU Ý QUAN TRỌNG
   Đăng xong thì chép video ra chỗ khác để giải phóng ổ C (mỗi video vài GB).
 - Mô tả YouTube (file "Tiêu đề - mô tả.txt") có sẵn danh sách bài kèm mốc thời gian "0:00 Tên bài" — dán nguyên vào YouTube,
   YouTube tự chia chương.
-- Cập nhật app sau này: trên máy có mã nguồn chạy Dong-goi-cap-nhat.bat → được Christmas-MV-Studio-cap-nhat.zip
-  → chép sang máy chạy → tắt app Giáng sinh → giải nén vào C:\Christmas-MV-Studio (chọn "Replace" / Thay thế các file) → chạy lại.
-  Dữ liệu ở máy chạy (cài đặt, kênh, kho ý tưởng, video, nhạc) được giữ nguyên.
+- Cập nhật app: TỰ ĐỘNG (mục F). Không cần chép gói cài sang máy chạy nữa, trừ lần cài bản này (lần cuối cài tay).
+
+  Dự phòng khi chưa có token / GitHub lỗi: trang điều khiển → Cài đặt → "Cập nhật app" → tải gói .zip lên (gói Dong-goi-cap-nhat.bat
+  hoặc file zip tải từ GitHub) → app tự cài khi rảnh. Hoặc như cũ: tắt app → giải nén Christmas-MV-Studio-cap-nhat.zip vào
+  C:\Christmas-MV-Studio (chọn "Replace" / Thay thế) → chạy lại; app tự dọn file của bản cũ không còn dùng (chuyển sang thư mục
+  C:\Christmas-MV-Studio\Christmas-MV-Studio-cap-nhat, không xoá). Dữ liệu ở máy chạy (cài đặt, kênh, kho ý tưởng, video, nhạc,
+  đăng nhập Muse) được giữ nguyên.
 
 
-E. THEO DÕI TIẾN ĐỘ TỪ MÁY CHÍNH
----------------------------------
-Giống app cũ (Tailscale + mật khẩu riêng), chỉ khác cổng: app Giáng sinh dùng cổng 3301 (app cũ 3300), nên mở được cả hai trang.
-Trên máy chạy, trong app Giáng sinh: Cài đặt → thẻ "Theo dõi từ máy khác (Tailscale)" → đặt mật khẩu → "Lưu mật khẩu" → tick
-"Bật trang theo dõi". Thẻ hiện địa chỉ dạng http://100.x.y.z:3301 → mở trên máy chính, lưu Bookmark.
-Lần đầu Windows có thể hỏi cho Node.js dùng mạng → bấm "Allow access" (Cho phép).
+E. ĐIỀU KHIỂN APP TỪ ĐIỆN THOẠI / MÁY KHÁC (không cần ngồi ở máy chạy)
+-----------------------------------------------------------------------
+Dùng mọi chức năng của app (thêm ý tưởng, xem dây chuyền, đăng nhập Muse, tải MP4, Cài đặt…) từ điện thoại hoặc máy tính khác,
+ở đâu cũng được (4G, wifi khác). Đi qua Tailscale: chỉ thiết bị đăng nhập cùng tài khoản Tailscale của bạn mới mở được, người ngoài
+và máy cùng wifi không vào được; app vẫn chỉ mở trong máy chạy.
+1. Cài Tailscale (tailscale.com/download) trên MÁY CHẠY và trên ĐIỆN THOẠI (App Store / CH Play: "Tailscale") hoặc máy tính của bạn,
+   đăng nhập CÙNG MỘT tài khoản (Google / Microsoft…). Bật Tailscale (nút Connect).
+2. Trên máy chạy, trong app Giáng sinh: Cài đặt → thẻ "Điều khiển từ xa (Tailscale)":
+   - gõ mật khẩu (ít nhất 6 ký tự, đừng dùng lại mật khẩu khác của bạn) → "Lưu mật khẩu";
+   - tick "Bật cổng từ xa" và "Cho phép điều khiển app (không chỉ xem)".
+   Thẻ hiện địa chỉ dạng http://100.x.y.z:3301 (app cũ dùng cổng 3300 nên mở được cả hai). Lần đầu Windows có thể hỏi cho Node.js dùng
+   mạng → bấm "Allow access" (Cho phép).
+3. Trên điện thoại: mở Tailscale (đang Connected) → mở trình duyệt → gõ địa chỉ đó → gõ mật khẩu → Đăng nhập. Điện thoại nhớ đăng nhập
+   30 ngày. Menu trình duyệt → "Thêm vào màn hình chính" để lần sau bấm là mở. Trên điện thoại, menu của app là nút ☰ Menu.
+4. Đăng nhập Muse từ điện thoại: Clip Muse (hoặc Tự động) → "Đăng nhập Muse" → khung "Cửa sổ Chrome của Muse" hiện ngay trong trang
+   (ảnh cửa sổ Chrome trên máy chạy, tự làm mới):
+   - tick "Hiện trang kiểu điện thoại" cho chữ to vừa màn hình;
+   - bấm vào ô trên ảnh (vd. ô Email) → gõ vào ô bên dưới ảnh → "Gõ vào trang"; làm tương tự với mật khẩu (chữ được che), rồi bấm nút
+     đăng nhập trên ảnh hoặc "⏎ Enter". Mã 2 bước cũng gõ như vậy. Có nút Cuộn, Quay lại, Tải lại.
+   Đăng nhập xong khung báo "✓ Đã đăng nhập Muse" → "Đóng khung". App không lưu chữ bạn gõ.
+- Mất điện thoại / nghi lộ mật khẩu: trên máy chạy (hoặc từ máy khác đang đăng nhập) đổi mật khẩu ở thẻ đó → mọi thiết bị bị đăng xuất.
+  Sai mật khẩu 5 lần liền thì địa chỉ đó bị khoá 15 phút. Muốn chỉ xem tiến độ: bỏ tick "Cho phép điều khiển app".
+
+
+F. TỰ CẬP NHẬT (làm một lần)
+-----------------------------
+Từ bản này, app tự lấy bản mới từ GitHub (repo riêng tư vhung-spec/christmas-mv-studio, nhánh christmas): mỗi giờ app hỏi một lần;
+có bản mới thì tải về và tự cài KHI APP RẢNH (không dựng video, không viết kịch bản, không gửi cảnh Muse): app tắt vài phút, cài,
+build, rồi tự mở lại — việc đang dở chạy tiếp. Cài lỗi thì app tự quay về bản cũ. Muốn vậy, máy chạy cần một token chỉ-đọc của repo:
+1. Trên github.com (tài khoản vhung-spec): ảnh đại diện → Settings → Developer settings → Personal access tokens → Fine-grained tokens
+   → Generate new token.
+2. Token name: "May chay Christmas". Expiration: tuỳ bạn (vd. 1 năm; hết hạn thì tạo token mới và dán lại).
+   Repository access: "Only select repositories" → chọn christmas-mv-studio.
+   Permissions → Repository permissions → Contents: "Read-only". Không cần quyền nào khác.
+3. Generate token → copy token (bắt đầu bằng github_pat_…).
+4. Trong app Giáng sinh (ngay trên máy chạy, hoặc qua trang điều khiển từ điện thoại): Cài đặt → thẻ "Cập nhật app" → dán vào ô
+   "Token GitHub (chỉ đọc)" → "Lưu token" → bấm "Kiểm tra ngay". Thẻ báo "đang dùng bản mới nhất ✓" là xong.
+   Token chỉ lưu trong máy chạy (file .env.local), không nằm trong gói cài, không gửi cho ai.
+- Thẻ "Cập nhật app" cho biết bản đang chạy, bản mới có gì, đang chờ gì để cài, kết quả lần cài gần nhất; có nút "Cài ngay".
+- Bỏ tick "Tự kiểm tra mỗi giờ và tự cài khi app rảnh" nếu muốn tự quyết lúc cài (bấm "Kiểm tra ngay" rồi "Cài ngay").
+- Phải mở app bằng Chay-Christmas-MV-Studio.bat (hoặc lối tắt tự chạy khi mở máy) thì app mới tự tắt để cài được.
+- Bản cũ được giữ trong C:\Christmas-MV-Studio\Christmas-MV-Studio-cap-nhat (3 bản gần nhất; cũ hơn vào Thùng rác).

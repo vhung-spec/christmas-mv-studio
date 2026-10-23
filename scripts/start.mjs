@@ -10,7 +10,7 @@ import { existsSync, readFileSync, readdirSync, renameSync, statSync, writeFileS
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { APP_ID, PENDING, RESTART_CODE, RESULT, VERSION_FILE, applyUpdate, listFiles, pruneOld, readJsonSafe, rollbackUpdate, sha256, updateDir } from "./cap-nhat.mjs";
+import { APP_ID, PENDING, RESTART_CODE, RESULT, VERSION_FILE, applyUpdate, listFiles, moveStale, pruneOld, readJsonSafe, rollbackUpdate, sha256, updateDir } from "./cap-nhat.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const isWin = process.platform === "win32";
@@ -177,6 +177,14 @@ const url = `http://${HOST}:${port}`;
 const nextBin = path.join(ROOT, "node_modules", "next", "dist", "bin", "next");
 let first = true;
 let forceBuild = false;
+
+// Cài tay bằng cách giải nén gói đè lên: file bản cũ không còn trong gói → sang dự phòng (không xoá), kẻo build lỗi.
+try {
+  const moved = moveStale(ROOT, path.join(UPD, `thua-${stamp()}`));
+  if (moved.length) log(`Đã chuyển ${moved.length} file của bản cũ không còn dùng sang ${UPD}`);
+} catch (e) {
+  console.error(`\x1b[31m✖ Không dọn được file cũ: ${e.message}\x1b[0m`);
+}
 
 for (;;) {
   // 2. Bản mới đang chờ cài (app vừa tự tắt để cài, hoặc đã tải về từ trước).
