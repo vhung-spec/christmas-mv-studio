@@ -8,7 +8,7 @@
 // hàng đợi Muse / dựng của máy này, hay profile Chrome có phiên đăng nhập Muse.
 
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -39,6 +39,20 @@ const DATA_KEEP = [
 function fail(msg) {
   console.error(`\n✖ ${msg}\n`);
   process.exit(1);
+}
+
+/** Chuyển file vào Thùng rác: Windows = Thùng rác thật (PowerShell, Microsoft.VisualBasic); máy khác = thư mục _thung-rac bên cạnh. */
+function toTrash(file) {
+  if (process.platform !== "win32") {
+    const bin = path.join(path.dirname(file), "_thung-rac");
+    mkdirSync(bin, { recursive: true });
+    renameSync(file, path.join(bin, `${path.basename(file)}-${Date.now().toString(36)}`));
+    return;
+  }
+  // Đường dẫn truyền qua biến môi trường — không ghép vào câu lệnh.
+  const script = "Add-Type -AssemblyName Microsoft.VisualBasic; [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($env:MV_TRASH_TARGET, 'OnlyErrorDialogs', 'SendToRecycleBin')";
+  const r = spawnSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { env: { ...process.env, MV_TRASH_TARGET: file }, windowsHide: true, encoding: "utf8" });
+  if (r.status !== 0 || existsSync(file)) fail(`Không chuyển được gói cũ vào Thùng rác: ${file}${r.stderr ? ` (${r.stderr.trim()})` : ""}`);
 }
 
 // 1. Danh sách file mã nguồn (file git đang theo dõi, lấy bản đang có trên máy).
@@ -81,9 +95,10 @@ if (!update) {
   }
 }
 
-// 3. Nén.
+// 3. Nén. Gói cũ cùng tên chuyển vào Thùng rác (không xoá hẳn), như moveToTrash của app (src/lib/trash.ts).
 const zip = path.join(OUT, zipName);
-rmSync(zip, { force: true });
+const oldZip = existsSync(zip);
+if (oldZip) toTrash(zip);
 // Windows 10/11 có sẵn tar.exe tạo được zip chuẩn (đường dẫn dùng "/"); Compress-Archive của PowerShell 5 ghi "\" nên chỉ dùng khi thiếu tar.
 const winTar = path.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe");
 const res =
@@ -97,6 +112,7 @@ if (res.status !== 0 || !existsSync(zip)) fail("Không nén được file zip.")
 
 const size = statSync(zip).size;
 console.log(`\n✔ Đã đóng gói: ${zip} (${(size / 1048576).toFixed(1)} MB, ${files.length + data.length} file)`);
+if (oldZip) console.log(`  Gói cũ cùng tên đã chuyển vào Thùng rác.`);
 if (update) {
   console.log("  Bản CẬP NHẬT (chỉ mã nguồn): ở máy kia tắt app, giải nén đè lên thư mục app (chọn Thay thế), rồi chạy lại Chay-Christmas-MV-Studio.bat.");
 } else {
