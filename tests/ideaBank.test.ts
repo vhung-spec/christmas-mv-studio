@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import ExcelJS from "exceljs";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import type { IdeaRow } from "@/lib/types";
 
@@ -38,8 +39,8 @@ beforeEach(async () => {
   await (await import("@/lib/pipeline")).pipelineIdle();
   writeFileSync(path.join(tmp, "ideas.json"), "{}");
   writeFileSync(path.join(tmp, "pipeline.json"), JSON.stringify({ items: [] }));
-  // MV và sổ bài đã dùng của test trước: ý tưởng đã có MV thì không chạy lại được.
-  for (const f of ["history", "media", "songs_used.json"]) rmSync(path.join(tmp, f), { recursive: true, force: true });
+  // MV và kênh (lịch sử bài) của test trước: ý tưởng đã có MV thì không chạy lại được.
+  for (const f of ["history", "media", "channels.json"]) rmSync(path.join(tmp, f), { recursive: true, force: true });
 });
 
 describe("kho ý tưởng", () => {
@@ -204,83 +205,88 @@ describe("kho ý tưởng", () => {
     await expect(bank.suggestIdeas()).rejects.toThrow(/API key/);
   });
 
-  it("kho nhạc: lấy ý tưởng theo số video mà nhạc chưa dùng còn đủ; ghép nhiều bài thành danh sách nhạc, mỗi bài một bản", async () => {
+  it("hai kênh: ý tưởng chia lần lượt đều các kênh, mỗi kênh tự xếp bài kiểu Bokin theo lịch sử riêng; kênh hết bài mới thì ý tưởng của kênh chờ", async () => {
     const bank = await import("@/lib/ideaBank");
     const pl = await import("@/lib/pipeline");
-    const store = await import("@/lib/store");
+    const ch = await import("@/lib/channels");
     const media = await import("@/lib/media");
-    const songs = path.join(tmp, "kho-nhac");
+    const songs = path.join(tmp, "kho-nhac-kenh");
     mkdirSync(songs, { recursive: true });
     const bin = (await import("@/lib/ffmpeg")).findFfmpeg().path!;
-    const tone = (name: string, seconds: number) => {
-      const r = spawnSync(bin, ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", `sine=frequency=330:duration=${seconds}`, "-c:a", "libmp3lame", path.join(songs, name)]);
+    // Kho chung 6 bài 20 giây, mức 3 / 2 / 2 / 1 / 1 / 1 (Kho bài hát.xlsx). Video 1 phút = 3 bài: 1 bài cũ (46%) + 2 bài mới.
+    for (let n = 1; n <= 6; n++) {
+      const r = spawnSync(bin, ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", `sine=frequency=${300 + n * 20}:duration=20`, "-c:a", "libmp3lame", path.join(songs, `${n}.mp3`)]);
       expect(r.status).toBe(0);
-    };
-    // Bài 1: bản đầu đã dùng (ghi "đã dùng"), bản "(1)" chưa dùng. Bài 2 có hai bản. Bài 3 một bản. Video dài 1 phút.
-    writeFileSync(path.join(songs, "1 đã dùng.wav"), "x");
-    tone("1 (1).mp3", 25);
-    tone("2.mp3", 25);
-    tone("2 (1).mp3", 25);
-    tone("3.mp3", 20);
-    const lib = { songs: [{ n: 2, world_location: "Main Street Christmas 1954", theme_code: "T10", theme_name: "Phố đèn Giáng sinh", outline: "o", hook: "Snow On Main Street", mood: "", lyrics: "[Chorus]\nSnow on Main Street" }] };
-    writeFileSync(path.join(tmp, "song_library.json"), JSON.stringify(lib));
-    setSettings({ songDir: songs, videoMinutes: 1 });
-    await bank.setBankConfig({ ahead: 2, suggest: false });
-    await bank.addIdeas([idea("1", "Rockefeller Center Christmas Eve 1954"), idea("2", "Woodstock Vermont First Snow 1952")]);
-    let v = await bank.bankView();
-    // Chưa dùng: 1 (1), 2, 3 (bản "2 (1)" là bài 2 — chỉ tính một bản mỗi bài) = 70 giây → đủ cho 1 video 1 phút.
-    expect(v.music).toMatchObject({ songs: 3, videos: 1 });
-    expect(v.ready).toBe(1);
-
-    // Chỉ lấy 1 ý tưởng (nhạc chỉ đủ một video); ý tưởng 2 chờ trong kho.
-    await pl.pipelineTick();
-    await pl.pipelineIdle();
-    expect((await pl.readPipeline()).items.map((i) => i.idea?.id)).toEqual(["1"]);
-    expect((await bank.bankView()).counts).toMatchObject({ new: 1, used: 1 });
-    expect((await bank.bankView()).ready).toBe(0);
-
-    // Bước nhạc: nối 1 (1) + 2 + 3 (đủ 1 phút), bài số nhỏ trước, tên bài theo thư viện lời.
-    await pl.pipelineTick();
-    const item = (await pl.readPipeline()).items[0];
-    expect(item.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/Tự ghép 3 bài/) });
-    const audio = (await media.loadProject(item.mv_id!)).audio!;
-    expect(audio.name).toBe("Danh sách nhạc 3 bài.flac");
-    expect(audio.duration).toBeCloseTo(70, 0);
-    expect(audio.tracks!.map((t) => [t.name, t.title])).toEqual([
-      ["1 (1).mp3", "Christmas Song No. 1"],
-      ["2.mp3", "Snow On Main Street"],
-      ["3.mp3", "Christmas Song No. 3"],
+    }
+    const wb = new ExcelJS.Workbook();
+    wb.addWorksheet("Kho bài hát").addRows([
+      ["Mã bài", "Tên bài", "Mức hay"],
+      ["1", "Snow On Main Street", 3],
+      ["2", "Carol Night", 2],
+      ["3", "Sleigh Ride Home", 2],
+      ["4", "Quiet Fireplace", 1],
+      ["5", "Paper Stars", 1],
+      ["6", "Midnight Bells", 1],
     ]);
-    expect(audio.tracks![1].start).toBeCloseTo(25, 0);
-    expect(audio.tracks![2].start).toBeCloseTo(50, 0);
-    const used = await (await import("@/lib/songsUsed")).readUsedSongs();
-    expect(used.map((x) => x.file).sort()).toEqual(["1 (1).mp3", "2.mp3", "3.mp3"]);
-    const mv = (await store.loadMV(item.mv_id!))!;
-    expect(mv.structure.total_shots).toBeGreaterThanOrEqual(20);
+    await wb.xlsx.writeFile(path.join(songs, "Kho bài hát.xlsx"));
+    setSettings({ songDir: songs, videoMinutes: 1 });
+    const b = await ch.addChannel("Kênh B");
+    await bank.setBankConfig({ ahead: 2, suggest: false });
+    // Cột Kênh (tên kênh) thắng; dòng không ghi kênh → chia lần lượt (kênh ít ý tưởng chưa dùng nhất).
+    const rows = [{ ...idea("1", "Rockefeller Center Christmas Eve 1954"), channel: "kênh b" }, idea("2", "Woodstock Vermont First Snow 1952"), idea("3", "Beacon Hill Boston Carol Night 1953")];
+    expect(await bank.addIdeas(rows)).toEqual({ added: 3, skipped: 0 });
+    let v = await bank.bankView("kenh-1");
+    expect(v.channels.map((c) => [c.name, c.counts.new])).toEqual([
+      ["Kênh Giáng sinh", 2],
+      ["Kênh B", 1],
+    ]);
+    expect(v.music).toMatchObject({ songs: 6, unused: 6, videos: 3, sheet: true });
 
-    // Còn mỗi "2 (1)" (25 giây) → chưa đủ; thêm bài 4 (40 giây) → đủ cho video thứ hai.
-    v = await bank.bankView();
-    expect(v.music).toMatchObject({ songs: 1, videos: 0 });
-    tone("4.mp3", 40);
-    v = await bank.bankView();
-    expect(v.music).toMatchObject({ songs: 2, videos: 1 });
-    await pl.pipelineTick();
-    await pl.pipelineIdle();
-    await pl.pipelineTick();
-    const second = (await pl.readPipeline()).items.find((i) => i.idea?.id === "2")!;
-    expect(second.steps.song).toMatchObject({ status: "done" });
-    const audio2 = (await media.loadProject(second.mv_id!)).audio!;
-    expect(audio2.tracks!.map((t) => t.name)).toEqual(["2 (1).mp3", "4.mp3"]);
+    // Lượt đầu: hai ý tưởng, mỗi kênh một (phân luồng lần lượt).
+    for (let k = 0; k < 5; k++) {
+      await pl.pipelineTick();
+      await pl.pipelineIdle();
+    }
+    let items = (await pl.readPipeline()).items;
+    expect(items.map((i) => [i.idea?.id, i.channel]).sort()).toEqual([
+      ["1", b.id],
+      ["2", "kenh-1"],
+    ]);
+    // Mỗi kênh có lịch sử riêng: cả hai video đều 3 bài mới, bài mức 3 mở đầu, tên bài theo Kho bài hát.
+    for (const it of items) {
+      expect(it.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/tự xếp 3 bài \(0 cũ \+ 3 mới\)/) });
+      const audio = (await media.loadProject(it.mv_id!)).audio!;
+      expect(audio.tracks!.map((t) => t.title)[0]).toBe("Snow On Main Street");
+      expect(audio.tracks).toHaveLength(3);
+    }
+    expect((await ch.readChannels()).map((c) => c.history.length)).toEqual([1, 1]);
+    v = await bank.bankView("kenh-1");
+    expect(v.music).toMatchObject({ unused: 3, videos: 1 });
 
-    // Hết nhạc: video mới (tắt "chỉ lấy khi đủ nhạc") chờ ở bước nhạc, báo rõ lý do.
-    await bank.setBankConfig({ needSong: false, ahead: 3 });
-    await bank.addIdeas([idea("3", "Beacon Hill Boston Carol Night 1953")]);
-    await pl.pipelineTick();
-    await pl.pipelineIdle();
-    await pl.pipelineTick();
+    // Video thứ hai của kênh Giáng sinh: 1 bài cũ (bài mức 3 nghỉ lâu nhất) + 2 bài mới, bài mở đầu khác video trước.
+    for (const it of items) await pl.removeFromPipeline(it.id);
+    for (let k = 0; k < 4; k++) {
+      await pl.pipelineTick();
+      await pl.pipelineIdle();
+    }
     const third = (await pl.readPipeline()).items.find((i) => i.idea?.id === "3")!;
-    expect(third.steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/không còn bài nào chưa dùng/) });
-    rmSync(path.join(tmp, "song_library.json"));
+    expect(third.channel).toBe("kenh-1");
+    expect(third.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/Kênh “Kênh Giáng sinh”: tự xếp 3 bài \(1 cũ \+ 2 mới\)/) });
+    const titles = (await media.loadProject(third.mv_id!)).audio!.tracks!.map((t) => t.title);
+    expect(titles).toContain("Snow On Main Street");
+    expect(titles[0]).not.toBe("Snow On Main Street");
+
+    // Kênh Giáng sinh còn 1 bài mới (chưa đủ cho một video) → ý tưởng mới của kênh chờ; kênh B còn bài mới → lấy ý tưởng của B.
+    await pl.removeFromPipeline(third.id);
+    await bank.addIdeas([idea("4", "Times Square New Year's Eve 1955")], "kenh-1");
+    await pl.pipelineTick();
+    await pl.pipelineIdle();
+    expect((await pl.readPipeline()).items).toHaveLength(0);
+    expect((await bank.bankView("kenh-1")).ready).toBe(0);
+    await bank.addIdeas([idea("5", "Central Park Christmas Eve 1956")], b.id);
+    await pl.pipelineTick();
+    await pl.pipelineIdle();
+    expect((await pl.readPipeline()).items.map((i) => [i.idea?.id, i.channel])).toEqual([["5", b.id]]);
   }, 120000);
 
   it("đề xuất lỗi (chưa có key) → không tự gọi lại liên tục; bấm “Nhờ Claude đề xuất ngay” thì thử lại", async () => {

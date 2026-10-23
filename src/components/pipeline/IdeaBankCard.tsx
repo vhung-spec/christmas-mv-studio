@@ -49,7 +49,18 @@ function IdeaLine({ x, children }: { x: BankIdea; children?: ReactNode }) {
   );
 }
 
-export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; busy: boolean; onPost: (json: Record<string, unknown>) => void }) {
+export function IdeaBankCard({
+  bank,
+  busy,
+  onPost,
+  onChannel,
+}: {
+  bank: BankData | null;
+  busy: boolean;
+  onPost: (json: Record<string, unknown>) => void;
+  /** Chọn kênh để xem kho ý tưởng của kênh đó. */
+  onChannel?: (id: string) => void;
+}) {
   if (!bank) {
     return (
       <Card title="Kho ý tưởng">
@@ -59,27 +70,51 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
   }
   const c = bank.config;
   const setConfig = (patch: Partial<BankConfig>) => onPost({ action: "config", config: patch });
+  // Mọi thao tác trên ý tưởng áp dụng cho kênh đang xem.
+  const post = (json: Record<string, unknown>) => onPost({ ...json, channel: bank.channel });
   const manual = bank.mode === "manual";
   const more = (bank.ready ?? bank.counts.new) - bank.upcoming.length;
+  const current = bank.channels.find((x) => x.id === bank.channel);
   return (
     <Card
       title="Kho ý tưởng"
       actions={
-        <button className="btn-ghost btn-sm" disabled={busy || bank.suggesting || manual} onClick={() => onPost({ action: "suggest" })} title="Claude nghĩ thêm ý tưởng mới ngay bây giờ">
+        <button className="btn-ghost btn-sm" disabled={busy || bank.suggesting || manual} onClick={() => post({ action: "suggest" })} title="Claude nghĩ thêm ý tưởng mới cho kênh này ngay bây giờ">
           {bank.suggesting && <Spinner />} ✨ Nhờ Claude đề xuất ngay
         </button>
       }
     >
       <div className="space-y-3 text-sm">
+        {bank.channels.length > 1 && (
+          <div className="flex flex-wrap gap-1" data-testid="bank-channels">
+            {bank.channels.map((x) => (
+              <button
+                key={x.id}
+                className={`btn-sm ${x.id === bank.channel ? "btn-primary" : "btn-ghost"}`}
+                onClick={() => onChannel?.(x.id)}
+                title={x.active ? "" : "Kênh đang tắt: dây chuyền tạm không lấy ý tưởng của kênh này"}
+              >
+                📺 {x.name} ({x.counts.new}
+                {x.counts.proposed ? ` + ${x.counts.proposed} chờ duyệt` : ""}){x.active ? "" : " · tắt"}
+              </button>
+            ))}
+          </div>
+        )}
         <p>
+          {bank.channels.length > 1 && current ? <b>{current.name}: </b> : null}
           Chưa dùng <b>{bank.counts.new}</b> · Đã dùng <b>{bank.counts.used}</b> · Claude đề xuất chờ duyệt <b>{bank.counts.proposed}</b>
           {bank.counts.rejected ? ` · Đã bỏ ${bank.counts.rejected}` : ""}
         </p>
         {bank.music && (
           <p className={bank.music.videos > 0 ? "text-xs text-muted" : "text-xs text-cherry-dark"}>
-            🎵 Nhạc chưa dùng trong Thư mục nhạc: <b>{bank.music.songs}</b> bài · khoảng <b>{bank.music.minutes}</b> phút — đủ cho <b>{bank.music.videos}</b> video
-            {` ${bank.music.videoMinutes} phút`}
-            {bank.music.videos === 0 && " (thêm bài vào kho nhạc trên Drive hoặc giảm “Độ dài video” trong Cài đặt)"}.
+            🎵 Kho nhạc: <b>{bank.music.songs}</b> bài (mức 3 / 2 / 1: {bank.music.levels[3]} / {bank.music.levels[2]} / {bank.music.levels[1]}) · kênh này chưa dùng{" "}
+            <b>{bank.music.unused}</b> bài — đủ bài mới cho khoảng <b>{bank.music.videos}</b> video {bank.music.videoMinutes} phút
+            {bank.music.videos === 0 &&
+              (c.needSong
+                ? ": ý tưởng của kênh này nằm chờ tới khi thêm bài vào kho nhạc (trên Drive), hoặc bỏ tick “Chỉ lấy ý tưởng của kênh khi kho nhạc còn bài mới” bên dưới để làm video toàn bài cũ"
+                : " (thêm bài vào kho nhạc trên Drive: video vẫn làm được nhưng toàn bài cũ)")}
+            .
+            {!bank.music.sheet && " Chưa có Kho bài hát.xlsx: mọi bài coi là mức 1."}
           </p>
         )}
         {bank.library > 0 && (
@@ -103,17 +138,17 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
         <div className="space-y-1.5">
           <label className="flex flex-wrap items-center gap-2">
             <input type="checkbox" checked={c.feed} disabled={busy} onChange={(e) => setConfig({ feed: e.target.checked })} />
-            Dây chuyền tự lấy ý tưởng trong kho, mỗi lúc
+            Dây chuyền tự lấy ý tưởng trong kho các kênh (lần lượt đều các kênh), mỗi lúc
             <NumberBox value={c.ahead} range={BANK_LIMITS.ahead} disabled={busy} onCommit={(ahead) => setConfig({ ahead })} />
             video (đang viết kịch bản hoặc chờ clip Muse)
           </label>
           <label className="flex flex-wrap items-center gap-2 pl-6">
             <input type="checkbox" checked={c.needSong} disabled={busy} onChange={(e) => setConfig({ needSong: e.target.checked })} />
-            Chỉ lấy ý tưởng khi Thư mục nhạc còn đủ bài chưa dùng cho một video (chưa đủ thì ý tưởng nằm chờ trong kho, thêm nhạc là tự chạy)
+            Chỉ lấy ý tưởng của kênh khi kho nhạc còn bài mới cho kênh đó (hết thì ý tưởng của kênh nằm chờ, thêm nhạc là tự chạy)
           </label>
           <label className="flex flex-wrap items-center gap-2">
             <input type="checkbox" checked={c.suggest} disabled={busy} onChange={(e) => setConfig({ suggest: e.target.checked })} />
-            Kho sắp hết thì nhờ Claude đề xuất
+            Kho của kênh sắp hết thì nhờ Claude đề xuất
             <NumberBox value={c.batch} range={BANK_LIMITS.batch} disabled={busy} onCommit={(batch) => setConfig({ batch })} />
             ý tưởng mới
           </label>
@@ -158,10 +193,10 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
             <div className="flex flex-wrap items-center gap-2">
               <b>Claude đề xuất — chờ bạn duyệt ({bank.proposals.length})</b>
               <span className="ml-auto flex gap-2">
-                <button className="btn-primary btn-sm" disabled={busy} onClick={() => onPost({ action: "approve", all: true })}>
+                <button className="btn-primary btn-sm" disabled={busy} onClick={() => post({ action: "approve", all: true })}>
                   ✓ Duyệt tất cả
                 </button>
-                <button className="btn-ghost btn-sm" disabled={busy} onClick={() => onPost({ action: "reject", all: true })}>
+                <button className="btn-ghost btn-sm" disabled={busy} onClick={() => post({ action: "reject", all: true })}>
                   ✗ Bỏ tất cả
                 </button>
               </span>
@@ -169,10 +204,10 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
             <ul className="mt-2">
               {bank.proposals.map((x) => (
                 <IdeaLine key={x.key} x={x}>
-                  <button className="btn-ghost btn-sm" disabled={busy} onClick={() => onPost({ action: "approve", keys: [x.key] })}>
+                  <button className="btn-ghost btn-sm" disabled={busy} onClick={() => post({ action: "approve", keys: [x.key] })}>
                     ✓ Dùng
                   </button>
-                  <button className="btn-ghost btn-sm" disabled={busy} onClick={() => onPost({ action: "reject", keys: [x.key] })}>
+                  <button className="btn-ghost btn-sm" disabled={busy} onClick={() => post({ action: "reject", keys: [x.key] })}>
                     ✗ Bỏ
                   </button>
                 </IdeaLine>
@@ -187,7 +222,7 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
             <ul className="mt-1 max-h-80 overflow-auto">
               {bank.upcoming.map((x) => (
                 <IdeaLine key={x.key} x={x}>
-                  <button className="btn-ghost btn-sm" disabled={busy} onClick={() => onPost({ action: "reject", keys: [x.key] })} title="Bỏ ý tưởng này khỏi kho (không dùng)">
+                  <button className="btn-ghost btn-sm" disabled={busy} onClick={() => post({ action: "reject", keys: [x.key] })} title="Bỏ ý tưởng này khỏi kho (không dùng)">
                     Bỏ
                   </button>
                 </IdeaLine>
@@ -197,7 +232,8 @@ export function IdeaBankCard({ bank, busy, onPost }: { bank: BankData | null; bu
           </details>
         ) : bank.counts.new > 0 ? (
           <p className="text-xs text-amber-800">
-            {bank.counts.new} ý tưởng đang chờ nhạc: thêm file nhạc đặt tên theo số ý tưởng (vd. <code>12.wav</code>) vào Thư mục nhạc là dây chuyền tự lấy.
+            {bank.counts.new} ý tưởng đang chờ: kho nhạc hết bài mới cho kênh này — thêm bài vào kho nhạc (Drive) là dây chuyền tự lấy, hoặc bỏ tick “Chỉ lấy ý
+            tưởng của kênh khi kho nhạc còn bài mới”.
           </p>
         ) : (
           !bank.proposals.length && <p className="text-xs text-muted">Kho chưa có ý tưởng chưa dùng — dán bảng ý tưởng ở thẻ “Thêm việc” rồi bấm “Đưa vào kho”.</p>

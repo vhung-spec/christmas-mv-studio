@@ -16,28 +16,30 @@ describe("Google Drive", () => {
     expect(driveFolderId("")).toBeNull();
   });
 
-  it("đọc trang thư mục công khai: thư mục con, file, Google Doc", () => {
+  it("đọc trang thư mục công khai: thư mục con, file, Google Doc, Google Sheet (Kho bài hát)", () => {
     const html = [
       entry("https://drive.google.com/drive/folders/12fbMkITDMuqzC7RbCwznUkVEEPWylNfr", "1 . dl bản 1"),
       entry("https://drive.google.com/file/d/1aPxIbW6jZmPoJUWv-iN8peUEEOkRUZDC/view?usp=drive_web", "1 (2)đã dùng.wav"),
       entry("https://docs.google.com/document/d/1Pd0EAhN0-uT4Uoshtqdx8GqUH79BmGCZFutjPM4WRJU/edit?usp=drive_web", "Tài liệu &amp; lời"),
+      entry("https://docs.google.com/spreadsheets/d/1KxSheetAbCdEfGhIjKlMnOpQrStUvWxYz012345/edit?usp=drive_web", "Kho bài hát"),
     ].join("");
     expect(parseFolderHtml(html)).toEqual([
       { kind: "folder", id: "12fbMkITDMuqzC7RbCwznUkVEEPWylNfr", name: "1 . dl bản 1" },
       { kind: "file", id: "1aPxIbW6jZmPoJUWv-iN8peUEEOkRUZDC", name: "1 (2)đã dùng.wav" },
       { kind: "doc", id: "1Pd0EAhN0-uT4Uoshtqdx8GqUH79BmGCZFutjPM4WRJU", name: "Tài liệu & lời" },
+      { kind: "sheet", id: "1KxSheetAbCdEfGhIjKlMnOpQrStUvWxYz012345", name: "Kho bài hát" },
     ]);
   });
 
-  it("tải bản chưa dùng còn thiếu, đổi tên bản ở máy khi Drive ghi “đã dùng”, bỏ qua bản đã dùng máy chưa có", () => {
+  it("tải mọi file nhạc còn thiếu (kể cả bản ghi “đã dùng”: bài cũ được dùng lại), đổi tên bản ở máy khi Drive đổi tên", () => {
     const f = (name: string): DriveEntry => ({ kind: "file", id: `id-${name}`, name });
     const drive = [f("8 (1) đã dùng.wav"), f("8.wav"), f("10 đã dùng .wav"), f("10 (1).wav"), f("72.mp3"), f("72.wav"), f("76_1.mp3")];
     const local = ["8 (1).wav", "8.wav", "72.wav", "Đèn Khuya - Rock Version.wav"];
     const plan = planAudio(drive, local);
     expect(plan.rename).toEqual([{ from: "8 (1).wav", to: "8 (1) đã dùng.wav" }]);
-    expect(plan.download.map((e) => e.name)).toEqual(["10 (1).wav", "72.mp3", "76_1.mp3"]);
+    expect(plan.download.map((e) => e.name)).toEqual(["10 đã dùng .wav", "10 (1).wav", "72.mp3", "76_1.mp3"]);
     // Đồng bộ lần hai (đã tải, đã đổi tên) → không còn gì để làm.
-    expect(planAudio(drive, ["8 (1) đã dùng.wav", "8.wav", "10 (1).wav", "72.mp3", "72.wav", "76_1.mp3"])).toEqual({ download: [], rename: [] });
+    expect(planAudio(drive, ["8 (1) đã dùng.wav", "8.wav", "10 đã dùng .wav", "10 (1).wav", "72.mp3", "72.wav", "76_1.mp3"])).toEqual({ download: [], rename: [] });
   });
 
   it("đọc tài liệu bài hát: 3 dòng ý tưởng + lời", () => {

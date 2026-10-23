@@ -19,15 +19,19 @@ export async function GET() {
   }
 }
 
-/** { action: "add", mvIds?, ideas? } · { action: "retry" | "remove", id } · { action: "clear" } (bỏ các việc đã xong) */
+/**
+ * { action: "add", mvIds?, ideas?, channel? ("auto" / không ghi = phân luồng lần lượt các kênh) } · { action: "retry" | "remove", id }
+ * · { action: "clear" } (bỏ các việc đã xong)
+ */
 export async function POST(req: Request) {
   try {
-    const body = await readJsonBody<{ action: string; mvIds?: unknown; ideas?: unknown; id?: unknown }>(req);
+    const body = await readJsonBody<{ action: string; mvIds?: unknown; ideas?: unknown; id?: unknown; channel?: unknown }>(req);
     switch (body.action) {
       case "add": {
         const mvIds = Array.isArray(body.mvIds) ? body.mvIds.filter((x): x is string => typeof x === "string") : [];
         const ideas = Array.isArray(body.ideas) ? body.ideas.map((x) => zIdea.parse(x)) : [];
-        const { added, skipped } = await addToPipeline({ mvIds, ideas });
+        const channel = typeof body.channel === "string" && body.channel ? body.channel : "auto";
+        const { added, skipped } = await addToPipeline({ mvIds, ideas, channel });
         return NextResponse.json({ added, skipped, ...(await pipelineView()) });
       }
       case "retry":

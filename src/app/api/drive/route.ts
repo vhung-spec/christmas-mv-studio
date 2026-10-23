@@ -4,16 +4,12 @@ import { UserError } from "@/lib/errors";
 import { errorResponse, readJsonBody } from "@/lib/http";
 import { ensurePipelineWatch } from "@/lib/pipeline";
 import { zSettings } from "@/lib/schemas";
-import { usedSongsView } from "@/lib/songsUsed";
 import { readSettings, writeSettings } from "@/lib/store";
 
-/**
- * Đồng bộ kho nhạc từ Google Drive: trạng thái + các cài đặt liên quan (link Drive, tự đồng bộ, Thư mục nhạc) + sổ bài đã dùng
- * (bài app đã ghép vào MV, để bạn ghi "đã dùng" trên Drive; MV đang dùng trùng một bài).
- */
+/** Đồng bộ kho nhạc từ Google Drive: trạng thái + các cài đặt liên quan (link Drive, tự đồng bộ, Thư mục nhạc). */
 async function view() {
   const s = await readSettings();
-  return { ...(await driveSyncStatus()), driveFolder: s.driveFolder, driveAutoSync: s.driveAutoSync, songDir: s.songDir, used: await usedSongsView(s.songDir) };
+  return { ...(await driveSyncStatus()), driveFolder: s.driveFolder, driveAutoSync: s.driveAutoSync, songDir: s.songDir };
 }
 
 export async function GET() {

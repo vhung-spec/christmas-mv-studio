@@ -23,6 +23,7 @@ data/ideas.json
 data/song_library.json
 data/drive_sync.json
 data/songs_used.json
+data/channels.json
 # Cổng Muse: hàng đợi, video tải về, profile Chrome (có phiên đăng nhập Muse — không bao giờ commit)
 gateway-data/
 data/gateway/

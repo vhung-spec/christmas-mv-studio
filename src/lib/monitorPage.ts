@@ -89,22 +89,22 @@ function render(s) {
   if (s.bank.error) alerts.push("Đề xuất ý tưởng: " + s.bank.error);
   for (const ev of (m.failover || [])) alerts.push(ev.kind === "switch" ? "Đã tự đổi tài khoản Muse “" + ev.from + "” → “" + ev.to + "” (" + time(ev.at) + "): " + ev.reason : "Tài khoản Muse “" + ev.from + "” bị lỗi và hết tài khoản dự phòng (" + time(ev.at) + ") — cần bạn xử lý.");
   if (s.bank.proposals) alerts.push(s.bank.proposals + " ý tưởng Claude đề xuất đang chờ bạn duyệt (trên máy chạy).");
-  for (const d of ((s.songs && s.songs.duplicates) || [])) alerts.push("MV dùng trùng bài " + d.file + ": " + d.titles.join(" · ") + " — đổi bài cho MV chưa đăng (trang Ghép video trên máy chạy).");
+  for (const c of (s.channels || [])) if (c.active && c.videosLeft <= 1 && s.library) alerts.push("Kênh “" + c.name + "” sắp hết bài mới (còn " + c.unused + " bài chưa dùng) — thêm bài vào kho nhạc trên Drive.");
   if (disk && disk.free < 10 * 1073741824) alerts.push("Ổ " + disk.path + " sắp đầy: còn " + gb(disk.free) + ".");
   $("alerts").hidden = !alerts.length;
   $("alerts").innerHTML = "<h2>Cần chú ý</h2>" + alerts.map((a) => "<div class=error>• " + esc(a) + "</div>").join("");
   $("open").innerHTML = open.length
-    ? "<table><tr><th>MV</th><th>Các bước</th><th>Đang ở</th></tr>" + open.map((i) => {
+    ? "<table><tr><th>Kênh</th><th>Video</th><th>Các bước</th><th>Đang ở</th></tr>" + open.map((i) => {
         const f = focus(i);
-        return "<tr><td>" + (i.idea ? "#" + esc(i.idea) + " " : "") + esc(i.title) + "</td><td>" +
+        return "<tr><td>" + esc(i.channel || "") + "</td><td>" + (i.idea ? "#" + esc(i.idea) + " " : "") + esc(i.title) + "</td><td>" +
           ORDER.map((k) => '<span class="chip ' + i.steps[k].status + '">' + ICON[i.steps[k].status] + " " + STEP[k] + "</span>").join("") +
           "</td><td" + (f ? ' class="' + f.status + '"' : "") + ">" + (f ? esc(STEP[f.n] + ": " + (f.message || "")) : "") + "</td></tr>";
       }).join("") + "</table>"
     : '<span class="muted">Không có việc nào đang làm.</span>';
   $("done").innerHTML = done.length
-    ? "<table><tr><th></th><th>MV</th><th>Xong lúc</th><th>Tải về</th></tr>" + done.slice(0, 15).map((i) =>
+    ? "<table><tr><th></th><th>Kênh</th><th>Video</th><th>Xong lúc</th><th>Tải về</th></tr>" + done.slice(0, 15).map((i) =>
         "<tr><td>" + (i.cover ? '<a href="' + esc(i.cover) + '" target="_blank"><img src="' + esc(i.cover) + '" alt="" style="width:120px;border-radius:4px;display:block"></a>' : "") +
-        "</td><td>" + (i.idea ? "#" + esc(i.idea) + " " : "") + esc(i.title) + (i.yt_title ? '<div class="muted">' + esc(i.yt_title) + "</div>" : "") +
+        "</td><td>" + esc(i.channel || "") + "</td><td>" + (i.idea ? "#" + esc(i.idea) + " " : "") + esc(i.title) + (i.yt_title ? '<div class="muted">' + esc(i.yt_title) + "</div>" : "") +
         "</td><td>" + esc(time(i.done_at)) + "</td><td>" +
         [i.video ? '<a href="' + esc(i.video) + '">⬇ MP4</a>' : "", i.cover ? '<a href="' + esc(i.cover) + '?download=1">⬇ Ảnh bìa</a>' : "", i.info ? '<a href="' + esc(i.info) + '">⬇ Tiêu đề + mô tả</a>' : ""].filter(Boolean).join(" · ") +
         "</td></tr>").join("") + "</table>"
@@ -113,10 +113,11 @@ function render(s) {
   if (!m.haohao && m.counts) rows.push("<tr><td>Muse" + (m.account ? " · " + esc(m.account) : "") + "</td><td>" + esc(museState) + " · chờ " + m.counts.queued + " · đang làm " + m.counts.processing + " · xong " + m.counts.succeeded + " · lỗi " + m.counts.failed + (m.fake ? " · (Muse giả)" : "") + "</td></tr>");
   rows.push("<tr><td>Dựng video</td><td>" + (s.render ? esc(s.render.title + " — " + s.render.stage) + '<div class="bar"><i style="width:' + Math.round(s.render.progress * 100) + '%"></i></div>' : "Không dựng gì") + "</td></tr>");
   const d = s.drive;
-  rows.push("<tr><td>Kho nhạc Drive</td><td>" + (d.running ? esc(d.phase || "Đang đồng bộ…") : d.last ? "Đồng bộ lúc " + esc(time(d.last.at)) + " · " + d.last.unused + " bản chưa dùng trên Drive · tải mới " + d.last.downloaded : "Chưa đồng bộ") + "</td></tr>");
-  rows.push("<tr><td>Kho ý tưởng</td><td>chưa dùng " + s.bank.counts.new + (s.bank.ready !== null ? " (có nhạc " + s.bank.ready + ")" : "") + " · đã dùng " + s.bank.counts.used + (s.bank.suggesting ? " · Claude đang nghĩ ý tưởng mới" : "") + "</td></tr>");
-  const sg = s.songs;
-  if (sg && sg.toMark.length) rows.push("<tr><td>Nhạc cần ghi “đã dùng” trên Drive (" + sg.toMark.length + ")</td><td>" + sg.toMark.map((x) => "<b>" + esc(x.file) + "</b> " + esc(x.title)).join("<br>") + "</td></tr>");
+  rows.push("<tr><td>Kho nhạc Drive</td><td>" + (d.running ? esc(d.phase || "Đang đồng bộ…") : d.last ? "Đồng bộ lúc " + esc(time(d.last.at)) + " · " + d.last.audio + " file nhạc trên Drive · tải mới " + d.last.downloaded + (d.last.sheet ? " · " + esc(d.last.sheet) : "") : "Chưa đồng bộ") + "</td></tr>");
+  const lib = s.library;
+  if (lib) rows.push("<tr><td>Kho nhạc</td><td>" + lib.songs + " bài · mức 3 / 2 / 1: " + lib.levels[3] + " / " + lib.levels[2] + " / " + lib.levels[1] + (lib.sheet ? "" : " · chưa có Kho bài hát.xlsx (mọi bài mức 1)") + (lib.problems ? " · " + lib.problems + " dòng cần sửa" : "") + "</td></tr>");
+  for (const c of (s.channels || [])) rows.push("<tr><td>Kênh " + esc(c.name) + (c.active ? "" : " (tắt)") + "</td><td>" + c.videos + " video" + (c.inProgress ? " (" + c.inProgress + " đang làm)" : "") + " · " + c.ideas + " ý tưởng chưa dùng" + (lib ? " · " + c.unused + " bài mới (~" + c.videosLeft + " video)" : "") + "</td></tr>");
+  rows.push("<tr><td>Kho ý tưởng</td><td>" + (s.bank.proposals ? s.bank.proposals + " ý tưởng chờ duyệt" : "không có ý tưởng chờ duyệt") + (s.bank.suggesting ? " · Claude đang nghĩ ý tưởng mới" : "") + "</td></tr>");
   $("system").innerHTML = "<table>" + rows.join("") + "</table>";
 }
 async function tick() {

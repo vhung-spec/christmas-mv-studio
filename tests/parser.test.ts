@@ -178,6 +178,8 @@ describe("helpers", () => {
     expect(matchLocation("Rockefeller Center Christmas Eve 1954", lib)).toBe("Rockefeller Center");
     expect(matchLocation("Woodstock Vermont First Snow 1952", lib)).toBe("Woodstock Vermont");
     expect(matchLocation("Vermont Village Sleigh Ride 1953", lib)).toBe("Woodstock Vermont");
+    // "stowe vermont" dài hơn alias chung "vermont" của Woodstock → đúng nơi trượt tuyết.
+    expect(matchLocation("Stowe Vermont 1958", lib)).toBe("Stowe Ski Lodge");
     expect(matchLocation("Hollywood Santa Claus Lane Parade 1955", lib)).toBe("Hollywood Boulevard");
     expect(matchLocation("Grand Central Station Homecoming 1951", lib)).toBe("Grand Central Terminal");
     expect(matchLocation("Atlantis Underwater 1955", lib)).toBeNull();

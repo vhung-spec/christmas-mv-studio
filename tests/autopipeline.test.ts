@@ -28,76 +28,30 @@ const make = (args: string[], out: string) => {
 
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 
-describe("tự ghép bài hát (so tên bài với tên file)", () => {
-  // Tên file thật trong thư mục nhạc của kênh.
-  const files = [
-    "Anh Còn Nợ Em - Nam Metal Rock.WAV",
-    "Chuyến xe lam chiều rock.WAV",
-    "Dấu Tình Sầu - Rock Version.wav",
-    "Sương Lạnh Chiều Đông1 - nam metal rock.wav",
-    "Đèn Khuya - Nam Rock.wav",
-    "Đèn Khuya - Rock Version.wav",
-    "Đêm lang thang - Rock Version.wav",
-  ];
-
-  it("bỏ dấu, bỏ phần phiên bản / chữ rock / số dính ở cuối", async () => {
-    const { normSong, songBase } = await import("@/lib/songs");
-    expect(normSong("Đèn Khuya")).toBe("den khuya");
-    expect(songBase("Đèn Khuya - Rock Version.wav")).toBe("den khuya");
-    expect(songBase("Chuyến xe lam chiều rock.WAV")).toBe("chuyen xe lam chieu");
-    expect(songBase("Sương Lạnh Chiều Đông1 - nam metal rock.wav")).toBe("suong lanh chieu dong");
-    expect(songBase("Phương Nam.mp3")).toBe("phuong nam");
-  });
-
-  it("chọn đúng bài; ghi rõ phiên bản thì chọn đúng file; trùng tên thì báo; không thấy thì null", async () => {
-    const { pickSong } = await import("@/lib/songs");
-    expect(pickSong("Chuyến Xe Lam Chiều", files)?.file).toBe("Chuyến xe lam chiều rock.WAV");
-    expect(pickSong("sương lạnh chiều đông", files)?.file).toBe("Sương Lạnh Chiều Đông1 - nam metal rock.wav");
-    expect(pickSong("Đèn Khuya - Rock Version", files)).toMatchObject({ file: "Đèn Khuya - Rock Version.wav", score: 1 });
-    expect(pickSong("Đèn Khuya", files)).toMatchObject({ score: 0.95, ties: 1 });
-    expect(pickSong("Neon Heartbeat", files)).toBeNull();
-    expect(pickSong("Đêm", files)).toBeNull(); // một chữ chung không đủ
-  });
-
-  it("sổ bài đã dùng: cùng bài dù tên file đổi; bài đã ghép vào MV khác thì chọn bản khác hoặc báo đã dùng", async () => {
-    const { matchSongForIdea, songKey } = await import("@/lib/songs");
-    expect(songKey("12.wav")).toBe("12|0");
-    expect(songKey("12 đã dùng.wav")).toBe("12|0");
-    expect(songKey("12.mp3")).toBe("12|0");
-    expect(songKey("12 (1).wav")).toBe("12|1");
-    expect(songKey("Đèn Khuya - Rock Version đã dùng.wav")).toBe(songKey("Đèn Khuya - Rock Version.wav"));
-    const nums = ["12.wav", "12 (1).wav", "13.wav"];
-    const taken = (keys: string[]) => (f: string) => keys.includes(songKey(f));
-    expect(matchSongForIdea(nums, { id: "12" })).toMatchObject({ file: "12.wav", used: false, free: 2 });
-    expect(matchSongForIdea(nums, { id: "12" }, undefined, taken(["12|0"]))).toMatchObject({ file: "12 (1).wav", used: false, free: 1 });
-    expect(matchSongForIdea(nums, { id: "12" }, undefined, taken(["12|0", "12|1"]))).toMatchObject({ used: true, free: 0, total: 2 });
-    // Tên bài ghi rõ: bản chưa dùng trước; hết bản thì báo đã dùng. Tên dự phòng (đoán) thì chỉ lấy bản chưa dùng.
-    const dk = taken([songKey("Đèn Khuya - Rock Version.wav")]);
-    expect(matchSongForIdea(files, { id: "x", song_title: "Đèn Khuya - Rock Version" }, undefined, dk)).toMatchObject({ file: "Đèn Khuya - Nam Rock.wav", used: false });
-    const both = taken([songKey("Đèn Khuya - Rock Version.wav"), songKey("Đèn Khuya - Nam Rock.wav")]);
-    expect(matchSongForIdea(files, { id: "x", song_title: "Đèn Khuya" }, undefined, both)).toMatchObject({ by: "title", used: true });
-    expect(matchSongForIdea(files, { id: "x" }, "Đèn Khuya", both)).toBeNull();
-    expect(matchSongForIdea(["Đèn Khuya - Rock Version đã dùng.wav"], { id: "x", song_title: "Đèn Khuya" })).toMatchObject({ used: true });
-  });
-});
-
-describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, danh sách nhạc nhiều bài)", () => {
+describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài kiểu Bokin theo kênh)", () => {
   let fake: FakeMuse;
   let engine: Awaited<ReturnType<typeof import("@/lib/museEngine")["initMuseEngine"]>>;
   const tone = (name: string, seconds: number, hz = 330) => make(["-f", "lavfi", "-i", `sine=frequency=${hz}:duration=${seconds}`, "-c:a", "libmp3lame"], path.join(songs, name));
+  const sheet = async (rows: (string | number)[][]) => {
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    wb.addWorksheet("Kho bài hát").addRows([["Mã bài", "Tên bài", "Mức hay"], ...rows]);
+    await wb.xlsx.writeFile(path.join(songs, "Kho bài hát.xlsx"));
+  };
 
   beforeAll(async () => {
     bin = (await import("@/lib/ffmpeg")).findFfmpeg().path!;
     mkdirSync(songs, { recursive: true });
-    // Kho nhạc đánh số: bài 1 có hai bản; video dài 1 phút cần 1 + 2 + 3 (bản "1 (1)" để dành cho video khác).
+    // Kho đánh số: bài 1 có hai bản. Mức hay trong Kho bài hát.xlsx: 1 = rất hay, 2 = hay, 3 = bình thường. Video dài 1 phút.
     tone("1.mp3", 25);
     tone("1 (1).mp3", 25, 360);
     tone("2.mp3", 20, 392);
     tone("3.mp3", 15, 440);
-    writeFileSync(
-      path.join(tmp, "song_library.json"),
-      JSON.stringify({ songs: [{ n: 2, world_location: "x", theme_code: "T10", theme_name: "", outline: "", hook: "Snow On Main Street", mood: "", lyrics: "" }] }),
-    );
+    await sheet([
+      ["1", "Silver Bells Waltz", 3],
+      ["2", "Snow On Main Street", 2],
+      ["3", "Candle In The Window", 1],
+    ]);
     const clip = make(["-f", "lavfi", "-i", "testsrc2=size=320x180:rate=24:duration=2", "-c:v", "libx264", "-preset", "ultrafast"], path.join(tmp, "clip.mp4"));
     fake = new FakeMuse(readFileSync(clip));
     engine = (await import("@/lib/museEngine")).initMuseEngine({ dir: path.join(tmp, "muse-engine"), page: fake, worker: FAST });
@@ -125,23 +79,20 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, danh sách nh�
     setSettings();
   });
 
-  it("viết kịch bản (Demo) → ghép danh sách nhạc 1 phút → gửi Muse → nhận clip → dựng MP4 lặp clip, mô tả có danh sách bài", async () => {
+  it("viết kịch bản (Demo) → tự xếp 3 bài cho kênh (mức 3 mở đầu) → gửi Muse → nhận clip → dựng MP4 lặp clip, mô tả có danh sách bài", async () => {
     const pl = await import("@/lib/pipeline");
     const jobs = await import("@/lib/museJobs");
     const queue = await import("@/lib/queue");
     const media = await import("@/lib/media");
+    const channels = await import("@/lib/channels");
     const { added } = await pl.addToPipeline({
-      ideas: [
-        { id: "1", world_location: "Rockefeller Center Christmas Eve 1955", theme_code: "T02", outline: "Cặp đôi trẻ trượt băng dưới cây thông khổng lồ" },
-        { id: "2", world_location: "Woodstock Vermont First Snow 1956", theme_code: "T18", outline: "Chỉ cảnh, không nhân vật chính: làng tuyết yên bình" },
-      ],
+      ideas: [{ id: "1", world_location: "Rockefeller Center Christmas Eve 1955", theme_code: "T02", outline: "Cặp đôi trẻ trượt băng dưới cây thông khổng lồ" }],
     });
-    expect(added).toBe(2);
+    expect(added).toBe(1);
     const item = async (n: number) => (await pl.readPipeline()).items.find((i) => i.idea?.id === String(n))!;
+    expect((await item(1)).channel).toBe("kenh-1");
 
-    // 1. Kịch bản: từng video một, mỗi video một vòng 20–30 cảnh (không theo độ dài nhạc).
-    await pl.pipelineTick();
-    await pl.pipelineIdle();
+    // 1. Kịch bản: một vòng 20–30 cảnh (không theo độ dài nhạc).
     await pl.pipelineTick();
     await pl.pipelineIdle();
     const a = await item(1);
@@ -149,22 +100,26 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, danh sách nh�
     const store = await import("@/lib/store");
     const mv = (await store.loadMV(a.mv_id!))!;
     expect(mv.idea.duration_sec).toBeUndefined();
+    expect(mv.idea.channel).toBe("kenh-1");
     expect(mv.structure.total_shots).toBeGreaterThanOrEqual(20);
     expect(mv.structure.total_shots).toBeLessThanOrEqual(30);
 
-    // 2–3. Nhạc: 3 bài nối thành 1 phút; video 2 chờ vì nhạc chưa dùng còn lại chưa đủ. Các cảnh được gửi sang Muse.
+    // 2–3. Nhạc: kênh chưa dùng bài nào → 3 bài mới, mức 3 → 2 → 1, tên bài theo Kho bài hát.xlsx; ghi vào lịch sử kênh. Cảnh gửi sang Muse.
     await pl.pipelineTick();
     const a2 = await item(1);
-    expect(a2.steps.song).toMatchObject({ status: "done", message: "Tự ghép 3 bài · 1 phút" });
+    expect(a2.steps.song).toMatchObject({ status: "done", message: "Kênh “Kênh Giáng sinh”: tự xếp 3 bài (0 cũ + 3 mới) · 1 phút" });
     expect(a2.clips_sent).toBe(true);
     const audio = (await media.loadProject(mv.id)).audio!;
-    expect(audio.tracks!.map((t) => t.title)).toEqual(["Christmas Song No. 1", "Snow On Main Street", "Christmas Song No. 3"]);
+    expect(audio.tracks!.map((t) => [t.title, t.name, t.code])).toEqual([
+      ["Silver Bells Waltz", "1.mp3", "1"],
+      ["Snow On Main Street", "2.mp3", "2"],
+      ["Candle In The Window", "3.mp3", "3"],
+    ]);
     expect(audio.duration).toBeCloseTo(60, 0);
-    const b = await item(2);
-    expect(b.steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/Chưa đủ nhạc/) });
+    const ch = (await channels.readChannels())[0];
+    expect(ch.history.map((v) => [v.id, v.codes, v.files])).toEqual([[mv.id, ["1", "2", "3"], ["1.mp3", "2.mp3", "3.mp3"]]]);
 
-    // Muse giả làm xong → clip vào MV; riêng cảnh cuối của MV 1 Muse không làm được video
-    // (cổng gửi lần lượt theo thứ tự xếp hàng; danh sách task mới nhất đứng đầu).
+    // Muse giả làm xong → clip vào MV; riêng cảnh cuối Muse không làm được video (cổng gửi lần lượt; danh sách task mới nhất đứng đầu).
     const lastShot = mv.shots[mv.shots.length - 1].shot_no;
     const lastTask = (await jobs.readMuse()).mvs.find((m) => m.mv_id === mv.id)!.shots.find((s) => s.shot_no === lastShot)!.task_id!;
     const tasks = engine.store.list().length;
@@ -195,89 +150,80 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, danh sách nh�
     // Có clip lặp lại: số đoạn nhiều hơn số clip (mọi cảnh trừ cảnh bỏ qua).
     expect(rendered.segments).toBeGreaterThan(mv.shots.length - 1);
 
-    // Mô tả YouTube (file .txt và thông tin MP4) kèm danh sách bài + mốc thời gian, hashtag vẫn ở cuối.
-    expect(rendered.tags!.description).toMatch(/Tracklist:\n0:00 Christmas Song No\. 1\n0:25 Snow On Main Street\n0:45 Christmas Song No\. 3\n\n#christmasmusic/);
+    // Mô tả YouTube (file .txt và thông tin MP4) kèm danh sách bài + mốc thời gian, hashtag vẫn ở cuối; file .txt ghi kênh.
+    expect(rendered.tags!.description).toMatch(/Tracklist:\n0:00 Silver Bells Waltz\n0:25 Snow On Main Street\n0:45 Candle In The Window\n\n#christmasmusic/);
     const info = readFileSync(media.mediaPath(mv.id, rendered.youtube_info!), "utf8");
-    expect(info).toContain("TIÊU ĐỀ");
+    expect(info).toMatch(/^﻿KÊNH\r\nKênh Giáng sinh\r\n/);
     expect(info).toContain(mv.youtube_titles[0]);
     expect(info).toContain("0:25 Snow On Main Street");
 
-    // Ảnh bìa 1280×720 + thư mục kết quả đủ 3 file.
+    // Ảnh bìa 1280×720 + thư mục kết quả (trong thư mục của kênh) đủ 3 file.
     expect(rendered.cover).toMatch(/-cover\.jpg$/);
     const cover = await (await import("@/lib/ffmpeg")).probe(media.mediaPath(mv.id, rendered.cover!), { still: true });
     expect([cover.video?.width, cover.video?.height]).toEqual([1280, 720]);
-    expect(rendered.result_dir).toBe(path.join(tmp, "ket-qua", "001 - Rockefeller Center Christmas Eve 1955"));
+    expect(rendered.result_dir).toBe(path.join(tmp, "ket-qua", "Kênh Giáng sinh", "001 - Rockefeller Center Christmas Eve 1955"));
     expect(readdirSync(rendered.result_dir!).sort()).toEqual(["Tiêu đề - mô tả.txt", "Ảnh bìa.jpg", rendered.download_name!].sort());
     if (process.env.KEEP_COVER_TEST) {
       cpSync(media.mediaPath(mv.id, rendered.cover!), path.join(process.env.KEEP_COVER_TEST, "cover.jpg"));
       cpSync(media.mediaPath(mv.id, done.output!), path.join(process.env.KEEP_COVER_TEST, "video.mp4"));
     }
-
-    // Việc 2 vẫn chờ nhạc; bỏ khỏi dây chuyền.
-    expect((await item(2)).done_at).toBeUndefined();
-    await pl.removeFromPipeline((await item(2)).id);
     await pl.clearFinishedPipeline();
     expect((await pl.readPipeline()).items).toHaveLength(0);
   }, 300000);
 
-  it("chống trùng nhạc: ý tưởng đã có MV không chạy lại; bài đã ghép vào MV khác không ghép nữa; danh sách bài cần ghi trên Drive", async () => {
+  it("video sau của kênh: bài cũ (bản chưa dùng của bài) + bài mới, bài mở đầu khác video trước; ý tưởng đã có MV không chạy lại; kênh khác có lịch sử riêng", async () => {
     const pl = await import("@/lib/pipeline");
-    const used = await import("@/lib/songsUsed");
-    const store = await import("@/lib/store");
+    const channels = await import("@/lib/channels");
     const media = await import("@/lib/media");
+    const store = await import("@/lib/store");
     const item = async (n: string) => (await pl.readPipeline()).items.find((i) => i.idea?.id === n)!;
-    // Sổ bài đã dùng: 3 bài dây chuyền đã ghép vào MV 1 ở test trước.
     const mv1 = (await store.listMVs()).find((m) => m.idea.id === "1")!;
-    const t1 = "#1 · Rockefeller Center Christmas Eve 1955";
-    expect((await used.readUsedSongs()).map((x) => [x.file, x.mv_id, x.title]).sort()).toEqual([
-      ["1.mp3", mv1.id, t1],
-      ["2.mp3", mv1.id, t1],
-      ["3.mp3", mv1.id, t1],
-    ]);
 
-    // "Chạy ngay" lại ý tưởng 1 (đã có MV) → bỏ qua; ý tưởng 3 dán hai lần → chỉ chạy một.
+    // "Chạy ngay" lại ý tưởng 1 (đã có MV ở kênh này) → bỏ qua; ý tưởng 3 dán hai lần → chỉ chạy một.
     const one = { id: "1", world_location: "Rockefeller Center Christmas Eve 1955", theme_code: "T02", outline: "Cặp đôi trẻ trượt băng dưới cây thông khổng lồ" };
     const three = { id: "3", world_location: "Beacon Hill Boston Carol Night 1956", theme_code: "T12", outline: "Hai đứa trẻ đi hát mừng cùng hàng xóm" };
+    // Thêm bài 4 (mức 2) vào kho trước: video 2 = 1 bài cũ + 1 bài mới cho đủ 1 phút.
+    tone("4.mp3", 35, 494);
+    await sheet([
+      ["1", "Silver Bells Waltz", 3],
+      ["2", "Snow On Main Street", 2],
+      ["3", "Candle In The Window", 1],
+      ["4", "Sleigh Ride Home", 2],
+    ]);
     const r = await pl.addToPipeline({ ideas: [one, three, { ...three, outline: " hai đứa trẻ  đi hát mừng cùng hàng xóm" }] });
     expect(r.added).toBe(1);
     expect(r.skipped).toEqual([
-      { title: `#1 · Rockefeller Center Christmas Eve 1955`, reason: "ý tưởng này đã có MV" },
-      { title: `#3 · Beacon Hill Boston Carol Night 1956`, reason: expect.stringMatching(/đang chạy/) },
+      { title: "#1 · Rockefeller Center Christmas Eve 1955", reason: "ý tưởng này đã có MV" },
+      { title: "#3 · Beacon Hill Boston Carol Night 1956", reason: expect.stringMatching(/đang chạy/) },
     ]);
-
-    // Ý tưởng 3: nhạc chưa dùng chỉ còn "1 (1)" (25 giây) — bài 1, 2, 3 đã ghép vào MV 1 → chờ.
     for (let k = 0; k < 2; k++) {
       await pl.pipelineTick();
       await pl.pipelineIdle();
     }
     await pl.pipelineTick();
-    let s3 = await item("3");
+    const s3 = await item("3");
     expect(s3.steps.script.status).toBe("done");
-    expect(s3.steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/Chưa đủ nhạc: .*\(1 bài\)/) });
-    expect((await media.loadProject(s3.mv_id!)).audio).toBeNull();
-    // Thêm bài 4 → đủ: bản còn lại của bài 1 + bài 4.
-    tone("4.mp3", 35, 494);
-    await pl.pipelineTick();
-    s3 = await item("3");
-    expect(s3.steps.song).toMatchObject({ status: "done", message: "Tự ghép 2 bài · 1 phút" });
-    expect((await media.loadProject(s3.mv_id!)).audio!.tracks!.map((t) => t.name)).toEqual(["1 (1).mp3", "4.mp3"]);
-    let view = await used.usedSongsView(songs);
-    expect(view.duplicates).toEqual([]);
+    // Bài 1 (mức 3) dùng lại làm bài cũ — bản "1 (1)" kênh chưa dùng; bài 4 mới mở đầu (bài 1 đã mở đầu video trước).
+    expect(s3.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/tự xếp 2 bài \(1 cũ \+ 1 mới\) · 1 phút/) });
+    expect((await media.loadProject(s3.mv_id!)).audio!.tracks!.map((t) => [t.title, t.name])).toEqual([
+      ["Sleigh Ride Home", "4.mp3"],
+      ["Silver Bells Waltz", "1 (1).mp3"],
+    ]);
+    const ch = (await channels.readChannels())[0];
+    expect(ch.history.map((v) => v.id)).toEqual([mv1.id, s3.mv_id]);
 
-    // MV dùng trùng bài (vd. tự tải nhạc lên ở trang Ghép video): báo trùng, kèm các MV.
-    const { createReadStream, renameSync } = await import("node:fs");
-    const { Readable } = await import("node:stream");
-    const stream = (f: string) => Readable.toWeb(createReadStream(f)) as ReadableStream<Uint8Array>;
-    const t3 = "#3 · Beacon Hill Boston Carol Night 1956";
-    await media.addAudio(s3.mv_id!, "2.mp3", stream(path.join(songs, "2.mp3")));
-    view = await used.usedSongsView(songs);
-    expect(view.duplicates).toEqual([{ file: "2.mp3", mvs: [{ mv_id: mv1.id, title: t1 }, { mv_id: s3.mv_id, title: t3 }] }]);
-    // Danh sách cho Drive (mỗi bài một dòng, kèm các MV đã dùng); ghi "đã dùng" xong (tên file ở máy đổi theo Drive) thì "đã ghi".
-    renameSync(path.join(songs, "3.mp3"), path.join(songs, "3 đã dùng.mp3"));
-    const rows = new Map((await used.usedSongsView(songs)).rows.map((x) => [x.file, x]));
-    expect(rows.get("2.mp3")!.mvs.map((m) => m.title)).toEqual([t1, t3]);
-    expect(rows.get("3.mp3")!.marked).toBe(true);
-    expect(rows.get("4.mp3")!.marked).toBe(false);
-    await pl.removeFromPipeline(s3.id);
+    // Kênh mới có lịch sử riêng: ý tưởng 1 (đã có MV ở kênh Giáng sinh) chạy được cho kênh mới, xếp toàn bài mới.
+    const b = await channels.addChannel("Kênh B");
+    const r2 = await pl.addToPipeline({ ideas: [one], channel: b.id });
+    expect(r2.added).toBe(1);
+    for (let k = 0; k < 2; k++) {
+      await pl.pipelineTick();
+      await pl.pipelineIdle();
+    }
+    await pl.pipelineTick();
+    const forB = (await pl.readPipeline()).items.find((i) => i.channel === b.id)!;
+    expect(forB.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/^Kênh “Kênh B”: tự xếp \d bài \(0 cũ \+ \d mới\)/) });
+    expect((await media.loadProject(forB.mv_id!)).audio!.tracks![0].title).toBe("Silver Bells Waltz");
+    for (const it of (await pl.readPipeline()).items) await pl.removeFromPipeline(it.id);
   }, 120000);
 });

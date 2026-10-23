@@ -10,6 +10,7 @@ import path from "node:path";
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { setEnvLine } from "./apikey";
+import { channelsView } from "./channelsView";
 import { driveSyncStatus } from "./driveSync";
 import { generationMode } from "./generate";
 import { bankView } from "./ideaBank";
@@ -19,7 +20,6 @@ import { museAccounts } from "./museEngine/accounts";
 import { museView } from "./museJobs";
 import { pipelineView } from "./pipeline";
 import { readQueue } from "./queue";
-import { usedSongsView } from "./songsUsed";
 import { SAFE_ID, readSettings } from "./store";
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
@@ -86,14 +86,15 @@ const FILE_TYPES: [RegExp, string, boolean][] = [
 
 export async function monitorSnapshot() {
   const settings = await readSettings();
-  const [pipeline, muse, bank, drive, queue, used] = await Promise.all([
+  const [pipeline, muse, bank, drive, queue, channels] = await Promise.all([
     pipelineView(),
     museView(),
     bankView(),
     driveSyncStatus(),
     readQueue(),
-    usedSongsView(settings.songDir).catch(() => ({ rows: [], duplicates: [] })),
+    channelsView().catch(() => null),
   ]);
+  const channelName = (id?: string) => pipeline.channels.find((c) => c.id === id)?.name ?? pipeline.channels[0]?.name ?? "";
   // Ổ chứa app và ổ chứa nhạc (cùng ổ thì chỉ một dòng).
   const disks: NonNullable<Awaited<ReturnType<typeof diskFree>>>[] = [];
   for (const d of await Promise.all([diskFree(process.cwd()), settings.songDir ? diskFree(settings.songDir) : null])) {
@@ -117,6 +118,7 @@ export async function monitorSnapshot() {
       items: pipeline.items.map((i) => ({
         id: i.id,
         title: i.title,
+        channel: channelName(i.channel ?? i.idea?.channel),
         idea: i.idea?.id ?? null,
         added_at: i.added_at,
         done_at: i.done_at ?? null,
@@ -143,14 +145,24 @@ export async function monitorSnapshot() {
           error: muse.error,
         }
       : { haohao: true, error: muse.error },
-    bank: { counts: bank.counts, ready: bank.ready, proposals: bank.proposals.length, suggesting: bank.suggesting, error: bank.error },
-    drive: { running: drive.running, phase: drive.phase, error: drive.error, last: drive.last },
-    // Bài app đã ghép vào MV mà trên Drive chưa ghi "đã dùng" (để bạn ghi cho khớp); MV đang dùng trùng một bài.
-    songs: {
-      toMark: used.rows.filter((x) => !x.marked).map((x) => ({ file: x.file, title: x.mvs.map((m) => m.title).join(" · ") })),
-      marked: used.rows.filter((x) => x.marked).length,
-      duplicates: used.duplicates.map((d) => ({ file: d.file, titles: d.mvs.map((m) => m.title) })),
+    bank: {
+      counts: bank.counts,
+      proposals: bank.channels.reduce((n, c) => n + c.counts.proposed, 0),
+      suggesting: bank.suggesting,
+      error: bank.error,
     },
+    drive: { running: drive.running, phase: drive.phase, error: drive.error, last: drive.last },
+    // Kênh: số video (đã làm + đang làm), ý tưởng chưa dùng, bài mới còn lại cho kênh.
+    channels: (channels?.channels ?? []).map((c) => ({
+      name: c.name,
+      active: c.active,
+      videos: c.videos,
+      inProgress: c.inProgress,
+      ideas: bank.channels.find((x) => x.id === c.id)?.counts.new ?? 0,
+      unused: c.unused,
+      videosLeft: c.videosLeft,
+    })),
+    library: channels?.library ? { songs: channels.library.songs, levels: channels.library.levels, sheet: Boolean(channels.library.sheet), problems: channels.library.problems.length } : null,
   };
 }
 

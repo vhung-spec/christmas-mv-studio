@@ -16,6 +16,7 @@ export const zIdea = z.object({
   tempo: tempo.optional(),
   lyrics: z.string().optional(),
   series: z.string().optional(),
+  channel: z.string().trim().max(60).optional(),
 });
 
 export const zTone = z.enum(["default", "playful", "melancholy", "cinematic"]);
@@ -51,6 +52,7 @@ export const zSettings = z.object({
   monitorPort: z.number().int().min(1024).max(65535),
   eraShare: z.number().int().min(0).max(50),
   videoMinutes: z.number().int().min(1).max(600),
+  songSheet: z.string().trim().max(500),
   resultsDir: z.string().trim().max(500),
 }).refine((s) => s.minShots <= s.maxShots, { message: "Số cảnh tối thiểu phải ≤ số cảnh tối đa", path: ["minShots"] });
 

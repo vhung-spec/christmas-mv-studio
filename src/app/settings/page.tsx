@@ -243,10 +243,16 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-3">
               <Field
-                label="Thư mục nhạc Giáng sinh (tự ghép danh sách nhạc)"
-                hint="Video chưa có nhạc → app lấy lần lượt các bài chưa dùng trong thư mục này (theo số bài: 1.wav, 2.mp3…; mỗi bài một bản, bỏ qua bản ghi “đã dùng”) cho đủ “Độ dài video”, rồi nối thành một file. Một file dài sẵn (vd. bản mix 1 tiếng) cũng dùng được. Ghi tên không kèm ổ đĩa (vd. KHO NHAC GIANG SINH) = thư mục nằm cạnh thư mục app. Để trống = không tự ghép."
+                label="Thư mục nhạc Giáng sinh (kho nhạc chung của các kênh)"
+                hint="Video chưa có nhạc → app tự xếp bài như Bokin Playlist theo lịch sử của kênh (bài cũ mức 2–3 lâu chưa dùng + bài kênh chưa dùng, bài mức 3 mở đầu) cho đủ “Độ dài video”, rồi nối thành một file. File đặt theo số bài (1.wav, 1 (1).wav = bản thứ hai…) hoặc theo tên. Ghi tên không kèm ổ đĩa (vd. KHO NHAC GIANG SINH) = thư mục nằm cạnh thư mục app. Để trống = không tự xếp."
               >
                 <input className="input" value={s.songDir} onChange={(e) => set("songDir", e.target.value)} />
+              </Field>
+              <Field
+                label="Tệp Kho bài hát (mức hay của các bài)"
+                hint="Cùng mẫu Bokin Playlist: cột Mã bài, Tên bài, Tệp nhạc, Mức hay (3 = rất hay, 2 = hay, 1 = bình thường), tuỳ chọn Dùng lại (Thưa hơn / Rất thưa / Không dùng lại / Loại khỏi kho). Để trống = tự tìm “Kho bài hát.xlsx” trong Thư mục nhạc (đồng bộ Drive tự tải về). Bài chưa có trong tệp = mức 1."
+              >
+                <input className="input" value={s.songSheet} placeholder="(tự tìm Kho bài hát.xlsx trong Thư mục nhạc)" onChange={(e) => set("songSheet", e.target.value)} />
               </Field>
               <Field
                 label="Thư mục kết quả (mỗi MV xong một thư mục: video, ảnh bìa, tiêu đề)"

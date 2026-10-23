@@ -17,6 +17,8 @@ export interface IdeaRow {
   tempo?: Tempo;
   lyrics?: string;
   series?: string;
+  /** Kênh làm video này (mã kênh, xem channels.ts); không có = kênh tự chia lần lượt. */
+  channel?: string;
 }
 
 // ---------- Thư viện cấu hình (data/*.json) ----------
@@ -156,8 +158,10 @@ export interface Settings {
   monitorPort: number;
   /** Phần trăm số cảnh là "đời sống Giáng sinh thập niên 50" (không có nhân vật chính), 0 = tắt. */
   eraShare: number;
-  /** Độ dài video (phút): app ghép các bài nhạc chưa dùng trong Thư mục nhạc cho đủ khoảng chừng này, clip lặp lại cho hết nhạc. */
+  /** Độ dài video (phút): app tự xếp bài (kiểu Bokin, theo lịch sử từng kênh) cho đủ khoảng chừng này, clip lặp lại cho hết nhạc. */
   videoMinutes: number;
+  /** Tệp Kho bài hát (mẫu Bokin: mã bài, tên bài, mức hay); "" = tự tìm "Kho bài hát.xlsx" trong Thư mục nhạc. */
+  songSheet: string;
   /** Thư mục kết quả: mỗi MV xong một thư mục con (video, ảnh bìa, tiêu đề). Không kèm ổ đĩa = cạnh thư mục app; "" = không tạo. */
   resultsDir: string;
 }
@@ -410,6 +414,8 @@ export interface PlaylistTrack {
   title: string;
   start: number;
   duration: number;
+  /** Mã bài trong Kho bài hát. */
+  code?: string;
 }
 
 export type CutPace = "slow" | "normal" | "fast";

@@ -1,8 +1,10 @@
 // ĐỒNG BỘ KHO NHẠC TỪ GOOGLE DRIVE — thư mục chia sẻ "Ai có đường liên kết", không cần đăng nhập Google.
-// Kho của kênh: thư mục gốc (vd. "KHO NHẠC ROCK") gồm các thư mục bài đánh số (mỗi thư mục một Google Doc: địa điểm, chủ đề,
-// dàn ý, lời) và một thư mục file nhạc đặt tên theo số ("12.wav", "12 (1).wav", "76_1.mp3"; thêm "đã dùng" khi đã làm MV).
-// Một lần đồng bộ: cập nhật thư viện lời (song_library.json), tải các bản nhạc CHƯA DÙNG còn thiếu về Thư mục nhạc, và bản nào
-// trên Drive đổi tên (vd. vừa ghi "đã dùng") thì đổi tên bản ở máy cho khớp. Không xoá file nào. Chỉ dùng phía server.
+// Kho chung của các kênh: thư mục gốc gồm tệp "Kho bài hát.xlsx" (mức hay, tên bài — mẫu Bokin Playlist; hoặc Google Sheet tên
+// "Kho bài hát"), các thư mục bài đánh số (mỗi thư mục một Google Doc: địa điểm, chủ đề, dàn ý, lời) và một thư mục file nhạc đặt
+// tên theo số ("12.wav", "12 (1).wav", "76_1.mp3").
+// Một lần đồng bộ: tải Kho bài hát.xlsx (không ghi đè nếu bản ở máy đã được sửa), cập nhật thư viện lời (song_library.json), tải mọi
+// file nhạc còn thiếu về Thư mục nhạc (bài cũ được dùng lại cho các video sau nên cần đủ file), file nào trên Drive đổi tên thì đổi tên
+// bản ở máy cho khớp. Không xoá file nào. Chỉ dùng phía server.
 
 import { createWriteStream, existsSync, promises as fs } from "node:fs";
 import path from "node:path";
@@ -11,7 +13,8 @@ import { pipeline } from "node:stream/promises";
 import { UserError } from "./errors";
 import { AUDIO_EXT } from "./media";
 import { parseSongDoc, readSongLibrary, writeSongLibrary, type LibrarySong } from "./songLibrary";
-import { isUsedSong, listSongs, songNumber } from "./songs";
+import { SHEET_TAB, isSheetName } from "./songSheet";
+import { listSongs, songNumber } from "./songs";
 import { DRIVE_SYNC_FILE, readJson, readSettings, writeJson } from "./store";
 
 /** Tự đồng bộ: cách nhau ít nhất chừng này. */
@@ -19,7 +22,8 @@ export const AUTO_SYNC_MS = 6 * 60 * 60 * 1000;
 const CONCURRENCY = 3;
 
 export interface DriveEntry {
-  kind: "folder" | "file" | "doc";
+  /** sheet = Google Sheet (tải bản .xlsx). */
+  kind: "folder" | "file" | "doc" | "sheet";
   id: string;
   name: string;
 }
@@ -28,13 +32,16 @@ export interface DriveSyncResult {
   at: string;
   /** Bài đọc được lời (thư mục bài đánh số). */
   songs: number;
-  /** File nhạc trên Drive / bản chưa dùng. */
+  /** File nhạc trên Drive. */
   audio: number;
-  unused: number;
   downloaded: number;
   bytes: number;
   renamed: number;
   failed: string[];
+  /** Kho bài hát.xlsx lần này: đã tải / không đổi / giữ bản ở máy / Drive chưa có. */
+  sheet: string | null;
+  /** Cỡ + giờ sửa của Kho bài hát ở máy ngay sau lần tải gần nhất (để biết bạn đã sửa bản ở máy chưa). */
+  sheetStat?: { file: string; size: number; mtimeMs: number } | null;
 }
 
 export interface DriveSyncStatus {
@@ -74,9 +81,11 @@ export function parseFolderHtml(html: string): DriveEntry[] {
     const name = decode(m[2]);
     const folder = href.match(/\/drive\/folders\/([\w-]+)/);
     const doc = href.match(/docs\.google\.com\/document\/d\/([\w-]+)/);
+    const sheet = href.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]+)/);
     const file = href.match(/\/file\/d\/([\w-]+)/);
     if (folder) out.push({ kind: "folder", id: folder[1], name });
     else if (doc) out.push({ kind: "doc", id: doc[1], name });
+    else if (sheet) out.push({ kind: "sheet", id: sheet[1], name });
     else if (file) out.push({ kind: "file", id: file[1], name });
   }
   return out;
@@ -110,8 +119,8 @@ export interface AudioPlan {
 }
 
 /**
- * Việc cần làm với file nhạc: bản trên Drive chưa dùng mà máy chưa có → tải; máy có bản cùng số + cùng bản nhưng khác tên
- * (vd. Drive vừa ghi "đã dùng") → đổi tên cho khớp; bản đã dùng mà máy chưa có → bỏ qua.
+ * Việc cần làm với file nhạc: file trên Drive mà máy chưa có → tải (kể cả bản ghi "đã dùng": app tự xếp bài theo lịch sử kênh, bài
+ * cũ được dùng lại); máy có bản cùng số + cùng bản nhưng khác tên (vd. Drive vừa đổi tên) → đổi tên cho khớp.
  */
 export function planAudio(drive: DriveEntry[], local: string[]): AudioPlan {
   const byKey = new Map<string, string>();
@@ -126,9 +135,50 @@ export function planAudio(drive: DriveEntry[], local: string[]): AudioPlan {
     const k = audioKey(e.name);
     const mine = k ? byKey.get(k) : undefined;
     if (mine) plan.rename.push({ from: mine, to: e.name });
-    else if (!isUsedSong(e.name)) plan.download.push(e);
+    else plan.download.push(e);
   }
   return plan;
+}
+
+/** Tải một tệp nhỏ (Kho bài hát) về `dest.part`; trả về nội dung. Google Sheet → bản .xlsx. */
+async function fetchSmall(e: DriveEntry): Promise<Buffer> {
+  const url =
+    e.kind === "sheet"
+      ? `https://docs.google.com/spreadsheets/d/${encodeURIComponent(e.id)}/export?format=xlsx`
+      : `https://drive.usercontent.google.com/download?id=${encodeURIComponent(e.id)}&export=download&confirm=t`;
+  const res = await fetch(url);
+  const type = res.headers.get("content-type") ?? "";
+  if (!res.ok || /text\/html/.test(type)) throw new Error(`HTTP ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+/**
+ * Kho bài hát.xlsx (hoặc .csv / Google Sheet "Kho bài hát") ở thư mục gốc trên Drive → Thư mục nhạc. Bản ở máy đã bị sửa (hoặc chép tay,
+ * khác lần tải trước) thì không ghi đè. Trả về lời nhắn + cỡ / giờ sửa sau khi tải.
+ */
+async function syncSheet(root: DriveEntry[], dir: string, prev: DriveSyncResult["sheetStat"]): Promise<{ note: string | null; stat: DriveSyncResult["sheetStat"] }> {
+  const entry = root.find((e) => e.kind === "sheet" && isSheetName(e.name, true)) ?? root.find((e) => e.kind === "file" && isSheetName(e.name));
+  if (!entry) return { note: `Drive chưa có ${SHEET_TAB}.xlsx (mức hay của các bài) — mọi bài coi là mức 1.`, stat: prev ?? null };
+  const ext = entry.kind === "sheet" ? ".xlsx" : path.extname(entry.name).toLowerCase();
+  const name = `${SHEET_TAB}${ext}`;
+  const dest = path.join(/*turbopackIgnore: true*/ dir, name);
+  const buf = await retry(() => fetchSmall(entry));
+  const before = existsSync(/*turbopackIgnore: true*/ dest) ? await fs.stat(/*turbopackIgnore: true*/ dest) : null;
+  if (before) {
+    if (Buffer.compare(await fs.readFile(/*turbopackIgnore: true*/ dest), buf) === 0) return { note: `${name}: không đổi.`, stat: prev ?? { file: name, size: before.size, mtimeMs: before.mtimeMs } };
+    const ours = prev && prev.file === name && prev.size === before.size && Math.abs(prev.mtimeMs - before.mtimeMs) < 2;
+    if (!ours) {
+      return {
+        note: `${name} ở máy đã được sửa (hoặc chép tay) — không ghi đè. Sửa trên Drive rồi chuyển bản ở máy vào Thùng rác để lần sau tải bản mới.`,
+        stat: prev ?? null,
+      };
+    }
+  }
+  const part = `${dest}.part`;
+  await fs.writeFile(/*turbopackIgnore: true*/ part, buf);
+  await fs.rename(/*turbopackIgnore: true*/ part, dest);
+  const after = await fs.stat(/*turbopackIgnore: true*/ dest);
+  return { note: `${name}: đã tải bản mới.`, stat: { file: name, size: after.size, mtimeMs: after.mtimeMs } };
 }
 
 async function download(e: DriveEntry, dir: string): Promise<number> {
@@ -196,9 +246,17 @@ async function runSync(): Promise<DriveSyncResult> {
     const inside = await retry(() => listFolder(f.id)).catch(() => []);
     audio.push(...inside.filter((e) => e.kind === "file" && isAudio(e.name) && songNumber(e.name)));
   }
+  const failed: string[] = [];
+
+  // 0. Kho bài hát.xlsx (mức hay, tên bài).
+  mem.phase = "Tải Kho bài hát…";
+  const prev = (await readJson<DriveSyncResult | null>(DRIVE_SYNC_FILE(), null))?.sheetStat ?? null;
+  const sheet = await syncSheet(root, dir, prev).catch((err) => {
+    failed.push(`${SHEET_TAB}.xlsx (${(err as Error).message})`);
+    return { note: null, stat: prev };
+  });
 
   // 1. Lời bài hát
-  const failed: string[] = [];
   const songs: LibrarySong[] = [];
   let read = 0;
   await pool(songFolders, CONCURRENCY + 1, async (f) => {
@@ -249,11 +307,12 @@ async function runSync(): Promise<DriveSyncResult> {
     at: new Date().toISOString(),
     songs: songs.length,
     audio: audio.length,
-    unused: audio.filter((e) => !isUsedSong(e.name)).length,
     downloaded,
     bytes,
     renamed,
     failed,
+    sheet: sheet.note,
+    sheetStat: sheet.stat,
   };
 }
 

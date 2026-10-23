@@ -14,7 +14,7 @@ A. CHUẨN BỊ (máy chạy đã chạy app cũ thì bỏ qua phần này, tr�
 ---------------------------------------------------------------------
 1. Dung lượng ổ C: video Giáng sinh dài 1 tiếng nên NẶNG HƠN app cũ nhiều.
    - Mỗi video: khoảng 3–5 GB (MP4 1 tiếng 1080p) + 0,5 GB (clip Muse + danh sách nhạc). Lúc dựng cần thêm ~1 GB tạm.
-   - Nhạc Giáng sinh: tuỳ kho (mỗi bài ~10–40 MB). Mỗi video dùng khoảng 18–20 bài (mỗi bài một bản).
+   - Nhạc Giáng sinh: tuỳ kho (mỗi bài ~10–40 MB). Mỗi video dùng khoảng 18–20 bài (bài cũ hay + bài mới).
    - Nên còn trống ít nhất 60 GB. Đăng YouTube xong thì chép video ra ổ khác / Google Drive rồi xoá bớt (xem mục D).
    - Muốn video nhẹ hơn: trang Ghép video → thiết lập dựng → chọn 720p (khoảng một nửa dung lượng).
 2. Google Chrome, Node.js LTS, không cho máy ngủ, phần mềm điều khiển từ xa, tự đăng nhập Windows:
@@ -41,7 +41,7 @@ B. CÀI APP
 
 App tự tạo thêm các thư mục nằm cạnh thư mục app (trong C:\Christmas-MV-Studio) — đừng xoá:
    KHO NHAC GIANG SINH                  nhạc Giáng sinh tải từ Google Drive
-   KET QUA GIANG SINH                   mỗi video xong một thư mục (video, ảnh bìa, tiêu đề – mô tả)
+   KET QUA GIANG SINH                   mỗi kênh một thư mục, mỗi video xong một thư mục (video, ảnh bìa, tiêu đề – mô tả)
    Christmas-MV-Studio-muse-gateway     Chrome riêng của Muse cho app này (có phiên đăng nhập Muse) và video Muse tải về
 
 
@@ -52,30 +52,46 @@ C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm 
    App Giáng sinh có Chrome riêng nên cần đăng nhập riêng. Nên dùng một tài khoản Muse KHÁC tài khoản của app cũ; nếu dùng
    chung một tài khoản thì hai app chia nhau hạn mức tuần (và đừng cho cả hai app cùng gửi cảnh một lúc).
 3. Kho nhạc Giáng sinh trên Google Drive (làm giống KHO NHẠC của kênh cũ, nhưng là một thư mục RIÊNG cho nhạc Giáng sinh):
-   - Thư mục gốc gồm: các thư mục bài đánh số (1, 2, 3… mỗi thư mục một Google Doc lời bài — câu điệp khúc đầu tiên được dùng làm
-     tên bài trong mô tả YouTube) và một thư mục file nhạc đặt tên theo số: 1.wav, 1 (1).wav (bản thứ hai), 2.mp3, 2_1.mp3…
+   - Thư mục gốc gồm:
+       * tệp Kho bài hát.xlsx — CÙNG MẪU với Bokin Playlist Studio (chép tệp của Bokin sang rồi sửa cũng được; hoặc một Google Sheet
+         tên "Kho bài hát"). Mỗi dòng một bài: Mã bài | Tên bài | Tệp nhạc | Mức hay (1–3) | Dùng lại | Nghệ sĩ | Thể loại | Ghi chú.
+         Tên bài là tên hiện trong danh sách bài của mô tả YouTube. Tệp nhạc bỏ trống thì app lấy các file đánh số theo Mã bài
+         (mã 12 → 12.wav, 12 (1).wav). Dùng lại: Bình thường / Thưa hơn / Rất thưa / Không dùng lại / Loại khỏi kho.
+         Bài có file mà chưa có dòng trong tệp thì app coi là mức 1.
+       * các thư mục bài đánh số (1, 2, 3… mỗi thư mục một Google Doc lời bài)
+       * một thư mục file nhạc đặt tên theo số: 1.wav, 1 (1).wav (bản thứ hai), 2.mp3, 2_1.mp3…
+   - KHÔNG cần ghi "đã dùng" vào tên file nữa: app tự nhớ kênh nào đã dùng bài nào.
    - Chia sẻ thư mục gốc: "Bất kỳ ai có đường liên kết" → copy link.
-   - Trong app: trang Tự động → thẻ "Kho nhạc trên Google Drive" → dán link → bấm "Đồng bộ ngay". App tải các bản chưa dùng về
-     C:\Christmas-MV-Studio\KHO NHAC GIANG SINH (dòng "Lưu nhạc vào" trên thẻ cho biết chính xác thư mục), rồi tự đồng bộ mỗi 6 giờ.
-4. Độ dài video: Cài đặt → "Độ dài video (phút)", mặc định 60. Mỗi video app lấy lần lượt các bài CHƯA DÙNG (mỗi bài một bản,
-   bài số nhỏ trước) cho đủ khoảng chừng ấy phút, nối thành một danh sách nhạc, rồi lặp 20–30 clip Muse cho hết nhạc.
-   Bài đã ghép vào video thì không bao giờ dùng lại (kể cả khi trên Drive chưa ghi "đã dùng"). Thẻ "Kho ý tưởng" cho biết nhạc chưa
-   dùng còn bao nhiêu phút, đủ cho mấy video. Ví dụ: 100 bài × 2 bản, mỗi bài 3 phút → khoảng 10 video 1 tiếng.
-   Muốn ghi "đã dùng" trên Drive cho khớp: thẻ Kho nhạc liệt kê các bài app đã ghép mà Drive chưa ghi (có nút Copy danh sách).
-5. Kho ý tưởng: app mới bắt đầu với kho TRỐNG. Dán bảng ý tưởng ở thẻ "Thêm việc" → "Đọc bảng" → "Đưa vào kho", hoặc bấm
-   "✨ Nhờ Claude đề xuất ngay". Mỗi dòng: số | địa điểm + dịp lễ + năm 1950–1959 | mã chủ đề | dàn ý, ví dụ
+   - Trong app: trang Tự động → thẻ "Kho nhạc trên Google Drive" → dán link → bấm "Đồng bộ ngay". App tải Kho bài hát.xlsx và mọi
+     file nhạc còn thiếu về C:\Christmas-MV-Studio\KHO NHAC GIANG SINH (dòng "Lưu nhạc vào" trên thẻ cho biết chính xác thư mục),
+     rồi tự đồng bộ mỗi 6 giờ. Xem lại ở thẻ "Kênh & kho nhạc": số bài, số bài mức 3 / 2 / 1, các dòng trong tệp cần sửa.
+4. Độ dài video và cách xếp nhạc: Cài đặt → "Độ dài video (phút)", mặc định 60. Mỗi video app tự xếp danh sách nhạc GIỐNG BOKIN
+   PLAYLIST STUDIO cho đủ khoảng chừng ấy phút, rồi lặp 20–30 clip Muse cho hết nhạc:
+   - khoảng 46% là bài cũ (bài mức 2–3 kênh đã dùng, bài lâu chưa dùng nhất trước), còn lại là bài mới (kênh chưa dùng lần nào);
+   - bài mức 1 chỉ dùng làm bài mới; danh sách xếp mức 3 → 2 → 1; bài mở đầu khác bài mở đầu video trước;
+   - bài có 2 bản (12.wav, 12 (1).wav): lần dùng lại lấy bản kênh đó ít dùng hơn.
+   Video đầu của mỗi kênh toàn bài mới. Thẻ "Kênh & kho nhạc" cho biết mỗi kênh còn bao nhiêu bài mới, đủ cho khoảng mấy video;
+   kênh hết bài mới thì ý tưởng của kênh nằm chờ cho tới khi bạn thêm bài vào kho trên Drive (app tự chạy tiếp).
+5. Kênh: trang Tự động → thẻ "Kênh & kho nhạc". Ban đầu có một kênh "Kênh Giáng sinh" (đổi tên được). Làm cho nhiều kênh YouTube thì
+   gõ tên kênh → "＋ Thêm kênh". Từ đó app TỰ CHIA: mỗi video mới vào kênh đang có ít video nhất, các kênh đều nhau.
+   Các kênh dùng chung kho nhạc, nhưng bài cũ / bài mới tính riêng theo từng kênh. Bỏ tick "Bật" = tạm không làm video cho kênh đó.
+   Video xong nằm trong thư mục con theo tên kênh, và tệp "Tiêu đề - mô tả.txt" ghi tên kênh ở dòng đầu.
+6. Kho ý tưởng: MỖI KÊNH MỘT KHO (các nút 📺 tên kênh trên thẻ "Kho ý tưởng"). App mới bắt đầu với kho TRỐNG. Dán bảng ý tưởng ở
+   thẻ "Thêm việc" → chọn ô "Kênh" (Chia lần lượt các kênh, hoặc một kênh) → "Đọc bảng" → "Đưa vào kho"; hoặc bấm
+   "✨ Nhờ Claude đề xuất ngay" (cho kênh đang xem). Mỗi dòng: số | địa điểm + dịp lễ + năm 1950–1959 | mã chủ đề | dàn ý, ví dụ
        1 | Rockefeller Center Christmas Eve 1954 | T01 | Cặp đôi trẻ hẹn nhau ở sân băng dưới cây thông khổng lồ.
        2 | Woodstock Vermont First Snow 1952 | T18 | Chỉ cảnh, không nhân vật chính: làng tuyết, xe trượt ngựa kéo.
+   Bảng có dòng tiêu đề (vd. Số | Địa điểm | Chủ đề | Dàn ý | Kênh) thì cột Kênh ghi tên kênh nào, dòng đó vào kho của kênh đó.
    Dàn ý ghi rõ nhân vật: cặp đôi, gia đình, trẻ em, ông bà… hoặc "Chỉ cảnh, không nhân vật chính".
    Mã chủ đề T01–T22 xem ở trang Thư viện → Chủ đề.
-6. Tài khoản Muse dự phòng, tự đổi khi tài khoản hỏng, tự bỏ qua cảnh Muse lỗi: giống hệt app cũ (Cài đặt → thẻ "Tài khoản Muse").
+7. Tài khoản Muse dự phòng, tự đổi khi tài khoản hỏng, tự bỏ qua cảnh Muse lỗi: giống hệt app cũ (Cài đặt → thẻ "Tài khoản Muse").
    Không hồ sơ nào bị xoá. App chỉ dùng một tài khoản mỗi lúc; đừng dùng để luân phiên lách hạn mức tuần.
 
 
 D. LƯU Ý QUAN TRỌNG
 -------------------
 - Mỗi tài khoản Muse chỉ chạy ở MỘT nơi mỗi lúc (một máy, một app).
-- Video dựng xong nằm trong thư mục kết quả C:\Christmas-MV-Studio\KET QUA GIANG SINH\<số - địa điểm>\ (và trong
+- Video dựng xong nằm trong thư mục kết quả C:\Christmas-MV-Studio\KET QUA GIANG SINH\<tên kênh>\<số - địa điểm>\ (và trong
   C:\Christmas-MV-Studio\Christmas-MV-Studio\data\media\<mã video>\). Lấy ra bằng nút "Tải MP4" trong app, hoặc đặt "Thư mục kết quả"
   trong ổ Google Drive cho máy tính (giống app cũ, mục F của hướng dẫn cũ) để video tự lên Drive.
   Đăng xong thì chép video ra chỗ khác để giải phóng ổ C (mỗi video vài GB).
@@ -83,7 +99,7 @@ D. LƯU Ý QUAN TRỌNG
   YouTube tự chia chương.
 - Cập nhật app sau này: trên máy có mã nguồn chạy Dong-goi-cap-nhat.bat → được Christmas-MV-Studio-cap-nhat.zip
   → chép sang máy chạy → tắt app Giáng sinh → giải nén vào C:\Christmas-MV-Studio (chọn "Replace" / Thay thế các file) → chạy lại.
-  Dữ liệu ở máy chạy (cài đặt, kho ý tưởng, video, nhạc) được giữ nguyên.
+  Dữ liệu ở máy chạy (cài đặt, kênh, kho ý tưởng, video, nhạc) được giữ nguyên.
 
 
 E. THEO DÕI TIẾN ĐỘ TỪ MÁY CHÍNH

@@ -1,6 +1,6 @@
-// THƯ MỤC KẾT QUẢ: mỗi MV dựng xong có một thư mục riêng trong "Thư mục kết quả" (Cài đặt), vd.
-//   KET QUA\008 - Santa Monica Moonlight 1959\
-//     Just Us Two - Santa Monica Moonlight 1959.mp4   (tên theo tiêu đề YouTube — YouTube lấy tên file làm tiêu đề mặc định)
+// THƯ MỤC KẾT QUẢ: mỗi video dựng xong có một thư mục riêng trong "Thư mục kết quả" (Cài đặt), trong thư mục con của kênh, vd.
+//   KET QUA GIANG SINH\Kênh Giáng sinh\001 - Rockefeller Center Christmas Eve 1955\
+//     Christmas in Rockefeller Center 1955 … (1 Hour).mp4   (tên theo tiêu đề YouTube — YouTube lấy tên file làm tiêu đề mặc định)
 //     Ảnh bìa.jpg
 //     Tiêu đề - mô tả.txt
 // Thư mục kết quả nằm trong ổ Google Drive (Google Drive cho máy tính) thì các file tự được đưa lên Drive.
@@ -15,7 +15,8 @@ import type { MVResult, RenderInfo } from "./types";
 export const COVER_NAME = "Ảnh bìa.jpg";
 export const INFO_NAME = "Tiêu đề - mô tả.txt";
 
-const safeName = (s: string) =>
+/** Tên an toàn cho thư mục / file trên Windows. */
+export const safeName = (s: string) =>
   s
     .normalize("NFC")
     .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ")

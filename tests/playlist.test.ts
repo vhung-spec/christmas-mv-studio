@@ -1,42 +1,12 @@
-// Danh sách nhạc của video Giáng sinh dài (~1 tiếng): chọn bài, tên bài, mốc thời gian trong mô tả YouTube, chữ trên ảnh bìa.
+// Danh sách nhạc của video Giáng sinh dài (~1 tiếng): tên bài, mốc thời gian trong mô tả YouTube, chữ trên ảnh bìa.
+// (Chọn bài nào: tests/channels.test.ts — tự xếp bài kiểu Bokin.)
 import { describe, expect, it } from "vitest";
 import { coverText } from "@/lib/cover";
-import { chapterTime, pickPlaylist, trackTitle, withTracklist, type PoolSong } from "@/lib/playlist";
+import { chapterTime, trackTitle, withTracklist } from "@/lib/playlist";
 import { videoLengthLabel } from "@/lib/prompts";
-import { songKey } from "@/lib/songs";
 
-const song = (file: string, duration: number): PoolSong => ({ file: `D:/nhac/${file}`, duration, channels: 2 });
-
-describe("chọn bài cho danh sách nhạc", () => {
-  const pool = [
-    song("3.mp3", 200),
-    song("1 đã dùng.wav", 180),
-    song("1 (1).wav", 180),
-    song("1 (1).mp3", 180),
-    song("2.mp3", 190),
-    song("2 (1).mp3", 190),
-    song("Silent Snow.mp3", 210),
-    song("10.wav", 170),
-  ];
-
-  it("bản chưa dùng, mỗi bài một bản (WAV trước MP3), bài số nhỏ trước rồi tới bài theo tên; đủ độ dài thì dừng", () => {
-    const p = pickPlaylist(pool, 600);
-    expect(p.songs.map((s) => s.file.replace("D:/nhac/", ""))).toEqual(["1 (1).wav", "2.mp3", "3.mp3", "10.wav"]);
-    expect(p.total).toBe(740);
-    expect(p.enough).toBe(true);
-    expect(p.available).toBe(180 + 190 + 200 + 170 + 210);
-  });
-
-  it("bỏ bài đã ghép vào video khác; tên bài ghi trong ý tưởng được đặt lên đầu; không đủ thì báo", () => {
-    const taken = (f: string) => ["1|1", "2|0"].includes(songKey(f));
-    const p = pickPlaylist(pool, 600, { taken, first: "Silent Snow" });
-    expect(p.songs.map((s) => s.file.replace("D:/nhac/", ""))).toEqual(["Silent Snow.mp3", "2 (1).mp3", "3.mp3"]);
-    expect(pickPlaylist(pool, 3600).enough).toBe(false);
-    // Một bản mix dài sẵn đủ độ dài thì dùng một mình nó.
-    expect(pickPlaylist([song("Christmas Mix.wav", 3610), song("5.mp3", 180)], 3600, { first: "Christmas Mix" }).songs).toHaveLength(1);
-  });
-
-  it("tên bài: câu hook trong thư viện lời, không có thì tên file đã làm gọn", () => {
+describe("tên bài khi chưa có trong Kho bài hát", () => {
+  it("câu hook trong thư viện lời, không có thì tên file đã làm gọn", () => {
     const hooks = new Map([[2, "Snow On Main Street"]]);
     expect(trackTitle("2 (1).mp3", hooks)).toBe("Snow On Main Street");
     expect(trackTitle("7.wav", hooks)).toBe("Christmas Song No. 7");

@@ -17,6 +17,8 @@ export interface PipelineItem {
   /** Ý tưởng (khi bắt đầu từ ý tưởng, chưa có MV). */
   idea?: IdeaRow;
   mv_id?: string;
+  /** Kênh làm video này (phân luồng lúc thêm việc: kênh của ý tưởng, hoặc kênh đang có ít video nhất). */
+  channel?: string;
   steps: Record<StepName, PipelineStep>;
   /** Đã gửi các cảnh thiếu clip sang Muse. */
   clips_sent?: boolean;
@@ -47,6 +49,8 @@ export interface PipelineView {
   error: string | null;
   /** Đang viết kịch bản cho việc nào. */
   generating: string | null;
+  /** Các kênh (tên để hiện "đang làm cho kênh nào"). */
+  channels: { id: string; name: string; active: boolean }[];
 }
 
 export const STEP_LABEL: Record<StepName, string> = { script: "Kịch bản", song: "Nhạc", clips: "Clip Muse", render: "Dựng MP4" };

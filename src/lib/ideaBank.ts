@@ -1,22 +1,33 @@
-// KHO Ý TƯỞNG — ý tưởng của bạn (dán bảng) và ý tưởng Claude đề xuất, đánh dấu đã dùng / chưa dùng.
-// Dây chuyền tự động lấy dần ý tưởng chưa dùng (mỗi lúc vài MV, xem feedFromBank trong pipeline.ts); kho sắp hết thì
-// nhờ Claude nghĩ thêm — chờ bạn duyệt, hoặc dùng luôn nếu bật "Tự duyệt". Lưu ở data/ideas.json. Chỉ dùng phía server.
+// KHO Ý TƯỞNG — ý tưởng của bạn (dán bảng) và ý tưởng Claude đề xuất, đánh dấu đã dùng / chưa dùng. MỖI KÊNH MỘT KHO RIÊNG:
+// ý tưởng của kênh nào chỉ làm video cho kênh đó; Claude đề xuất theo từng kênh (không trùng ý tưởng của kênh khác).
+// Dây chuyền tự lấy dần ý tưởng chưa dùng, lần lượt đều các kênh (xem feedFromBank trong pipeline.ts); kho của kênh sắp hết thì
+// nhờ Claude nghĩ thêm cho kênh đó — chờ bạn duyệt, hoặc dùng luôn nếu bật "Tự duyệt". Lưu ở data/ideas.json. Chỉ dùng phía server.
 
 import { randomUUID } from "node:crypto";
+import { DEFAULT_CHANNEL_ID } from "./channelTypes";
+import { channelStatus, newPerVideo, readChannels, resolveChannel } from "./channels";
 import { UserError } from "./errors";
 import { generationMode } from "./generate";
-import { BANK_LIMITS, DEFAULT_BANK_CONFIG, type BankConfig, type BankStatus, type BankView, type IdeaBank, type MusicStock } from "./ideaBankTypes";
+import {
+  BANK_LIMITS,
+  DEFAULT_BANK_CONFIG,
+  type BankChannel,
+  type BankConfig,
+  type BankIdea,
+  type BankStatus,
+  type BankView,
+  type IdeaBank,
+  type MusicStock,
+} from "./ideaBankTypes";
 import { callStructured, hasCredentials } from "./llm";
 import { IDEAS_SCHEMA, zIdeaBatch, type RawIdeaBatch } from "./llmSchemas";
 import { mockIdeas } from "./mock";
+import { loadMusicLibrary } from "./musicLibrary";
 import { extractYear, splitThemeCell } from "./parser";
-import { ENOUGH_RATIO, pickPlaylist, songDurations } from "./playlist";
 import { IDEAS_SYSTEM, buildIdeasPrompt } from "./prompts";
 import { readSongLibrary } from "./songLibrary";
-import { listSongs } from "./songs";
-import { readUsedSongs, takenBy } from "./songsUsed";
 import { IDEAS_FILE, PIPELINE_FILE, listMVs, readJson, readLibraries, readSettings, withLock, writeJson } from "./store";
-import type { IdeaRow } from "./types";
+import type { IdeaRow, Settings } from "./types";
 
 /** Lần đề xuất tự động bị lỗi thì chờ chừng này mới tự thử lại (bấm "Nhờ Claude đề xuất ngay" thì thử luôn). */
 const RETRY_MS = 30 * 60 * 1000;
@@ -28,6 +39,9 @@ const g = globalThis as unknown as {
   __mvIdeaBank?: { suggesting: Promise<unknown> | null; error: string | null; failedAt: number; last: BankView["last"] };
 };
 const mem = (g.__mvIdeaBank ??= { suggesting: null, error: null, failedAt: 0, last: null });
+
+/** Kênh của một ý tưởng trong kho (ý tưởng cũ chưa có kênh → kênh mặc định). */
+export const ideaChannel = (x: Pick<BankIdea, "channel" | "idea">) => x.channel ?? x.idea.channel ?? DEFAULT_CHANNEL_ID;
 
 export async function readBank(): Promise<IdeaBank> {
   const b = await readJson<Partial<IdeaBank>>(IDEAS_FILE(), {});
@@ -55,16 +69,19 @@ const norm = (s = "") =>
     .trim();
 /** Khoá so trùng ý tưởng: địa điểm + dàn ý (bỏ dấu, hoa thường, dấu cách). */
 export const sameIdea = (i: IdeaRow) => `${norm(i.world_location)}|${norm(i.outline)}`;
+/** Khoá so trùng trong cùng kênh: kênh + địa điểm + dàn ý (cùng ý tưởng ở hai kênh là hai việc khác nhau). */
+export const ideaKey = (i: IdeaRow, channel = i.channel ?? DEFAULT_CHANNEL_ID) => `${channel}|${sameIdea(i)}`;
 
-/** Ý tưởng chạy thẳng (nút "Chạy ngay", không qua kho) mà cũng có trong kho → đánh dấu đã dùng để kho không lấy lại. */
+/** Ý tưởng chạy thẳng (nút "Chạy ngay", không qua kho) mà cũng có trong kho cùng kênh → đánh dấu đã dùng để kho không lấy lại. */
 export async function markIdeasUsed(ideas: IdeaRow[]): Promise<number> {
-  const keys = new Set(ideas.map(sameIdea));
-  if (!(await readBank()).ideas.some((x) => (x.status === "new" || x.status === "proposed") && keys.has(sameIdea(x.idea)))) return 0;
+  const keys = new Set(ideas.map((i) => ideaKey(i)));
+  const hit = (x: BankIdea) => (x.status === "new" || x.status === "proposed") && keys.has(ideaKey(x.idea, ideaChannel(x)));
+  if (!(await readBank()).ideas.some(hit)) return 0;
   return updateBank((b) => {
     const now = new Date().toISOString();
     let n = 0;
     for (const x of b.ideas) {
-      if ((x.status !== "new" && x.status !== "proposed") || !keys.has(sameIdea(x.idea))) continue;
+      if (!hit(x)) continue;
       Object.assign(x, { status: "used", used_at: now });
       n++;
     }
@@ -72,44 +89,61 @@ export async function markIdeasUsed(ideas: IdeaRow[]): Promise<number> {
   });
 }
 
-/** Thêm ý tưởng của bạn vào kho (bỏ qua ý tưởng đã có: trùng địa điểm + dàn ý). */
-export async function addIdeas(rows: IdeaRow[]): Promise<{ added: number; skipped: number }> {
+/**
+ * Thêm ý tưởng của bạn vào kho của kênh `channel` (bỏ qua ý tưởng kênh đó đã có: trùng địa điểm + dàn ý).
+ * `channel` = "auto": chia lần lượt cho các kênh đang bật (kênh ít ý tưởng chưa dùng nhất trước).
+ */
+export async function addIdeas(rows: IdeaRow[], channel = "auto"): Promise<{ added: number; skipped: number }> {
   if (!rows.length) throw new UserError("Chưa có ý tưởng nào.");
+  const channels = await readChannels();
+  if (channel !== "auto" && !channels.some((c) => c.id === channel)) throw new UserError("Không tìm thấy kênh.", 404);
+  const active = channels.filter((c) => c.active);
   return updateBank((b) => {
-    const seen = new Set(b.ideas.map((x) => sameIdea(x.idea)));
+    const seen = new Set(b.ideas.map((x) => ideaKey(x.idea, ideaChannel(x))));
+    const load = new Map(active.map((c) => [c.id, b.ideas.filter((x) => ideaChannel(x) === c.id && (x.status === "new" || x.status === "proposed")).length]));
     const now = new Date().toISOString();
     let added = 0;
-    for (const idea of rows) {
-      const k = sameIdea(idea);
+    for (const row of rows) {
+      // Cột Kênh của dòng (tên hoặc mã kênh) thắng; không có thì kênh đang chọn, hoặc chia lần lượt (kênh ít ý tưởng chưa dùng nhất).
+      const target =
+        resolveChannel(channels, row.channel) ??
+        (channel !== "auto"
+          ? channel
+          : (active.reduce<(typeof active)[number] | null>((best, c) => (!best || load.get(c.id)! < load.get(best.id)! ? c : best), null)?.id ?? DEFAULT_CHANNEL_ID));
+      const idea = { ...row, channel: target };
+      const k = ideaKey(idea);
       if (seen.has(k)) continue;
       seen.add(k);
-      b.ideas.push({ key: newKey(), idea, source: "user", status: "new", added_at: now });
+      b.ideas.push({ key: newKey(), idea, channel: target, source: "user", status: "new", added_at: now });
+      load.set(target, (load.get(target) ?? 0) + 1);
       added++;
     }
     return { added, skipped: rows.length - added };
   });
 }
 
-/** Xét một ý tưởng trước khi lấy: "take" = lấy · "wait" = để nguyên trong kho (vd. chưa có nhạc) · chuỗi khác = lý do bỏ qua. */
+/** Xét một ý tưởng trước khi lấy: "take" = lấy · "wait" = để nguyên trong kho (vd. hết bài mới) · chuỗi khác = lý do bỏ qua. */
 export type TakeCheck = (idea: IdeaRow) => "take" | "wait" | (string & {});
 
 /**
- * Lấy n ý tưởng chưa dùng (theo thứ tự trong kho) và đánh dấu đã dùng. `check` trả về lý do bỏ qua thì ý tưởng đó cũng được đánh
- * dấu đã dùng (kèm lý do) nhưng không lấy — vd. nhạc của bài đã dùng hết; trả về "wait" thì ý tưởng vẫn chờ trong kho.
+ * Lấy n ý tưởng chưa dùng của kênh (theo thứ tự trong kho) và đánh dấu đã dùng. `check` trả về lý do bỏ qua thì ý tưởng đó cũng được
+ * đánh dấu đã dùng (kèm lý do) nhưng không lấy; trả về "wait" thì ý tưởng vẫn chờ trong kho. Ý tưởng trả về mang mã kênh.
  */
-export async function takeIdeas(n: number, check?: TakeCheck): Promise<IdeaRow[]> {
-  if (n <= 0 || !(await readBank()).ideas.some((x) => x.status === "new")) return [];
+export async function takeIdeas(n: number, check?: TakeCheck, channel = DEFAULT_CHANNEL_ID): Promise<IdeaRow[]> {
+  const mine = (x: BankIdea) => x.status === "new" && ideaChannel(x) === channel;
+  if (n <= 0 || !(await readBank()).ideas.some(mine)) return [];
   return updateBank((b) => {
     const now = new Date().toISOString();
     const out: IdeaRow[] = [];
     for (const x of b.ideas) {
       if (out.length >= n) break;
-      if (x.status !== "new") continue;
-      const verdict = check ? check(x.idea) : "take";
+      if (!mine(x)) continue;
+      const idea = { ...x.idea, channel };
+      const verdict = check ? check(idea) : "take";
       if (verdict === "wait") continue;
       x.status = "used";
       x.used_at = now;
-      if (verdict === "take") out.push(x.idea);
+      if (verdict === "take") out.push(idea);
       else x.note = verdict;
     }
     return out;
@@ -117,43 +151,43 @@ export async function takeIdeas(n: number, check?: TakeCheck): Promise<IdeaRow[]
 }
 
 /**
- * Nhạc chưa dùng trong Thư mục nhạc (mỗi bài một bản; bài ghi "đã dùng" hoặc đã ghép vào video khác không tính) và đủ cho mấy video.
- * null khi chưa đặt Thư mục nhạc (hoặc không mở được).
+ * Kho nhạc cho một kênh: bài dùng được (Kho bài hát.xlsx + Thư mục nhạc), theo mức, bài kênh chưa dùng lần nào và đủ bài mới cho khoảng
+ * mấy video (mỗi video cần khoảng (100 − % bài cũ)% số bài là bài mới). null khi chưa đặt Thư mục nhạc (hoặc không mở được).
  */
-export async function musicStock(songDir: string, videoMinutes: number): Promise<MusicStock | null> {
-  const files = songDir.trim() ? await listSongs(songDir.trim()).catch(() => null) : null;
-  if (!files) return null;
-  // Sổ bài đã dùng: bài đã ghép vào video nào đó cũng coi như đã ghi "đã dùng".
-  const pick = pickPlaylist(await songDurations(files), Infinity, { taken: takenBy(await readUsedSongs()) });
-  const need = Math.max(1, videoMinutes) * 60 * ENOUGH_RATIO;
-  return { minutes: Math.round(pick.available / 60), songs: pick.songs.length, videos: Math.floor(pick.available / need + 1e-9), videoMinutes };
+export async function musicStock(settings: Settings, channelId = DEFAULT_CHANNEL_ID): Promise<MusicStock | null> {
+  if (!settings.songDir.trim()) return null;
+  const lib = await loadMusicLibrary(settings.songDir, settings.songSheet).catch(() => null);
+  if (!lib) return null;
+  const channels = await readChannels();
+  const ch = channels.find((c) => c.id === channelId) ?? channels[0];
+  const st = channelStatus(lib.songs, ch.history, newPerVideo(lib.songs, settings.videoMinutes * 60, ch.oldPercent));
+  return { songs: st.songs, levels: st.levels, unused: st.unused, videos: st.videosLeft, videoMinutes: settings.videoMinutes, sheet: Boolean(lib.sheet) };
 }
 
 /**
- * Kiểm tra theo Thư mục nhạc (video Giáng sinh dùng nhiều bài, không gắn bài với số ý tưởng): `needSong` thì chỉ lấy bấy nhiêu ý tưởng
- * mà nhạc chưa dùng còn đủ (trừ `reserved` video trong dây chuyền đang chờ ghép nhạc), còn lại chờ trong kho.
- * null khi không lọc (tắt, hoặc chưa đặt Thư mục nhạc).
+ * Kiểm tra theo kho nhạc: `needSong` thì chỉ lấy bấy nhiêu ý tưởng của kênh mà bài mới còn lại cho kênh đủ (trừ `reserved` video của
+ * kênh trong dây chuyền đang chờ ghép nhạc), còn lại chờ trong kho. null khi không lọc (tắt, hoặc chưa đặt Thư mục nhạc).
  */
-export async function songCheck(songDir: string, needSong: boolean, videoMinutes: number, reserved = 0): Promise<TakeCheck | null> {
+export async function songCheck(settings: Settings, needSong: boolean, channelId = DEFAULT_CHANNEL_ID, reserved = 0): Promise<TakeCheck | null> {
   if (!needSong) return null;
-  const stock = await musicStock(songDir, videoMinutes);
+  const stock = await musicStock(settings, channelId);
   if (!stock) return null;
   let left = stock.videos - reserved;
   return () => (left-- > 0 ? "take" : "wait");
 }
 
-/** Số video trong dây chuyền chưa xong mà chưa có nhạc (sẽ lấy nhạc trong Thư mục nhạc). */
-export async function waitingForMusic(): Promise<number> {
-  const st = await readJson<{ items: { done_at?: string; steps: { song: { status: string } } }[] }>(PIPELINE_FILE(), { items: [] });
-  return st.items.filter((i) => !i.done_at && i.steps.song.status !== "done").length;
+/** Số video của kênh trong dây chuyền chưa xong mà chưa có nhạc (sẽ lấy bài mới của kênh). */
+export async function waitingForMusic(channelId?: string): Promise<number> {
+  const st = await readJson<{ items: { done_at?: string; channel?: string; idea?: IdeaRow; steps: { song: { status: string } } }[] }>(PIPELINE_FILE(), { items: [] });
+  return st.items.filter((i) => !i.done_at && i.steps.song.status !== "done" && (!channelId || (i.channel ?? i.idea?.channel ?? DEFAULT_CHANNEL_ID) === channelId)).length;
 }
 
-/** Duyệt (đề xuất → chưa dùng) hoặc bỏ ý tưởng. keys = "proposed" → mọi ý tưởng đang chờ duyệt. Trả về số ý tưởng đã đổi. */
-export function setIdeas(keys: string[] | "proposed", action: "approve" | "reject"): Promise<number> {
+/** Duyệt (đề xuất → chưa dùng) hoặc bỏ ý tưởng. keys = "proposed" → mọi ý tưởng đang chờ duyệt (của kênh `channel` nếu có). */
+export function setIdeas(keys: string[] | "proposed", action: "approve" | "reject", channel?: string): Promise<number> {
   return updateBank((b) => {
     let n = 0;
     for (const x of b.ideas) {
-      if (keys === "proposed" ? x.status !== "proposed" : !keys.includes(x.key)) continue;
+      if (keys === "proposed" ? x.status !== "proposed" || (channel && ideaChannel(x) !== channel) : !keys.includes(x.key)) continue;
       const to: BankStatus | null =
         action === "approve" ? (x.status === "proposed" ? "new" : null) : x.status === "proposed" || x.status === "new" ? "rejected" : null;
       if (!to) continue;
@@ -182,25 +216,33 @@ export function setBankConfig(patch: Partial<Record<keyof BankConfig, unknown>>)
 
 // ---------- Claude đề xuất ý tưởng mới ----------
 
-/** Mọi ý tưởng app đã biết: các MV đã viết, việc trong dây chuyền, kho (kể cả đã bỏ) — để không đề xuất trùng. */
-async function knownIdeas(bank: IdeaBank): Promise<IdeaRow[]> {
-  const pipeline = await readJson<{ items: { idea?: IdeaRow }[] }>(PIPELINE_FILE(), { items: [] });
-  const all = [...(await listMVs()).map((m) => m.idea), ...pipeline.items.flatMap((i) => (i.idea ? [i.idea] : [])), ...bank.ideas.map((x) => x.idea)];
+/**
+ * Mọi ý tưởng app đã biết: các MV đã viết, việc trong dây chuyền, kho (kể cả đã bỏ) — để không đề xuất trùng (ở mọi kênh).
+ * `channel` = chỉ lấy ý tưởng của kênh đó (làm mẫu, đánh số tiếp, series).
+ */
+async function knownIdeas(bank: IdeaBank, channel?: string): Promise<IdeaRow[]> {
+  const pipeline = await readJson<{ items: { idea?: IdeaRow; channel?: string }[] }>(PIPELINE_FILE(), { items: [] });
+  const all = [
+    ...(await listMVs()).map((m) => m.idea),
+    ...pipeline.items.flatMap((i) => (i.idea ? [{ ...i.idea, channel: i.channel ?? i.idea.channel }] : [])),
+    ...bank.ideas.map((x) => ({ ...x.idea, channel: ideaChannel(x) })),
+  ];
   const seen = new Set<string>();
   return all.filter((i) => {
-    const k = sameIdea(i);
+    if (channel && (i.channel ?? DEFAULT_CHANNEL_ID) !== channel) return false;
+    const k = channel ? sameIdea(i) : ideaKey(i);
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
   });
 }
 
-/** Chủ đề trong thư viện + chủ đề đã gặp trong kho (bảng gốc có thể dùng mã chưa có trong thư viện), kèm số lần dùng. */
-async function themeList(bank: IdeaBank) {
+/** Chủ đề trong thư viện + chủ đề đã gặp trong kho của kênh (bảng gốc có thể dùng mã chưa có trong thư viện), kèm số lần dùng ở kênh. */
+async function themeList(bank: IdeaBank, channel: string) {
   const libs = await readLibraries();
   const names = new Map<string, string>(Object.entries(libs.themes).map(([code, t]) => [code, t.name]));
   const used = new Map<string, number>();
-  for (const x of bank.ideas) {
+  for (const x of bank.ideas.filter((i) => ideaChannel(i) === channel)) {
     const code = x.idea.theme_code.trim().toUpperCase();
     if (!names.has(code)) names.set(code, x.idea.theme_name || code);
     if (x.status !== "rejected") used.set(code, (used.get(code) ?? 0) + 1);
@@ -250,18 +292,21 @@ export function cleanSuggestions(raw: RawIdeaBatch["ideas"], known: IdeaRow[], t
   return { ideas, problems };
 }
 
-async function runSuggest(count?: number): Promise<NonNullable<BankView["last"]>> {
+async function runSuggest(count: number | undefined, channel: string): Promise<NonNullable<BankView["last"]>> {
   const settings = await readSettings();
   const mode = generationMode(settings);
   if (mode === "manual") {
     throw new UserError("Cần Claude API key để đề xuất ý tưởng: vào Cài đặt → “API key của Claude” (hoặc chọn chế độ Demo để thử).");
   }
   if (mode === "claude" && !hasCredentials()) throw new UserError("Chưa có Claude API key — nhập key trong Cài đặt rồi thử lại.");
+  if (!(await readChannels()).some((c) => c.id === channel)) throw new UserError("Không tìm thấy kênh.", 404);
   const bank = await readBank();
   const n = clamp(count ?? bank.config.batch, BANK_LIMITS.batch, bank.config.batch);
-  const { libs, themes } = await themeList(bank);
+  const { libs, themes } = await themeList(bank, channel);
   const allowed = new Set(themes.map((t) => t.code));
+  // Không trùng ý tưởng nào của mọi kênh; mẫu, số thứ tự và series theo kênh.
   const known = await knownIdeas(bank);
+  const mine = await knownIdeas(bank, channel);
   let raw: RawIdeaBatch;
   let cost: number | null = null;
   if (mode === "mock") {
@@ -270,7 +315,7 @@ async function runSuggest(count?: number): Promise<NonNullable<BankView["last"]>
     const res = await callStructured({
       settings,
       system: IDEAS_SYSTEM,
-      user: buildIdeasPrompt({ count: n, themes, examples: pickExamples(known), existing: known, series: seriesOf(known, nextIdeaId(known)) }),
+      user: buildIdeasPrompt({ count: n, themes, examples: pickExamples(mine.length ? mine : known), existing: known, series: seriesOf(mine, nextIdeaId(mine)) }),
       schema: IDEAS_SCHEMA,
       validator: zIdeaBatch,
       check: (d) => {
@@ -290,8 +335,9 @@ async function runSuggest(count?: number): Promise<NonNullable<BankView["last"]>
   const added = await updateBank(async (b) => {
     // Đọc lại: trong lúc Claude nghĩ, kho có thể đã thêm ý tưởng.
     const pool = await knownIdeas(b);
+    const own = await knownIdeas(b, channel);
     const { ideas } = cleanSuggestions(raw.ideas.slice(0, n), pool, allowed);
-    let id = nextIdeaId(pool);
+    let id = nextIdeaId(own);
     for (const s of ideas) {
       const start = blockStart(id);
       const name = names.get(s.theme_code);
@@ -299,22 +345,24 @@ async function runSuggest(count?: number): Promise<NonNullable<BankView["last"]>
         id: String(id++),
         ...s,
         ...(name && name !== s.theme_code ? { theme_name: name } : {}),
-        series: seriesOf(pool, start) ?? `${start}–${start + SERIES_SIZE - 1} · ${label}`,
+        series: seriesOf(own, start) ?? `${start}–${start + SERIES_SIZE - 1} · ${label}`,
+        channel,
       };
+      own.push(idea);
       pool.push(idea);
-      b.ideas.push({ key: newKey(), idea, source: "claude", status: b.config.autoApprove ? "new" : "proposed", added_at: at });
+      b.ideas.push({ key: newKey(), idea, channel, source: "claude", status: b.config.autoApprove ? "new" : "proposed", added_at: at });
     }
     return ideas.length;
   });
   // Không thêm được ý tưởng nào → báo lỗi (dây chuyền chờ RETRY_MS rồi mới thử lại, không gọi Claude liên tục).
   if (!added) throw new UserError("Claude chưa đưa ra ý tưởng mới nào dùng được (trùng hoặc sai định dạng) — thử lại sau.");
-  return { at, added, dropped: raw.ideas.length - added, cost_usd: cost };
+  return { at, channel, added, dropped: raw.ideas.length - added, cost_usd: cost };
 }
 
-/** Nhờ Claude (hoặc chế độ Demo) nghĩ thêm ý tưởng và đưa vào kho. Mỗi lúc chỉ một lần; chờ tới khi xong. */
-export async function suggestIdeas(count?: number): Promise<NonNullable<BankView["last"]>> {
+/** Nhờ Claude (hoặc chế độ Demo) nghĩ thêm ý tưởng cho kênh và đưa vào kho của kênh. Mỗi lúc chỉ một lần; chờ tới khi xong. */
+export async function suggestIdeas(count?: number, channel = DEFAULT_CHANNEL_ID): Promise<NonNullable<BankView["last"]>> {
   if (mem.suggesting) throw new UserError("Claude đang nghĩ ý tưởng mới — chờ chút.");
-  const run = runSuggest(count);
+  const run = runSuggest(count, channel);
   mem.suggesting = run.catch(() => {});
   try {
     const last = await run;
@@ -332,12 +380,12 @@ export async function suggestIdeas(count?: number): Promise<NonNullable<BankView
 }
 
 /**
- * Đề xuất chạy nền; xong (thành công hay lỗi) thì gọi onDone. `force` = người dùng bấm, bỏ qua thời gian chờ sau lỗi.
+ * Đề xuất cho kênh, chạy nền; xong (thành công hay lỗi) thì gọi onDone. `force` = người dùng bấm, bỏ qua thời gian chờ sau lỗi.
  * Trả về false nếu không bắt đầu (đang chạy, hoặc vừa lỗi chưa đủ RETRY_MS).
  */
-export function startSuggest(onDone: () => void, force = false): boolean {
+export function startSuggest(onDone: () => void, force = false, channel = DEFAULT_CHANNEL_ID): boolean {
   if (mem.suggesting || (!force && mem.failedAt && Date.now() - mem.failedAt < RETRY_MS)) return false;
-  void suggestIdeas().then(onDone, (err) => {
+  void suggestIdeas(undefined, channel).then(onDone, (err) => {
     console.error("[ideas]", (err as Error).message);
     onDone();
   });
@@ -351,23 +399,34 @@ export async function suggestIdle(): Promise<void> {
   while (mem.suggesting) await mem.suggesting;
 }
 
-export async function bankView(): Promise<BankView> {
-  const b = await readBank();
+const countsOf = (ideas: BankIdea[]) => {
   const counts: Record<BankStatus, number> = { new: 0, proposed: 0, used: 0, rejected: 0 };
-  for (const x of b.ideas) counts[x.status]++;
-  // Nhạc chưa dùng còn đủ cho mấy video; đang bật "chỉ lấy ý tưởng khi đủ nhạc" mà chưa đủ thì chưa ý tưởng nào tới lượt.
+  for (const x of ideas) counts[x.status]++;
+  return counts;
+};
+
+/** Kho ý tưởng của kênh `channel` (không ghi = kênh đầu tiên) + số ý tưởng của từng kênh. */
+export async function bankView(channel?: string): Promise<BankView> {
+  const b = await readBank();
+  const list = await readChannels();
+  const current = list.find((c) => c.id === channel) ?? list[0];
+  const channels: BankChannel[] = list.map((c) => ({ id: c.id, name: c.name, active: c.active, counts: countsOf(b.ideas.filter((x) => ideaChannel(x) === c.id)) }));
+  const mine = b.ideas.filter((x) => ideaChannel(x) === current.id);
+  // Bài mới còn lại cho kênh đủ cho mấy video; bật "chỉ lấy ý tưởng khi còn bài mới" thì chỉ bấy nhiêu ý tưởng tới lượt.
   const settings = await readSettings();
-  const music = await musicStock(settings.songDir, settings.videoMinutes);
-  const fresh = b.ideas.filter((x) => x.status === "new");
-  const ready = b.config.needSong && music ? fresh.slice(0, Math.max(0, music.videos - (await waitingForMusic()))) : null;
+  const music = await musicStock(settings, current.id);
+  const fresh = mine.filter((x) => x.status === "new");
+  const ready = b.config.needSong && music ? fresh.slice(0, Math.max(0, music.videos - (await waitingForMusic(current.id)))) : null;
   return {
     config: b.config,
-    counts,
+    channel: current.id,
+    channels,
+    counts: countsOf(mine),
     ready: ready ? ready.length : null,
     music,
     upcoming: (ready ?? fresh).slice(0, 20),
-    proposals: b.ideas.filter((x) => x.status === "proposed"),
-    skipped: b.ideas
+    proposals: mine.filter((x) => x.status === "proposed"),
+    skipped: mine
       .filter((x) => x.note)
       .sort((p, q) => (q.used_at ?? "").localeCompare(p.used_at ?? ""))
       .slice(0, 20),

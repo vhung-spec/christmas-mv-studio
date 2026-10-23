@@ -20,7 +20,8 @@ import { EBUR128_FILTER, MAX_AAC_ATTEMPTS, gainDecision, parseEbur128, retryGain
 import { loadProject, mediaDir, mediaPath, updateProject } from "./media";
 import { withTracklist } from "./playlist";
 import { AUDIO_BITRATE, videoEncoderArgs } from "./quality";
-import { exportResult } from "./results";
+import { exportResult, safeName } from "./results";
+import { channelFor } from "./channels";
 import { loadMV, readSettings } from "./store";
 import type { EditOptions, EditPlan, EditSegment, LoudnessReport, LoudnessStats, MVResult, RenderInfo, RenderJob, Verification, VideoProject } from "./types";
 
@@ -433,9 +434,10 @@ async function runJob(job: JobState, mv: MVResult, project: VideoProject, plan: 
     const outName = stampName(mv);
     await fs.rename(partial, mediaPath(mv.id, outName));
     const stat = await fs.stat(mediaPath(mv.id, outName));
-    // Ảnh bìa + tiêu đề / mô tả YouTube cạnh file MP4 (lỗi thì bỏ qua — video vẫn xong).
+    // Ảnh bìa + tiêu đề / mô tả YouTube cạnh file MP4 (lỗi thì bỏ qua — video vẫn xong). Kênh của video ghi đầu file tiêu đề.
     job.stage = "Ảnh bìa + tiêu đề YouTube";
-    const extras = await makeCoverAndInfo(told, project, outName, tmp).catch((err) => {
+    const channel = await channelFor(mv).catch(() => null);
+    const extras = await makeCoverAndInfo(told, project, outName, tmp, undefined, channel?.name).catch((err) => {
       console.error("[cover]", (err as Error).message);
       return null;
     });
@@ -456,11 +458,12 @@ async function runJob(job: JobState, mv: MVResult, project: VideoProject, plan: 
       ...(extras?.cover ? { cover: extras.cover } : {}),
       ...(extras ? { youtube_info: extras.info } : {}),
     };
-    // Thư mục kết quả (video + ảnh bìa + tiêu đề); nằm trong ổ Google Drive thì tự lên Drive. Lỗi thì bỏ qua.
+    // Thư mục kết quả (video + ảnh bìa + tiêu đề), trong thư mục con của kênh; nằm trong ổ Google Drive thì tự lên Drive. Lỗi thì bỏ qua.
     const resultsDir = (await readSettings()).resultsDir;
     if (resultsDir) {
       job.stage = "Tạo thư mục kết quả";
-      output.result_dir = await exportResult(mv, output, resultsDir).catch((err) => {
+      const dir = channel ? path.join(/*turbopackIgnore: true*/ resultsDir, safeName(channel.name) || "Kenh") : resultsDir;
+      output.result_dir = await exportResult(mv, output, dir).catch((err) => {
         console.error("[results]", (err as Error).message);
         return undefined;
       });

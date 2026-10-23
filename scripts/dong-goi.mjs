@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Đóng gói app để chép sang máy khác (bấm đúp "Dong-goi-cai-moi.bat" / "Dong-goi-cap-nhat.bat"):
-//   node scripts/dong-goi.mjs             → bản CÀI MỚI: mã nguồn + dữ liệu của bạn (cài đặt, thư viện lời, kho ý tưởng, chủ đề…)
+//   node scripts/dong-goi.mjs             → bản CÀI MỚI: mã nguồn + dữ liệu của bạn (cài đặt, thư viện lời, kênh, kho ý tưởng, chủ đề…)
 //   node scripts/dong-goi.mjs --cap-nhat  → bản CẬP NHẬT: chỉ mã nguồn (giải nén đè lên thư mục app ở máy kia, dữ liệu ở đó giữ nguyên)
 //   --ra <thư mục>                        → nơi để file zip (mặc định: thư mục "<tên thư mục app>-goi" cạnh thư mục app,
 //                                           vd. D:\bokin-christmas → D:\bokin-christmas-goi)
@@ -32,6 +32,8 @@ const DATA_KEEP = [
   "couples.json",
   "song_library.json",
   "ideas.json",
+  // Kênh + lịch sử nhạc từng kênh: phải đi cùng kho ý tưởng (mỗi ý tưởng gắn mã kênh).
+  "channels.json",
 ];
 
 function fail(msg) {

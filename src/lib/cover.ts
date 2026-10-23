@@ -64,10 +64,11 @@ export function coverText(mv: Pick<MVResult, "idea" | "youtube_titles">, hook?: 
   return { lines, sub };
 }
 
-/** Nội dung file thông tin YouTube. */
-export function youtubeInfo(mv: Pick<MVResult, "youtube_titles" | "youtube_description" | "idea">): string {
+/** Nội dung file thông tin YouTube (kênh đăng video ở đầu, nếu biết). */
+export function youtubeInfo(mv: Pick<MVResult, "youtube_titles" | "youtube_description" | "idea">, channelName?: string): string {
   const titles = (mv.youtube_titles ?? []).map((t) => t.trim()).filter(Boolean);
   const out = [
+    ...(channelName ? ["KÊNH", channelName, ""] : []),
     "TIÊU ĐỀ",
     titles[0] ?? mv.idea.song_title ?? mv.idea.world_location,
     "",
@@ -89,10 +90,11 @@ export async function makeCoverAndInfo(
   videoFile: string,
   work: string,
   hook?: string,
+  channelName?: string,
 ): Promise<{ cover: string | null; info: string }> {
   const stem = videoFile.replace(/\.mp4$/i, "");
   const info = `${stem}-youtube.txt`;
-  await fs.writeFile(mediaPath(mv.id, info), "﻿" + youtubeInfo(mv), "utf8");
+  await fs.writeFile(mediaPath(mv.id, info), "﻿" + youtubeInfo(mv, channelName), "utf8");
 
   const clips = project.clips as Record<string, ClipRef>;
   const shot = pickCoverShot(mv, clips);

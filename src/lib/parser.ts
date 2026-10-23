@@ -36,6 +36,8 @@ const HEADER_ALIASES: Record<Field, string[]> = {
   tempo_or_bpm: ["bpmtempo", "tempobpm"],
   lyrics: ["lyrics", "loi", "loibaihat", "lyric", "loibai"],
   series: ["series", "loat", "seri", "bo"],
+  // Cột Kênh (tên kênh): ý tưởng của kênh đó; không có cột thì ý tưởng vào kênh đang chọn / chia lần lượt các kênh.
+  channel: ["kenh", "channel", "tenkenh", "kenhyoutube"],
 };
 
 const POSITIONAL_AFTER_OUTLINE: Field[] = ["song_title", "duration_sec", "tempo_or_bpm", "lyrics", "series"];

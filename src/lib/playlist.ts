@@ -1,14 +1,13 @@
 // DANH SÁCH NHẠC CỦA VIDEO DÀI — video Giáng sinh khoảng 1 tiếng dùng nhiều bài nối nhau (Cài đặt → Độ dài video).
-// Kho nhạc như kho của kênh cũ: file đặt theo số bài ("12.wav", "12 (1).wav" = bản thứ hai, "8 đã dùng.mp3"), hoặc theo tên bài.
-// Mỗi video lấy lần lượt các bài CHƯA DÙNG (bỏ bản ghi "đã dùng" và bản đã ghép vào video khác — sổ bài đã dùng), mỗi bài một bản,
-// số bài nhỏ trước, cho tới khi đủ độ dài; một file dài sẵn (vd. bản mix 1 tiếng) đủ độ dài thì dùng một mình nó.
-// Rồi nối thành một file FLAC (không mất chất lượng) và ghi lại bài nào bắt đầu ở giây nào — để viết danh sách bài vào mô tả YouTube.
+// Chọn bài nào, thứ tự ra sao: tự xếp bài kiểu Bokin Playlist Studio theo lịch sử từng kênh (channels.ts) trên kho nhạc
+// (musicLibrary.ts: Kho bài hát.xlsx + Thư mục nhạc). Ở đây: đo thời lượng file, nối các bài thành một file FLAC (không mất chất
+// lượng), ghi lại bài nào bắt đầu ở giây nào và viết danh sách bài (kèm mốc thời gian) vào mô tả YouTube.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { ffmpegOrThrow, probe } from "./ffmpeg";
 import { readSongLibrary } from "./songLibrary";
-import { isUsedSong, normSong, pickSong, songNumber, type SongTaken } from "./songs";
+import { songNumber } from "./songs";
 import type { PlaylistTrack } from "./types";
 
 /** Nhạc ít hơn chừng này phần độ dài video thì chưa ghép (chờ thêm bài). */
@@ -43,63 +42,11 @@ export async function songDurations(files: string[]): Promise<PoolSong[]> {
   return out;
 }
 
-const extRank = (file: string) => (/\.(wav|flac|aiff?)$/i.test(file) ? 0 : 1);
-
-/** Nhóm "cùng một bài" (mọi bản của bài số 12 là một nhóm; bài đặt theo tên thì mỗi tên một nhóm). */
-function songGroup(file: string): string {
-  const num = songNumber(path.basename(file));
-  if (num) return `n|${num.n}`;
-  return `t|${normSong(path.basename(file).replace(/\.[a-z0-9]{2,5}$/i, "")).replace(/\bda ?dung\b/g, " ").replace(/\s+/g, " ").trim()}`;
-}
-
-export interface PlaylistPick {
-  songs: PoolSong[];
-  total: number;
-  /** Đủ ít nhất ENOUGH_RATIO độ dài video. */
-  enough: boolean;
-  /** Tổng thời lượng mọi bản chưa dùng còn trong kho (mỗi bài một bản). */
-  available: number;
-}
-
-/**
- * Chọn bài cho một video dài `targetSec` giây: bản chưa dùng, mỗi bài một bản (bản số nhỏ trước, WAV trước MP3), bài số nhỏ trước rồi tới
- * bài đặt theo tên; `first` (tên bài ghi trong ý tưởng) được đặt lên đầu. Dừng khi đủ độ dài (bài cuối có thể vượt một chút).
- */
-export function pickPlaylist(pool: PoolSong[], targetSec: number, opts: { first?: string; taken?: SongTaken } = {}): PlaylistPick {
-  const free = pool.filter((s) => s.duration > 0 && !isUsedSong(path.basename(s.file)) && !opts.taken?.(s.file));
-  const order = [...free].sort((a, b) => {
-    const na = songNumber(path.basename(a.file));
-    const nb = songNumber(path.basename(b.file));
-    if (na && nb) return na.n - nb.n || na.version - nb.version || extRank(a.file) - extRank(b.file) || a.file.localeCompare(b.file);
-    if (na || nb) return na ? -1 : 1;
-    return a.file.localeCompare(b.file);
-  });
-  // Mỗi bài một bản.
-  const seen = new Set<string>();
-  const one = order.filter((s) => {
-    const k = songGroup(s.file);
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-  const pinned = opts.first?.trim() ? pickSong(opts.first, one.map((s) => s.file)) : null;
-  const list = pinned ? [one.find((s) => s.file === pinned.file)!, ...one.filter((s) => s.file !== pinned.file)] : one;
-  const available = list.reduce((a, s) => a + s.duration, 0);
-  const songs: PoolSong[] = [];
-  let total = 0;
-  for (const s of list) {
-    if (total >= targetSec - 1e-6) break;
-    songs.push(s);
-    total += s.duration;
-  }
-  return { songs, total, enough: total >= targetSec * ENOUGH_RATIO, available };
-}
-
 const titleCase = (s: string) => s.replace(/(^|[\s(-])(\p{Ll})/gu, (_m, p: string, c: string) => p + c.toUpperCase());
 
-/** Tên bài cho mô tả YouTube: câu hook điệp khúc trong thư viện lời (bài đánh số), không có thì tên file đã làm gọn. */
+/** Tên bài khi bài chưa có trong Kho bài hát.xlsx: câu hook điệp khúc trong thư viện lời (bài đánh số), không có thì tên file đã làm gọn. */
 export function trackTitle(file: string, hooks: Map<number, string>): string {
-  const base = path.basename(file);
+  const base = path.basename(file).normalize("NFC");
   const num = songNumber(base);
   if (num) return hooks.get(num.n) || `Christmas Song No. ${num.n}`;
   const stem = base
@@ -144,22 +91,35 @@ export async function libraryHooks(): Promise<Map<number, string>> {
   return new Map(lib.songs.filter((s) => s.hook).map((s) => [s.n, s.hook]));
 }
 
+/** Một bài để nối: file (bản đã chọn), thời lượng, số kênh tiếng, tên hiện trong danh sách bài. */
+export interface PlaylistItem extends PoolSong {
+  title: string;
+  /** Mã bài trong kho (ghi vào danh sách bài của video). */
+  code?: string;
+}
+
 /**
  * Nối các bài thành một file FLAC 48 kHz stereo 16-bit `out` (bài mono được nhân đôi nguyên mức). Trả về danh sách bài kèm mốc bắt đầu.
  */
-export async function buildPlaylistAudio(songs: PoolSong[], out: string, hooks: Map<number, string>, signal?: AbortSignal): Promise<PlaylistTrack[]> {
-  if (!songs.length) throw new Error("Chưa có bài nào để ghép.");
-  const inputs = songs.flatMap((s) => ["-i", s.file]);
-  const chains = songs.map((s, i) => `[${i}:a:0]${s.channels === 1 ? "pan=stereo|c0=c0|c1=c0," : ""}aresample=48000,aformat=sample_fmts=s16:channel_layouts=stereo[a${i}]`);
-  const graph = `${chains.join(";")};${songs.map((_, i) => `[a${i}]`).join("")}concat=n=${songs.length}:v=0:a=1[out]`;
+export async function buildPlaylistAudio(items: PlaylistItem[], out: string, signal?: AbortSignal): Promise<PlaylistTrack[]> {
+  if (!items.length) throw new Error("Chưa có bài nào để ghép.");
+  const inputs = items.flatMap((s) => ["-i", s.file]);
+  const chains = items.map((s, i) => `[${i}:a:0]${s.channels === 1 ? "pan=stereo|c0=c0|c1=c0," : ""}aresample=48000,aformat=sample_fmts=s16:channel_layouts=stereo[a${i}]`);
+  const graph = `${chains.join(";")};${items.map((_, i) => `[a${i}]`).join("")}concat=n=${items.length}:v=0:a=1[out]`;
   await ffmpegOrThrow(
     ["-hide_banner", "-loglevel", "error", "-y", ...inputs, "-filter_complex", graph, "-map", "[out]", "-map_metadata", "-1", "-c:a", "flac", "-sample_fmt", "s16", out],
     "Ghép danh sách nhạc",
     { signal },
   );
   let start = 0;
-  return songs.map((s) => {
-    const t: PlaylistTrack = { name: path.basename(s.file), title: trackTitle(s.file, hooks), start: Math.round(start * 1000) / 1000, duration: Math.round(s.duration * 1000) / 1000 };
+  return items.map((s) => {
+    const t: PlaylistTrack = {
+      name: path.basename(s.file),
+      title: s.title,
+      start: Math.round(start * 1000) / 1000,
+      duration: Math.round(s.duration * 1000) / 1000,
+      ...(s.code ? { code: s.code } : {}),
+    };
     start += s.duration;
     return t;
   });

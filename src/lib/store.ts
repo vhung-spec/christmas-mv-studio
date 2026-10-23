@@ -42,8 +42,8 @@ export const IDEAS_FILE = () => dataPath("ideas.json");
 export const SONG_LIBRARY_FILE = () => dataPath("song_library.json");
 /** Kết quả lần đồng bộ kho nhạc từ Google Drive gần nhất. */
 export const DRIVE_SYNC_FILE = () => dataPath("drive_sync.json");
-/** Sổ bài đã dùng: bài nhạc nào đã ghép vào MV nào (không lấy lại cho MV khác). */
-export const SONGS_USED_FILE = () => dataPath("songs_used.json");
+/** Các kênh: cài đặt xếp bài và lịch sử bài từng video của mỗi kênh (thay cho sổ bài đã dùng songs_used.json của bản trước). */
+export const CHANNELS_FILE = () => dataPath("channels.json");
 
 export const LIBRARY_FILES = {
   themes: "themes.json",
@@ -85,6 +85,7 @@ export const DEFAULT_SETTINGS: Settings = {
   monitorPort: 3301,
   eraShare: 40,
   videoMinutes: 60,
+  songSheet: "",
   resultsDir: "KET QUA GIANG SINH",
 };
 
