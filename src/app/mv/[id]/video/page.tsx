@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { TrackList, audioTracks } from "@/components/channels/TrackList";
 import ClipGrid, { VIDEO_ACCEPT } from "@/components/video/ClipGrid";
 import ClipStrip from "@/components/video/ClipStrip";
 import EditOptionsCard from "@/components/video/EditOptionsCard";
@@ -347,6 +348,14 @@ export default function VideoPage() {
               onTimeUpdate={(e) => setNow(e.currentTarget.currentTime)}
               onSeeked={(e) => setNow(e.currentTarget.currentTime)}
             />
+            {(audio.tracks?.length ?? 0) > 1 && (
+              <details className="rounded border border-ink/10 p-2">
+                <summary className="cursor-pointer text-sm font-semibold">Danh sách bài ({audio.tracks!.length} bài) — giờ bắt đầu từng bài</summary>
+                <div className="mt-2">
+                  <TrackList tracks={audioTracks(audio)} />
+                </div>
+              </details>
+            )}
           </div>
         ) : (
           <div

@@ -6,6 +6,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { KindBadge } from "@/components/channels/ChannelPlanCard";
+import { VideoTracks } from "@/components/channels/TrackList";
 import { MuseStatus, useMuse } from "@/components/muse/MusePanels";
 import { FeedCard } from "@/components/pipeline/FeedCard";
 import type { BankData } from "@/components/pipeline/IdeaBankCard";
@@ -44,6 +45,8 @@ export default function PipelinePage() {
   const [busy, setBusy] = useState(false);
   /** Lọc danh sách theo kênh ("" = mọi kênh). */
   const [only, setOnly] = useState("");
+  /** Việc đang mở danh sách bài. */
+  const [tracksOf, setTracksOf] = useState<Set<string>>(new Set());
   const muse = useMuse();
 
   const reload = useCallback(() => api<View>("/api/pipeline").then(setView, (e) => setError((e as Error).message)), []);
@@ -203,6 +206,22 @@ export default function PipelinePage() {
                       </span>
                     ))}
                     <span className="ml-auto flex flex-wrap gap-2 text-xs">
+                      {it.mv_id && it.steps.song.status === "done" && (
+                        <button
+                          className="btn-ghost btn-sm"
+                          aria-expanded={tracksOf.has(it.id)}
+                          onClick={() =>
+                            setTracksOf((o) => {
+                              const n = new Set(o);
+                              if (n.has(it.id)) n.delete(it.id);
+                              else n.add(it.id);
+                              return n;
+                            })
+                          }
+                        >
+                          🎵 {tracksOf.has(it.id) ? "Ẩn danh sách bài" : "Danh sách bài"}
+                        </button>
+                      )}
                       {it.mv_id && (
                         <Link href={`/mv/${it.mv_id}/video`} className="btn-ghost btn-sm">
                           Mở MV
@@ -223,6 +242,11 @@ export default function PipelinePage() {
                       </button>
                     </span>
                   </div>
+                  {it.mv_id && tracksOf.has(it.id) && (
+                    <div className="mt-2 rounded border border-ink/10 bg-cream/50 p-2">
+                      <VideoTracks mvId={it.mv_id} title={it.title} />
+                    </div>
+                  )}
                   {it.done_at ? (
                     <div className="mt-2 flex flex-wrap items-start gap-3">
                       {it.mv_id && it.cover && (

@@ -296,6 +296,31 @@ export function pickMvSong(songs: LibSong[], history: ChannelVideo[], reserved: 
   return list.sort((a, b) => b.level - a.level || Number(hasLyrics(b)) - Number(hasLyrics(a)))[0] ?? null;
 }
 
+export interface SongUse {
+  video: ChannelVideo;
+  /** Bản đã dùng (tên file). */
+  file: string;
+  /** Bài thứ mấy trong video (1 = mở đầu). */
+  position: number;
+}
+
+/**
+ * Bài kênh đã dùng, theo lịch sử kênh: mỗi bài các lần dùng (mới nhất trước); bài dùng gần đây nhất đứng trước (cùng một video thì
+ * theo thứ tự trong video).
+ */
+export function songUses(history: ChannelVideo[]): { code: string; uses: SongUse[] }[] {
+  const songs = new Map<string, { code: string; uses: SongUse[]; last: number; at: number }>();
+  history.forEach((video, i) =>
+    video.codes.forEach((code, k) => {
+      const s = songs.get(key(code)) ?? { code, uses: [], last: 0, at: 0 };
+      s.uses.unshift({ video, file: video.files[k] ?? "", position: k + 1 });
+      Object.assign(s, { last: i, at: k });
+      songs.set(key(code), s);
+    }),
+  );
+  return [...songs.values()].sort((a, b) => b.last - a.last || a.at - b.at).map(({ code, uses }) => ({ code, uses }));
+}
+
 /** Phân luồng: kênh đang bật có ít video nhất (đang làm + đã xong) — bằng nhau thì kênh đứng trước trong danh sách. */
 export function routeChannel<C extends Pick<Channel, "id" | "active">>(channels: C[], load: Map<string, number>, skip: Set<string> = new Set()): C | null {
   let best: C | null = null;

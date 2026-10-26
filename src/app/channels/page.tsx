@@ -1,12 +1,14 @@
 "use client";
 
-// Trang Kênh: quản lý từng kênh (cài đặt, thứ tự sản xuất MV / playlist), kế hoạch sản xuất, giao việc, kho ý tưởng của kênh; cuối trang
-// là kho nhạc chung trên Drive (cài một lần). Dây chuyền sản xuất (các video đang làm) ở trang Dây chuyền.
+// Trang Kênh: quản lý từng kênh (cài đặt, thứ tự sản xuất MV / playlist), kế hoạch sản xuất, nhạc đã dùng (theo video / theo bài), giao
+// việc, kho ý tưởng của kênh; cuối trang là kho nhạc chung trên Drive (cài một lần). Dây chuyền sản xuất (các video đang làm) ở trang
+// Dây chuyền.
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AssignCard, type AssignSettings } from "@/components/channels/AssignCard";
 import { ChannelPlanCard } from "@/components/channels/ChannelPlanCard";
+import { UsedSongsCard } from "@/components/channels/UsedSongsCard";
 import { ChannelsCard, type ChannelsData } from "@/components/pipeline/ChannelsCard";
 import { DriveSyncCard } from "@/components/pipeline/DriveSyncCard";
 import { type BankData, IdeaBankCard } from "@/components/pipeline/IdeaBankCard";
@@ -104,6 +106,9 @@ export default function ChannelsPage() {
       />
 
       {current && <ChannelPlanCard channel={current} items={(view?.items ?? []).filter((i) => itemChannelOf(i) === current.id)} videoMinutes={channels?.videoMinutes ?? 60} />}
+
+      {/* Đọc lại khi kênh có thêm video được xếp nhạc / thêm, bớt việc đang làm (bài MV đang giữ). */}
+      {current && <UsedSongsCard channelId={current.id} reload={`${current.recent[0]?.id ?? ""}|${current.inProgress}`} />}
 
       {channels && (
         <AssignCard

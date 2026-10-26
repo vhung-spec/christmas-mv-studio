@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { addChannel, updateChannel } from "@/lib/channels";
-import { channelsView } from "@/lib/channelsView";
+import { channelsView, usedSongsView } from "@/lib/channelsView";
 import { UserError } from "@/lib/errors";
 import { errorResponse, readJsonBody } from "@/lib/http";
 import { ensurePipelineWatch } from "@/lib/pipeline";
 
-/** Các kênh (cài đặt xếp bài, số video, bài mới còn lại) + tình trạng kho nhạc (Kho bài hát.xlsx, số bài theo mức, lỗi trong tệp). */
-export async function GET() {
+/**
+ * Các kênh (cài đặt xếp bài, số video, bài mới còn lại) + tình trạng kho nhạc (Kho bài hát.xlsx, số bài theo mức, lỗi trong tệp).
+ * ?used=<mã kênh>: nhạc đã dùng của kênh đó — từng video (bài theo thứ tự + giờ bắt đầu), từng bài, bài chưa dùng.
+ */
+export async function GET(req: Request) {
   try {
+    const used = new URL(req.url).searchParams.get("used");
+    if (used) return NextResponse.json(await usedSongsView(used));
     return NextResponse.json(await channelsView());
   } catch (err) {
     return errorResponse(err);

@@ -85,3 +85,55 @@ export interface LibrarySummary {
   minutes: number;
   problems: { row: number | null; message: string }[];
 }
+
+// ---------- Nhạc đã dùng của kênh (thẻ "Nhạc đã dùng" ở trang Kênh) ----------
+
+/** Một bài trong video, theo thứ tự trong video. */
+export interface UsedTrack {
+  code: string;
+  /** Tên bài (như trong mô tả YouTube). */
+  title: string;
+  /** Bản đã dùng (tên file). */
+  file: string;
+  level: 1 | 2 | 3 | null;
+  /** Giây bắt đầu trong video (null = không còn biết: nhạc của video đã bị thay). */
+  start: number | null;
+  duration: number | null;
+}
+
+/** Một video đã xếp nhạc của kênh, kèm danh sách bài. */
+export interface UsedVideo {
+  id: string;
+  title: string;
+  date: string;
+  kind: VideoKind;
+  tracks: UsedTrack[];
+  /** Tổng thời lượng nhạc (giây), null nếu không biết. */
+  total: number | null;
+  /** Video (MV) còn trong app — mở được trang Ghép video. */
+  exists: boolean;
+}
+
+/** Một bài kênh đã dùng: các lần dùng (mới nhất trước) — video nào, MV hay playlist, bài thứ mấy, bản nào. */
+export interface UsedSong {
+  code: string;
+  title: string;
+  level: 1 | 2 | 3 | null;
+  /** Còn dùng được trong kho nhạc (có file, không bị loại khỏi kho). */
+  inLibrary: boolean;
+  uses: { video: string; title: string; kind: VideoKind; date: string; file: string; position: number }[];
+}
+
+export interface UsedSongsView {
+  channel: { id: string; name: string };
+  /** Video mới nhất trước. */
+  videos: UsedVideo[];
+  /** Bài dùng gần đây nhất trước. */
+  songs: UsedSong[];
+  /** Bài trong kho kênh chưa dùng lần nào (mức cao trước), không tính bài MV đang làm đã giữ. */
+  unused: { code: string; title: string; level: 1 | 2 | 3 }[];
+  /** Bài các MV đang làm của kênh đã giữ (chưa ghép nhạc nên chưa có trong lịch sử). */
+  held: { code: string; title: string; video: string }[];
+  /** Đã đặt Thư mục nhạc và đọc được kho. */
+  library: boolean;
+}

@@ -291,7 +291,7 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     const media = await import("@/lib/media");
     const store = await import("@/lib/store");
     const channels = await import("@/lib/channels");
-    const { channelsView } = await import("@/lib/channelsView");
+    const { channelsView, usedSongsView } = await import("@/lib/channelsView");
     // Playlist 1 tiếng: kho chưa đủ nhạc (MV một bài thì đủ).
     setSettings({ videoMinutes: 60 });
     await bank.setBankConfig({ feed: false });
@@ -346,6 +346,14 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     expect((await item("23")).steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/^Chưa đủ nhạc cho kênh “Kênh MV”/) });
     expect((await item("24")).steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/^Chờ playlist “Times Square Toy Shop 1954” \(vòng trước\)/) });
     expect((await item("24")).clips_sent).toBe(true);
+    // Nhạc đã dùng của kênh: 2 MV đã có nhạc; bài 5 đang giữ cho MV vòng sau (chưa ghép nhạc).
+    const before = await usedSongsView(c.id);
+    expect(before.videos.map((v) => [v.kind, v.tracks.map((t) => t.code)])).toEqual([
+      ["mv", ["1"]],
+      ["mv", ["6"]],
+    ]);
+    expect(before.held).toEqual([{ code: "5", title: "Jingle Bell Jamboree", video: "Jingle Bell Jamboree" }]);
+    expect(before.unused.map((x) => x.code)).not.toContain("5");
 
     // Đủ nhạc → playlist mở đầu bằng bài 6 rồi bài 1 (bản "1 (1)" kênh chưa dùng), không lấy bài 5 (MV vòng sau đang giữ); rồi tới MV đó.
     setSettings({ videoMinutes: 1 });
@@ -368,6 +376,26 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
       ["mv", "5"],
     ]);
     expect((await summary()).recent.map((v) => v.kind)).toEqual(["mv", "playlist", "mv", "mv"]);
+
+    // Danh sách nhạc từng video (mới nhất trước), giờ bắt đầu từng bài như trong mô tả YouTube; từng bài dùng ở đâu.
+    const used = await usedSongsView(c.id);
+    expect(used.videos.map((v) => v.kind)).toEqual(["mv", "playlist", "mv", "mv"]);
+    const playlist = used.videos[1];
+    expect(playlist.tracks.slice(0, 2).map((t) => [t.code, t.title, t.file])).toEqual([
+      ["6", "Mistletoe Moonlight", "6.mp3"],
+      ["1", "Silver Bells Waltz", "1 (1).mp3"],
+    ]);
+    expect(playlist.tracks[0].start).toBe(0);
+    expect(playlist.tracks[1].start).toBeCloseTo(12, 0);
+    expect(playlist.total).toBeCloseTo(tracks.reduce((a, t) => a + t.duration, 0), 0);
+    expect(used.videos[3].tracks).toMatchObject([{ code: "6", start: 0, level: 3 }]);
+    expect(used.videos[3].tracks[0].duration).toBeCloseTo(12, 0);
+    const six = used.songs.find((x) => x.code === "6")!;
+    expect(six.uses.map((u) => [u.kind, u.title, u.position])).toEqual([
+      ["playlist", "#23 · Times Square Toy Shop 1954", 1],
+      ["mv", "#21 · Mistletoe Moonlight", 1],
+    ]);
+    expect(used.held).toEqual([]);
 
     // Muse giả làm xong → dựng: MV dài đúng bài, thư mục kết quả "MV <tên bài>" trong thư mục của kênh.
     await museFinishAll();

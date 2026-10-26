@@ -283,7 +283,7 @@ Hai trang, tách phần quản lý khỏi phần sản xuất:
 
 - **Kênh** — quản lý: thẻ **Các kênh & kho nhạc chung** (thêm kênh, bật / tắt, *MV mỗi vòng*, *Bài cũ %*, *Chọn bài mới*, cột *Tiếp theo*; bấm
   **Xem kênh** để chọn kênh), **Kế hoạch sản xuất** của kênh đang xem (thứ tự vòng, video tiếp theo + bài của nó, các video sắp tới, đang làm, đã làm
-  gần đây), **Giao việc** (từ ý tưởng hoặc từ MV có sẵn — cho kênh đang xem, một kênh khác hoặc chia lần lượt các kênh), **Kho ý tưởng** của kênh
+  gần đây), **Nhạc đã dùng** (mục dưới), **Giao việc** (từ ý tưởng hoặc từ MV có sẵn — cho kênh đang xem, một kênh khác hoặc chia lần lượt các kênh), **Kho ý tưởng** của kênh
   và **Kho nhạc trên Google Drive**.
 - **Dây chuyền** — sản xuất: *Chuẩn bị* (Claude / nhạc / Muse đã sẵn sàng chưa), **Tự lấy việc** (dây chuyền tự lấy ý tưởng trong kho các kênh, mỗi
   lúc N video; *Làm video trước, ghép nhạc sau*) và danh sách **Đang sản xuất** (lọc theo kênh; mỗi việc ghi 📺 kênh và 🎬 MV hay 📀 Playlist).
@@ -331,6 +331,19 @@ gần nhất.
   rõ đang chờ video nào); trong lúc chờ, kịch bản và clip Muse vẫn làm tiếp.
 - Kho ý tưởng cấp ý tưởng cho cả MV lẫn playlist (MV chỉ lấy ý tưởng trong kho của kênh, bài thì app chọn). Thẻ **Kế hoạch sản xuất** (trang Kênh) cho
   thấy video tiếp theo của kênh là MV mấy / playlist và bài nào.
+
+### Nhạc đã dùng: theo kênh, theo video
+
+Thẻ **Nhạc đã dùng** (trang Kênh, kênh đang xem), lấy từ lịch sử nhạc của kênh, có ô tìm bài / video:
+
+- **Theo video** — mỗi MV / playlist đã xếp nhạc (mới nhất trước): các bài **theo thứ tự**, **giờ bắt đầu** từng bài, mức hay, bản đã dùng (vd.
+  `1 (1).mp3`), thời lượng; nút **📋 Chép danh sách bài** chép các dòng `0:00 Tên bài` để dán vào mô tả YouTube (YouTube tự tạo chương — mô tả
+  trong thư mục kết quả của playlist đã có sẵn danh sách này). Bấm tên video để mở trang Ghép video của nó.
+- **Theo bài** — mỗi bài kênh đã dùng: số lần, dùng ở MV / playlist nào, ngày, bài thứ mấy trong playlist, bản nào; bài không còn trong kho thì ghi rõ.
+- **Chưa dùng** — các bài trong kho kênh chưa dùng lần nào, theo mức hay; dòng **Đang giữ cho MV đang làm** cho biết bài nào MV đang làm đã giữ.
+
+Danh sách bài của từng video cũng có ở trang **Dây chuyền** (nút **🎵 Danh sách bài** của video đã có nhạc) và trang **Ghép video** (mục *Danh
+sách bài*, playlist).
 
 ### Video hoàn thiện: ảnh bìa, tiêu đề, mô tả có danh sách bài, thư mục kết quả
 
@@ -561,8 +574,9 @@ src/lib/
   musicLibrary.ts       kho nhạc = tệp Kho bài hát + file trong thư mục nhạc (gom các bản của một bài, đo thời lượng)
   channels.ts           kênh (data/channels.json): tự xếp bài kiểu Bokin (chuyển từ loop_music/channels.py), đủ độ dài video,
                         chọn bản, phân luồng kênh, thứ tự sản xuất (N MV rồi playlist, bài cho MV); channelTypes.ts = kiểu,
-                        channelsView.ts = thẻ Các kênh & kho nhạc chung
-  playlist.ts           nối danh sách nhạc thành một file, danh sách bài + mốc thời gian cho mô tả YouTube
+                        channelsView.ts = thẻ Các kênh & kho nhạc chung + Nhạc đã dùng
+  playlist.ts           nối danh sách nhạc thành một file, danh sách bài + mốc thời gian cho mô tả YouTube; chapters.ts = mốc thời gian / dòng
+                        danh sách bài (dùng cả trên trình duyệt)
   pipeline.ts           dây chuyền tự động: kịch bản → bài hát → clip Muse → MP4 (data/pipeline.json), lập kế hoạch MV / playlist từng
                         kênh (planner), nhạc ghép đúng thứ tự; pipelineSteps.ts = kiểu + nhãn
   haohao.ts             đọc (chỉ đọc) hàng đợi tasks.json và thư mục lưu của tool HaoHao (cách dán tay)

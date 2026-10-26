@@ -1,7 +1,7 @@
 // Tự xếp bài kiểu Bokin Playlist Studio (chuyển từ tests/test_channels.py của Bokin) + phần lấy đủ độ dài video + phân luồng kênh +
 // thứ tự sản xuất (N MV một bài rồi playlist).
 import { describe, expect, it } from "vitest";
-import { channelSequence, lastUse, nextVideo, pickForLength, pickMvSong, pickSongs, resting, routeChannel, type PickSong, type SeqEntry } from "@/lib/channels";
+import { channelSequence, lastUse, nextVideo, pickForLength, pickMvSong, pickSongs, resting, routeChannel, songUses, type PickSong, type SeqEntry } from "@/lib/channels";
 import type { ChannelVideo } from "@/lib/channelTypes";
 import type { LibSong } from "@/lib/musicLibrary";
 import type { Level, ReuseRule } from "@/lib/songSheet";
@@ -220,6 +220,24 @@ describe("thứ tự sản xuất — N MV một bài rồi 1 playlist mỗi vò
     expect(pickMvSong(kho, [video("a", ["2"])])?.code).toBe("3");
     expect(pickMvSong(kho, [video("a", ["2"])], ["3"])?.code).toBe("1");
     expect(pickMvSong(kho, [video("a", ["2", "3", "1"])], ["6"])).toBeNull();
+  });
+});
+
+describe("songUses — nhạc đã dùng của kênh", () => {
+  it("mỗi bài các lần dùng (mới nhất trước): video nào, bài thứ mấy, bản nào; bài dùng gần đây nhất đứng trước, cùng video thì theo thứ tự", () => {
+    const history: ChannelVideo[] = [
+      { ...video("mv1", ["7"]), files: ["7.wav"], kind: "mv" },
+      { ...video("pl1", ["7", "3", "9"]), files: ["7 (1).wav", "3.wav", "9.wav"] },
+      { ...video("mv2", ["4"]), files: ["4.wav"], kind: "mv" },
+    ];
+    const r = songUses(history);
+    expect(r.map((s) => s.code)).toEqual(["4", "7", "3", "9"]);
+    expect(r[1].uses.map((u) => [u.video.id, u.position, u.file])).toEqual([
+      ["pl1", 1, "7 (1).wav"],
+      ["mv1", 1, "7.wav"],
+    ]);
+    expect(r[3].uses.map((u) => [u.video.id, u.position])).toEqual([["pl1", 3]]);
+    expect(songUses([])).toEqual([]);
   });
 });
 
