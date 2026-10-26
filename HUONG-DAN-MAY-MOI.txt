@@ -75,6 +75,10 @@ C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm 
    - bài có 2 bản (12.wav, 12 (1).wav): lần dùng lại lấy bản kênh đó ít dùng hơn.
    Video đầu của mỗi kênh toàn bài mới. Thẻ "Kênh & kho nhạc" cho biết mỗi kênh còn bao nhiêu bài mới, đủ cho khoảng mấy video;
    kênh hết bài mới thì ý tưởng của kênh nằm chờ cho tới khi bạn thêm bài vào kho trên Drive (app tự chạy tiếp).
+   KHO NHẠC CHƯA XONG mà muốn làm video trước: trang Tự động → thẻ "Kho ý tưởng" → bấm "Làm video trước, ghép nhạc sau" (hoặc bỏ tick
+   "Chỉ làm video mới khi kho nhạc còn bài mới"). App vẫn viết kịch bản và làm clip Muse; mỗi video dừng ở bước Nhạc ("chờ nhạc").
+   Khi kho nhạc có bài (đồng bộ Drive), app tự xếp bài cho từng video rồi dựng MP4 — không phải làm gì thêm. Kho đủ rồi thì tick lại ô đó.
+   Lưu ý: mỗi video vẫn tốn 20–30 lượt Muse ngay lúc làm clip.
 5. Kênh: trang Tự động → thẻ "Kênh & kho nhạc". Ban đầu có một kênh "Kênh Giáng sinh" (đổi tên được). Làm cho nhiều kênh YouTube thì
    gõ tên kênh → "＋ Thêm kênh". Từ đó app TỰ CHIA: mỗi video mới vào kênh đang có ít video nhất, các kênh đều nhau.
    Các kênh dùng chung kho nhạc, nhưng bài cũ / bài mới tính riêng theo từng kênh. Bỏ tick "Bật" = tạm không làm video cho kênh đó.

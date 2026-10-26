@@ -226,4 +226,57 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     expect((await media.loadProject(forB.mv_id!)).audio!.tracks![0].title).toBe("Silver Bells Waltz");
     for (const it of (await pl.readPipeline()).items) await pl.removeFromPipeline(it.id);
   }, 120000);
+
+  it("kho nhạc chưa xong: làm video trước (kịch bản + clip), chờ ở bước Nhạc; kho có nhạc → tự xếp bài rồi dựng", async () => {
+    const pl = await import("@/lib/pipeline");
+    const bank = await import("@/lib/ideaBank");
+    const jobs = await import("@/lib/museJobs");
+    const queue = await import("@/lib/queue");
+    const media = await import("@/lib/media");
+    // Thư mục nhạc chưa có (kho trên Drive chưa xong).
+    const later = path.join(tmp, "nhac-sau");
+    setSettings({ songDir: later });
+    await bank.setBankConfig({ feed: true, ahead: 1, needSong: true, suggest: false });
+    await bank.addIdeas([{ id: "7", world_location: "Woodstock Vermont First Snow 1952", theme_code: "T05", outline: "Chỉ cảnh, không nhân vật chính: làng tuyết" }], "kenh-1");
+    const item = async () => (await pl.readPipeline()).items.find((i) => i.idea?.id === "7");
+
+    // Bật "chỉ làm video mới khi kho nhạc còn bài mới" + kho trống → ý tưởng nằm chờ.
+    await pl.pipelineTick();
+    expect(await item()).toBeUndefined();
+
+    // "Làm video trước, ghép nhạc sau": lấy ý tưởng, viết kịch bản, gửi cảnh sang Muse; bước Nhạc chờ (không lỗi).
+    await bank.setBankConfig({ needSong: false });
+    await pl.pipelineTick();
+    await pl.pipelineIdle();
+    await pl.pipelineTick();
+    const a = (await item())!;
+    expect(a.steps.script.status).toBe("done");
+    expect(a.steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/chưa có bài nào.*clip Muse vẫn làm tiếp/) });
+    expect(a.clips_sent).toBe(true);
+
+    // Muse làm xong → đủ clip; chưa có nhạc nên chưa dựng.
+    await museFinishAll();
+    await jobs.museTick();
+    await pl.pipelineTick();
+    const b = (await item())!;
+    expect(b.steps.clips.status).toBe("done");
+    expect(b.steps.song.status).toBe("waiting");
+    expect(b.steps.render.status).toBe("pending");
+
+    // Kho có nhạc (vd. vừa đồng bộ Drive) → lượt sau tự xếp bài cho video đang chờ rồi dựng MP4.
+    mkdirSync(later, { recursive: true });
+    // Bài số 8, 9: kênh chưa dùng (bài 1–4 đã có trong lịch sử kênh từ các test trên).
+    make(["-f", "lavfi", "-i", "sine=frequency=523:duration=35", "-c:a", "libmp3lame"], path.join(later, "8.mp3"));
+    make(["-f", "lavfi", "-i", "sine=frequency=587:duration=30", "-c:a", "libmp3lame"], path.join(later, "9.mp3"));
+    await pl.pipelineTick();
+    const c = (await item())!;
+    expect(c.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/tự xếp 2 bài \(0 cũ \+ 2 mới\)/) });
+    expect(c.steps.render.status).toBe("running");
+    await queue.idle();
+    await pl.pipelineTick();
+    const d = (await item())!;
+    expect(d.steps.render.status).toBe("done");
+    expect(existsSync(media.mediaPath(d.mv_id!, d.output!))).toBe(true);
+    for (const it of (await pl.readPipeline()).items) await pl.removeFromPipeline(it.id);
+  }, 300000);
 });

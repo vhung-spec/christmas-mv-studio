@@ -29,6 +29,8 @@ import type { IdeaRow } from "./types";
 
 const POLL_MS = 5000;
 const IDLE_MS = 30000;
+/** Cuối lời báo "chờ nhạc": chưa có nhạc không chặn kịch bản / clip. */
+const CLIPS_GO_ON = " Kịch bản và clip Muse vẫn làm tiếp; kho có nhạc là app tự xếp bài rồi dựng.";
 
 // Trạng thái trong tiến trình: vòng chạy, việc đang viết kịch bản (mỗi lúc một MV), hàm đánh thức vòng chạy đang nghỉ.
 const g = globalThis as unknown as {
@@ -219,12 +221,13 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
   if (!mv) return { steps: { ...steps, script: { status: "error", message: "MV đã bị xoá." } } };
   const project = await loadProject(mv.id);
 
-  // 2. Nhạc: tự xếp bài kiểu Bokin theo lịch sử của kênh, cho đủ Độ dài video.
+  // 2. Nhạc: tự xếp bài kiểu Bokin theo lịch sử của kênh, cho đủ Độ dài video. Chưa có nhạc thì chỉ bước Dựng chờ —
+  // kịch bản và clip Muse vẫn làm tiếp ("làm video trước, ghép nhạc sau"); kho có nhạc là lượt sau tự xếp bài.
   if (project.audio) {
     const n = project.audio.tracks?.length ?? 0;
     if (steps.song.status !== "done") steps.song = { status: "done", message: n > 1 ? `${n} bài · ${minutesLabel(project.audio.duration)}` : project.audio.name };
   } else if (!settings.songDir.trim()) {
-    steps.song = { status: "waiting", message: "Chưa có nhạc — tải lên ở trang Ghép video, hoặc đặt “Thư mục nhạc” trong Cài đặt để app tự xếp danh sách nhạc." };
+    steps.song = { status: "waiting", message: `Chưa có nhạc — tải lên ở trang Ghép video, hoặc đặt “Thư mục nhạc” trong Cài đặt để app tự xếp danh sách nhạc.${CLIPS_GO_ON}` };
   } else if (!isRendering(mv.id)) {
     const title = `${/^\d+$/.test(mv.idea.id) ? `#${mv.idea.id} · ` : ""}${mv.idea.song_title || item.title}`;
     try {
@@ -239,8 +242,8 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
         steps.song = {
           status: "waiting",
           message: mix.picks.length
-            ? `Chưa đủ nhạc cho kênh “${ch.name}”: kho chỉ có ${minutesLabel(mix.total)} (${mix.picks.length} bài dùng được), cần khoảng ${minutesLabel(target)} — thêm bài vào kho (hoặc đồng bộ kho nhạc từ Drive), hoặc giảm “Độ dài video” trong Cài đặt.`
-            : "Kho nhạc chưa có bài nào dùng được — thêm nhạc vào Thư mục nhạc (hoặc đồng bộ từ Drive), hoặc tải nhạc lên ở trang Ghép video.",
+            ? `Chưa đủ nhạc cho kênh “${ch.name}”: kho chỉ có ${minutesLabel(mix.total)} (${mix.picks.length} bài dùng được), cần khoảng ${minutesLabel(target)} — thêm bài vào kho (hoặc đồng bộ kho nhạc từ Drive), hoặc giảm “Độ dài video” trong Cài đặt.${CLIPS_GO_ON}`
+            : `Kho nhạc chưa có bài nào dùng được — thêm nhạc vào Thư mục nhạc (hoặc đồng bộ từ Drive), hoặc tải nhạc lên ở trang Ghép video.${CLIPS_GO_ON}`,
         };
       } else {
         await fs.mkdir(mediaDir(mv.id), { recursive: true });

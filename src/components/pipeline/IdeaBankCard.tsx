@@ -106,16 +106,28 @@ export function IdeaBankCard({
           {bank.counts.rejected ? ` · Đã bỏ ${bank.counts.rejected}` : ""}
         </p>
         {bank.music && (
-          <p className={bank.music.videos > 0 ? "text-xs text-muted" : "text-xs text-cherry-dark"}>
-            🎵 Kho nhạc: <b>{bank.music.songs}</b> bài (mức 3 / 2 / 1: {bank.music.levels[3]} / {bank.music.levels[2]} / {bank.music.levels[1]}) · kênh này chưa dùng{" "}
-            <b>{bank.music.unused}</b> bài — đủ bài mới cho khoảng <b>{bank.music.videos}</b> video {bank.music.videoMinutes} phút
-            {bank.music.videos === 0 &&
-              (c.needSong
-                ? ": ý tưởng của kênh này nằm chờ tới khi thêm bài vào kho nhạc (trên Drive), hoặc bỏ tick “Chỉ lấy ý tưởng của kênh khi kho nhạc còn bài mới” bên dưới để làm video toàn bài cũ"
-                : " (thêm bài vào kho nhạc trên Drive: video vẫn làm được nhưng toàn bài cũ)")}
-            .
-            {!bank.music.sheet && " Chưa có Kho bài hát.xlsx: mọi bài coi là mức 1."}
-          </p>
+          <div className={`space-y-1 text-xs ${bank.music.videos > 0 || !c.needSong ? "text-muted" : "text-cherry-dark"}`}>
+            <p>
+              🎵 Kho nhạc: <b>{bank.music.songs}</b> bài (mức 3 / 2 / 1: {bank.music.levels[3]} / {bank.music.levels[2]} / {bank.music.levels[1]}) · kênh này chưa dùng{" "}
+              <b>{bank.music.unused}</b> bài — đủ bài mới cho khoảng <b>{bank.music.videos}</b> video {bank.music.videoMinutes} phút
+              {bank.music.videos === 0 &&
+                (c.needSong
+                  ? ": ý tưởng của kênh này đang nằm chờ nhạc."
+                  : bank.music.songs === 0
+                    ? " — đang làm video trước: kịch bản và clip Muse vẫn làm, video chờ ở bước Nhạc; kho có nhạc là app tự xếp bài rồi dựng."
+                    : " — video vẫn làm; tới bước Nhạc mà kho hết bài mới thì dùng lại bài cũ (thêm bài vào kho trên Drive).")}
+              {!bank.music.sheet && bank.music.songs > 0 && " Chưa có Kho bài hát.xlsx: mọi bài coi là mức 1."}
+            </p>
+            {bank.music.videos === 0 && c.needSong && (
+              <p className="flex flex-wrap items-center gap-2">
+                <span>Kho nhạc chưa xong?</span>
+                <button className="btn-ghost btn-sm" disabled={busy} onClick={() => setConfig({ needSong: false })}>
+                  Làm video trước, ghép nhạc sau
+                </button>
+                <span className="text-muted">(bỏ tick ô “Chỉ làm video mới khi kho nhạc còn bài mới” bên dưới)</span>
+              </p>
+            )}
+          </div>
         )}
         {bank.library > 0 && (
           <p className="text-xs text-muted">
@@ -144,7 +156,8 @@ export function IdeaBankCard({
           </label>
           <label className="flex flex-wrap items-center gap-2 pl-6">
             <input type="checkbox" checked={c.needSong} disabled={busy} onChange={(e) => setConfig({ needSong: e.target.checked })} />
-            Chỉ lấy ý tưởng của kênh khi kho nhạc còn bài mới cho kênh đó (hết thì ý tưởng của kênh nằm chờ, thêm nhạc là tự chạy)
+            Chỉ làm video mới khi kho nhạc còn bài mới cho kênh đó (hết thì ý tưởng của kênh nằm chờ, thêm nhạc là tự chạy). Bỏ tick khi kho nhạc chưa
+            xong: cứ làm kịch bản + clip Muse trước, video chờ ở bước Nhạc, có nhạc là tự xếp bài và dựng
           </label>
           <label className="flex flex-wrap items-center gap-2">
             <input type="checkbox" checked={c.suggest} disabled={busy} onChange={(e) => setConfig({ suggest: e.target.checked })} />

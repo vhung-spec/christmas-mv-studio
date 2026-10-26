@@ -362,8 +362,11 @@ app mới bắt đầu với kho trống). Ý tưởng trùng (cùng địa đi�
 
 - **Dây chuyền tự lấy ý tưởng trong kho các kênh, lần lượt đều các kênh, mỗi lúc N video** (mặc định 2): chỉ lấy ý tưởng mới khi số video đang viết
   kịch bản hoặc chờ clip Muse ít hơn N — dây chuyền tự đi theo tốc độ của Muse.
-- **Chỉ lấy ý tưởng của kênh khi kho nhạc còn bài mới cho kênh đó** (bật sẵn): kênh hết bài mới thì ý tưởng của kênh nằm chờ (các kênh khác vẫn chạy);
-  thêm bài vào kho là tự chạy tiếp. Bỏ tick thì video vẫn làm, toàn bài cũ.
+- **Chỉ làm video mới khi kho nhạc còn bài mới cho kênh đó** (bật sẵn): kênh hết bài mới thì ý tưởng của kênh nằm chờ (các kênh khác vẫn chạy);
+  thêm bài vào kho là tự chạy tiếp. **Kho nhạc chưa xong → bỏ tick** (hoặc bấm *Làm video trước, ghép nhạc sau*): dây chuyền cứ viết kịch bản và
+  làm clip Muse, video chờ ở bước Nhạc (bước Clip Muse không chờ nhạc; video chờ nhạc không tính là “đang làm” nên dây chuyền lấy tiếp ý tưởng
+  mới); kho có nhạc (đồng bộ Drive / thả bài vào Thư mục nhạc) thì trong vòng nửa phút app tự xếp bài kiểu Bokin cho từng video rồi dựng. Nhớ: mỗi
+  video vẫn tốn 20–30 lượt Muse, và kho có ít bài mới thì các video làm trước sẽ dùng lại nhiều bài cũ. Kho đủ rồi thì tick lại.
 - **Kho của kênh sắp hết thì nhờ Claude đề xuất M ý tưởng mới** cho kênh đó (mặc định 10; nối số và series theo ý tưởng của kênh, tránh trùng mọi kênh):
   Claude viết ý tưởng **cùng kiểu**: “địa điểm có thật ở Mỹ + dịp lễ + năm 1950–1959”
   (vd. `Woodstock Vermont Christmas Eve 1952`, `Rockefeller Center First Snow 1955`), mã chủ đề có trong thư viện (ưu tiên chủ đề ít dùng), dàn ý tiếng

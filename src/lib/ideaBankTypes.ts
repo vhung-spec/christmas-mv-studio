@@ -24,7 +24,10 @@ export interface BankConfig {
   feed: boolean;
   /** Số video làm cùng lúc (cả các kênh: đang viết kịch bản hoặc chờ clip Muse). */
   ahead: number;
-  /** Chỉ lấy ý tưởng của kênh khi kho nhạc còn bài mới cho kênh đó (hết bài mới thì ý tưởng của kênh nằm chờ). */
+  /**
+   * Chỉ làm video mới khi kho nhạc còn bài mới cho kênh đó (hết bài mới thì ý tưởng của kênh nằm chờ). Tắt = kho nhạc chưa xong:
+   * cứ làm kịch bản + clip, video chờ ở bước Nhạc, có nhạc là tự xếp bài rồi dựng.
+   */
   needSong: boolean;
   /** Kho của kênh sắp hết thì nhờ Claude đề xuất thêm cho kênh đó. */
   suggest: boolean;
