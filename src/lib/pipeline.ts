@@ -6,24 +6,31 @@
 //   3. Clip: gửi các cảnh chưa có clip sang Muse (Muse trong app), clip xong tự vào đúng cảnh (museJobs).
 //   4. Dựng: đủ clip + có nhạc → thêm vào hàng chờ dựng (clip lặp lại cho hết nhạc), chạy, chờ ra MP4.
 // Phân luồng: việc mới thuộc kênh của ý tưởng; không ghi kênh thì giao cho kênh đang bật có ít video nhất (đang làm + đã xong).
+// Thứ tự sản xuất của kênh (channels.ts): mỗi vòng N MV một bài rồi 1 playlist. MV: lúc thêm việc giữ luôn bài cho MV (mức hay cao nhất
+// kênh chưa dùng) → kịch bản (ý tưởng trong kho của kênh, như playlist) dài đúng bài, bám lời (thư viện lời); bước Nhạc ghép đúng bài đó.
+// Playlist cuối vòng mở đầu bằng các bài vừa có MV. Kho chưa có bài cho MV thì làm playlist trước, MV làm khi kho có bài. Việc thêm
+// trước làm trước; nhạc của kênh ghép đúng thứ tự (playlist chờ các MV của vòng, MV vòng sau chờ playlist vòng trước) để lịch sử kênh
+// đúng vòng.
 // Kho ý tưởng (ideaBank.ts, mỗi kênh một kho): dây chuyền tự lấy dần ý tưởng, lần lượt đều các kênh; kho của kênh sắp hết thì nhờ Claude
 // đề xuất thêm cho kênh đó. Lưu ở data/pipeline.json; tắt app giữa chừng thì mở lại chạy tiếp. Chỉ dùng phía server.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { DEFAULT_CHANNEL_ID, type Channel } from "./channelTypes";
-import { pickForLength, readChannels, recordChannelVideo, resolveChannel, routeChannel } from "./channels";
+import { DEFAULT_CHANNEL_ID, type Channel, type VideoKind } from "./channelTypes";
+import { channelSequence, nextVideo, pickForLength, pickMvSong, readChannels, recordChannelVideo, resolveChannel, routeChannel, key as songKey, type SeqEntry } from "./channels";
 import { UserError } from "./errors";
 import { generateMV, generationMode } from "./generate";
 import { ideaChannel, ideaKey, isSuggesting, markIdeasUsed, readBank, songCheck, startSuggest, takeIdeas, waitingForMusic } from "./ideaBank";
 import { addPlaylistAudio, loadProject, mediaDir } from "./media";
 import { museCounts } from "./muse";
 import { ensureMuseWatch, readMuse, sendToMuse } from "./museJobs";
-import { loadMusicLibrary } from "./musicLibrary";
-import { buildPlaylistAudio, minutesLabel } from "./playlist";
+import { loadMusicLibrary, type LibSong } from "./musicLibrary";
+import { buildPlaylistAudio, chapterTime, minutesLabel } from "./playlist";
 import { addToQueue, readQueue, startQueue } from "./queue";
 import { isRendering } from "./render";
 import type { AddResult, PipelineItem, PipelineState, PipelineStep, PipelineView, StepName } from "./pipelineSteps";
+import { readSongLibrary, type LibrarySong } from "./songLibrary";
+import { songNumber } from "./songs";
 import { PIPELINE_FILE, listMVs, loadMV, readJson, readSettings, withLock, writeJson } from "./store";
 import type { IdeaRow } from "./types";
 
@@ -60,6 +67,10 @@ const finished = (it: PipelineItem) => Boolean(it.done_at);
 /** Kênh của một việc. */
 export const itemChannel = (it: Pick<PipelineItem, "channel" | "idea">) => it.channel ?? it.idea?.channel ?? DEFAULT_CHANNEL_ID;
 
+const kindOf = (it: PipelineItem): VideoKind => it.kind ?? it.idea?.video_kind ?? "playlist";
+/** Theo thứ tự sản xuất: việc thêm trước đứng trước (cùng một lần thêm thì theo thứ tự trong bảng — thứ tự trong pipeline.json). */
+const inOrder = (items: PipelineItem[]) => [...items].sort((a, b) => a.added_at.localeCompare(b.added_at));
+
 /** Số video của từng kênh (dùng để phân luồng): đã có danh sách nhạc (lịch sử kênh) + đang trong dây chuyền mà chưa có trong lịch sử. */
 export function channelLoad(channels: Channel[], items: PipelineItem[]): Map<string, number> {
   const load = new Map(channels.map((c) => [c.id, c.history.length]));
@@ -70,6 +81,71 @@ export function channelLoad(channels: Channel[], items: PipelineItem[]): Map<str
     load.set(ch, (load.get(ch) ?? 0) + 1);
   }
   return load;
+}
+
+// ---------- Thứ tự sản xuất: MV một bài / playlist ----------
+
+/** Số bài (để tìm lời trong thư viện lời): số trong tên file nhạc, hoặc mã bài là số. */
+const songNo = (s: LibSong) => songNumber(s.versions[0]?.name ?? "")?.n ?? (/^\d+$/.test(s.code) ? Number(s.code) : null);
+
+/** Video tiếp theo của một kênh: MV kèm bài đã chọn (và tài liệu lời / ý tưởng của bài nếu có), hoặc playlist kèm các bài mở đầu. */
+export type PlannedVideo = { kind: "mv"; index: number; song: LibSong; doc: LibrarySong | null } | { kind: "playlist"; index: 0; opensWith: string[]; waitingForMvSong: boolean };
+
+export interface Planner {
+  plan(channelId: string): PlannedVideo;
+  /** Ghi nhận việc vừa thêm cho kênh (các việc thêm sau trong cùng lượt tính tiếp từ đó). */
+  note(channelId: string, entry: SeqEntry): void;
+}
+
+/**
+ * Lập kế hoạch theo lịch sử từng kênh + các việc đang làm chưa có trong lịch sử (MV đang làm đã giữ bài). MV mà kho không còn bài kênh
+ * chưa dùng → làm playlist trước (đóng vòng sớm: mở đầu bằng các bài MV đã có của vòng); kho có bài thì MV làm tiếp.
+ */
+export async function planner(channels: Channel[], items: PipelineItem[]): Promise<Planner> {
+  const settings = await readSettings();
+  const lib = settings.songDir.trim() ? await loadMusicLibrary(settings.songDir, settings.songSheet).catch(() => null) : null;
+  const docs = (await readSongLibrary().catch(() => ({ songs: [] as LibrarySong[] }))).songs;
+  const docOf = (s: LibSong) => {
+    const n = songNo(s);
+    return n === null ? null : (docs.find((d) => d.n === n) ?? null);
+  };
+  const recorded = new Set(channels.flatMap((c) => c.history.map((v) => v.id)));
+  const open = new Map<string, SeqEntry[]>();
+  const pending = inOrder(items.filter((i) => !finished(i) && !(i.mv_id && recorded.has(i.mv_id))));
+  for (const it of pending) {
+    const ch = itemChannel(it);
+    open.set(ch, [...(open.get(ch) ?? []), { kind: kindOf(it), codes: it.idea?.mv_song ? [it.idea.mv_song.code] : [] }]);
+  }
+  return {
+    plan(id) {
+      const ch = channels.find((c) => c.id === id) ?? channels[0];
+      const seq = channelSequence(ch.history, open.get(ch.id) ?? []);
+      const next = nextVideo(seq, ch.mvPerRound);
+      if (next.kind === "mv") {
+        const reserved = (open.get(ch.id) ?? []).flatMap((e) => e.codes);
+        const song = lib ? pickMvSong(lib.songs, ch.history, reserved, (s) => Boolean(docOf(s)?.lyrics.trim())) : null;
+        if (song) return { kind: "mv", index: next.index, song, doc: docOf(song) };
+        return { kind: "playlist", index: 0, opensWith: nextVideo(seq, 0).opensWith, waitingForMvSong: true };
+      }
+      return { kind: "playlist", index: 0, opensWith: next.opensWith, waitingForMvSong: false };
+    },
+    note(id, entry) {
+      open.set(id, [...(open.get(id) ?? []), entry]);
+    },
+  };
+}
+
+/** Ý tưởng MV một bài: giữ bài, kịch bản dài đúng bài, tên bài làm tên video, lời trong thư viện lời (nếu có) để kịch bản bám lời. */
+function asMv(idea: IdeaRow, song: LibSong, doc: LibrarySong | null): IdeaRow {
+  const v = song.versions[0];
+  return {
+    ...idea,
+    video_kind: "mv",
+    mv_song: { code: song.code, file: v.name, level: song.level },
+    song_title: song.title,
+    duration_sec: Math.min(1200, Math.max(10, Math.round(v.duration))),
+    ...(doc?.lyrics?.trim() ? { lyrics: doc.lyrics.trim() } : {}),
+  };
 }
 
 /**
@@ -88,8 +164,9 @@ export async function addToPipeline(input: { mvIds?: string[]; ideas?: IdeaRow[]
   const channels = await readChannels();
   const chosen = input.channel && input.channel !== "auto" ? channels.find((c) => c.id === input.channel) : null;
   if (input.channel && input.channel !== "auto" && !chosen) throw new UserError("Không tìm thấy kênh.", 404);
-  if (!chosen && !channels.some((c) => c.active)) throw new UserError("Chưa có kênh nào đang bật — bật một kênh ở thẻ Kênh.");
-  const load = channelLoad(channels, (await readPipeline()).items);
+  if (!chosen && !channels.some((c) => c.active)) throw new UserError("Chưa có kênh nào đang bật — bật một kênh ở trang Kênh.");
+  const current = (await readPipeline()).items;
+  const load = channelLoad(channels, current);
   // Phân luồng từng việc (việc trước được tính vào số video của kênh khi chia việc sau).
   const route = (own?: string) => {
     const id = resolveChannel(channels, own) ?? chosen?.id ?? routeChannel(channels, load)?.id ?? DEFAULT_CHANNEL_ID;
@@ -102,13 +179,39 @@ export async function addToPipeline(input: { mvIds?: string[]; ideas?: IdeaRow[]
     const mv = await loadMV(id);
     if (!mv) throw new UserError(`Không tìm thấy MV ${id}.`, 404);
     const own = channels.find((c) => c.history.some((v) => v.id === id))?.id ?? mv.idea.channel;
-    items.push({ id: newId(), title: mv.idea.song_title || mv.idea.world_location, added_at: now, mv_id: id, channel: route(own), steps: { ...fresh(), script: { status: "done", message: `${mv.shots.length} cảnh (có sẵn)` } } });
+    items.push({
+      id: newId(),
+      title: mv.idea.song_title || mv.idea.world_location,
+      added_at: now,
+      mv_id: id,
+      channel: route(own),
+      kind: mv.idea.video_kind === "mv" ? "mv" : "playlist",
+      steps: { ...fresh(), script: { status: "done", message: `${mv.shots.length} cảnh (có sẵn)` } },
+    });
   }
+  // Ý tưởng mới: MV một bài hay playlist theo thứ tự sản xuất của kênh (MV giữ luôn bài). Ý tưởng sẽ bị bỏ qua (đã có MV, đang chạy,
+  // trùng dòng khác) không tính vào thứ tự, để không giữ mất bài của MV.
+  const made = ideas.length ? new Set((await listMVs()).map((m) => ideaKey(m.idea))) : new Set<string>();
+  const plans = ideas.length ? await planner(channels, current) : null;
+  const seen = new Set(current.flatMap((i) => (!finished(i) && i.idea ? [ideaKey(i.idea, itemChannel(i))] : [])));
   for (const row of ideas) {
     const channel = route(row.channel);
-    items.push({ id: newId(), title: row.song_title || row.world_location, added_at: now, idea: { ...row, channel }, channel, steps: fresh() });
+    const key = ideaKey(row, channel);
+    const p = plans!.plan(channel);
+    const idea = p.kind === "mv" ? asMv({ ...row, channel }, p.song, p.doc) : { ...row, channel };
+    items.push({
+      id: newId(),
+      title: idea.song_title || idea.world_location,
+      added_at: now,
+      idea,
+      channel,
+      kind: p.kind,
+      ...(p.kind === "playlist" && p.opensWith.length ? { opens_with: p.opensWith } : {}),
+      steps: fresh(),
+    });
+    if (!made.has(key) && !seen.has(key)) plans!.note(channel, { kind: p.kind, codes: p.kind === "mv" ? [p.song.code] : [] });
+    seen.add(key);
   }
-  const made = ideas.length ? new Set((await listMVs()).map((m) => ideaKey(m.idea))) : new Set<string>();
   const result = await updatePipeline((st) => {
     const open = st.items.filter((i) => !finished(i));
     const busy = new Set(open.flatMap((i) => (i.mv_id ? [i.mv_id] : [])));
@@ -168,20 +271,27 @@ export async function retryPipeline(id: string): Promise<void> {
 }
 
 /**
- * Viết kịch bản cho một việc (chạy nền, mỗi lúc một video). Kịch bản là một vòng cảnh (Cài đặt → Độ dài một vòng cảnh), không theo
- * độ dài nhạc: khi dựng, vòng cảnh lặp lại cho hết danh sách nhạc.
+ * Viết kịch bản cho việc `id` (chạy nền, mỗi lúc một video) nếu tới lượt: là việc đầu tiên theo thứ tự sản xuất còn chờ kịch bản.
+ * Đọc lại trạng thái mới nhất — lượt chạy có thể đang cầm trạng thái cũ, lúc kịch bản trước vừa viết xong — nên không bao giờ viết
+ * hai lần cho một việc. Trả về false nếu chưa tới lượt (hoặc đã có kịch bản). Playlist: kịch bản là một vòng cảnh (Cài đặt → Độ dài một
+ * vòng cảnh), không theo độ dài nhạc — khi dựng, vòng cảnh lặp lại cho hết danh sách nhạc; MV một bài: dài đúng bài.
  */
-function startScript(item: PipelineItem) {
-  mem.generating = item.id;
+async function startScript(id: string): Promise<boolean> {
+  mem.generating = id;
+  const next = inOrder((await readPipeline()).items).find((i) => !finished(i) && !i.mv_id && i.idea && i.steps.script.status !== "error");
+  if (next?.id !== id) {
+    mem.generating = null;
+    return false;
+  }
   void (async () => {
     try {
-      const mv = await generateMV({ ...item.idea! });
-      await patch(item.id, (it) => {
+      const mv = await generateMV({ ...next.idea! });
+      await patch(id, (it) => {
         it.mv_id = mv.id;
         it.steps.script = { status: "done", message: `${mv.shots.length} cảnh` };
       });
     } catch (err) {
-      await patch(item.id, (it) => {
+      await patch(id, (it) => {
         it.steps.script = { status: "error", message: (err as Error).message };
       });
     } finally {
@@ -189,6 +299,7 @@ function startScript(item: PipelineItem) {
       ensurePipelineWatch();
     }
   })();
+  return true;
 }
 
 function patch(id: string, fn: (it: PipelineItem) => void): Promise<void> {
@@ -196,6 +307,74 @@ function patch(id: string, fn: (it: PipelineItem) => void): Promise<void> {
     const it = st.items.find((i) => i.id === id);
     if (it) fn(it);
   });
+}
+
+type MVOf = NonNullable<Awaited<ReturnType<typeof loadMV>>>;
+
+/** Bước Nhạc của MV một bài: ghép đúng bài đã giữ lúc thêm việc (kịch bản viết theo bài này), ghi vào lịch sử kênh là MV. */
+async function mvSongStep(mv: MVOf, wanted: NonNullable<IdeaRow["mv_song"]>, ch: Channel, songs: LibSong[], title: string): Promise<PipelineStep> {
+  const song = songs.find((s) => s.exists && songKey(s.code) === songKey(wanted.code));
+  const version = song ? (song.versions.find((v) => v.name === wanted.file) ?? song.versions[0]) : undefined;
+  if (!song || !version) {
+    return { status: "waiting", message: `MV chờ bài “${mv.idea.song_title || wanted.code}”: không thấy bài này trong kho nhạc — thêm lại bài (hoặc đồng bộ kho nhạc từ Drive).${CLIPS_GO_ON}` };
+  }
+  await fs.mkdir(mediaDir(mv.id), { recursive: true });
+  const tmp = path.join(mediaDir(mv.id), `bai-${Date.now().toString(36)}.flac`);
+  try {
+    await buildPlaylistAudio([{ ...version, title: song.title, code: song.code }], tmp);
+    await addPlaylistAudio(mv.id, tmp, version.name, []);
+  } finally {
+    await fs.rm(tmp, { force: true }).catch(() => undefined);
+  }
+  await recordChannelVideo(ch.id, { id: mv.id, date: new Date().toISOString(), title, codes: [song.code], files: [version.name], kind: "mv" });
+  return { status: "done", message: `Kênh “${ch.name}”: MV bài “${song.title}” (mức ${song.level}) · ${chapterTime(version.duration)}` };
+}
+
+/**
+ * Bước Nhạc của playlist: tự xếp bài kiểu Bokin cho đủ `target` giây; playlist cuối vòng mở đầu bằng các bài vừa có MV, không lấy bài
+ * các MV đang làm của kênh đã giữ (`avoid`).
+ */
+async function playlistSongStep(mv: MVOf, ch: Channel, songs: LibSong[], history: Channel["history"], title: string, opensWith: string[], avoid: string[], target: number): Promise<PipelineStep> {
+  const mix = pickForLength(songs, history, { targetSec: target, oldPercent: ch.oldPercent, newOrder: ch.newOrder, seed: mv.id, opensWith, avoid });
+  if (!mix.enough) {
+    return {
+      status: "waiting",
+      message: mix.picks.length
+        ? `Chưa đủ nhạc cho kênh “${ch.name}”: kho chỉ có ${minutesLabel(mix.total)} (${mix.picks.length} bài dùng được), cần khoảng ${minutesLabel(target)} — thêm bài vào kho (hoặc đồng bộ kho nhạc từ Drive), hoặc giảm “Độ dài video” trong Cài đặt.${CLIPS_GO_ON}`
+        : `Kho nhạc chưa có bài nào dùng được — thêm nhạc vào Thư mục nhạc (hoặc đồng bộ từ Drive), hoặc tải nhạc lên ở trang Ghép video.${CLIPS_GO_ON}`,
+    };
+  }
+  await fs.mkdir(mediaDir(mv.id), { recursive: true });
+  const tmp = path.join(mediaDir(mv.id), `playlist-${Date.now().toString(36)}.flac`);
+  try {
+    const tracks = await buildPlaylistAudio(mix.picks.map((p) => ({ ...p.version, title: p.song.title, code: p.song.code })), tmp);
+    const name = mix.picks.length === 1 ? mix.picks[0].version.name : `Danh sách nhạc ${mix.picks.length} bài.flac`;
+    await addPlaylistAudio(mv.id, tmp, name, mix.picks.length > 1 ? tracks : []);
+  } finally {
+    await fs.rm(tmp, { force: true }).catch(() => undefined);
+  }
+  const files = mix.picks.map((p) => p.version.name);
+  await recordChannelVideo(ch.id, { id: mv.id, date: new Date().toISOString(), title, codes: mix.picks.map((p) => p.song.code), files, kind: "playlist" });
+  const old = mix.picks.filter((p) => p.role === "old").length;
+  const lead = opensWith.length ? mix.picks.filter((p) => opensWith.some((c) => songKey(c) === songKey(p.song.code))).length : 0;
+  const warn = mix.warnings.length ? ` · ⚠ ${mix.warnings.join(" ")}` : "";
+  return {
+    status: "done",
+    message: `Kênh “${ch.name}”: tự xếp ${mix.picks.length} bài (${old} cũ + ${mix.picks.length - old} mới) · ${minutesLabel(mix.total)}${lead ? ` · mở đầu bằng ${lead} bài vừa có MV` : ""}${warn}`,
+  };
+}
+
+/**
+ * Nhạc của kênh ghép đúng thứ tự sản xuất, để lịch sử kênh đúng vòng (MV → MV → MV → playlist → MV…): playlist chờ các MV mà nó mở
+ * đầu có nhạc trước; MV chờ playlist thêm trước nó (vòng trước) của kênh. Trả về việc phải chờ, null = tới lượt.
+ */
+function songTurn(item: PipelineItem, items: PipelineItem[]): PipelineItem | null {
+  const ch = itemChannel(item);
+  const queue = inOrder(items.filter((o) => !finished(o) && itemChannel(o) === ch && o.steps.song.status !== "done"));
+  const earlier = queue.slice(0, Math.max(0, queue.findIndex((o) => o.id === item.id)));
+  if (kindOf(item) === "mv") return earlier.find((o) => kindOf(o) === "playlist") ?? null;
+  const opens = new Set((item.opens_with ?? []).map(songKey));
+  return earlier.find((o) => kindOf(o) === "mv" && o.idea?.mv_song && opens.has(songKey(o.idea.mv_song.code))) ?? null;
 }
 
 /** Một bước của một việc → trạng thái mới (đọc MV, bài hát, tiến độ Muse, hàng chờ dựng). */
@@ -210,7 +389,7 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
     if (generationMode(settings) === "manual") {
       steps.script = { status: "error", message: "Cần Claude API key để tự viết kịch bản (Cài đặt → API key của Claude)." };
     } else if (!mem.generating) {
-      startScript(item);
+      if (!(await startScript(item.id))) return null;
       steps.script = { status: "running", message: "Claude đang viết kịch bản…" };
     } else if (mem.generating !== item.id) {
       steps.script = { status: "waiting", message: "Chờ tới lượt viết kịch bản" };
@@ -229,40 +408,38 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
   } else if (!settings.songDir.trim()) {
     steps.song = { status: "waiting", message: `Chưa có nhạc — tải lên ở trang Ghép video, hoặc đặt “Thư mục nhạc” trong Cài đặt để app tự xếp danh sách nhạc.${CLIPS_GO_ON}` };
   } else if (!isRendering(mv.id)) {
-    const title = `${/^\d+$/.test(mv.idea.id) ? `#${mv.idea.id} · ` : ""}${mv.idea.song_title || item.title}`;
-    try {
-      const lib = await loadMusicLibrary(settings.songDir, settings.songSheet);
-      const channels = await readChannels();
-      const ch = channels.find((c) => c.id === itemChannel(item)) ?? channels.find((c) => c.id === mv.idea.channel) ?? channels[0];
-      const target = settings.videoMinutes * 60;
-      // Lịch sử kênh không tính chính video này (ghép lại nhạc cho một video đã có trong lịch sử).
-      const history = ch.history.filter((v) => v.id !== mv.id);
-      const mix = pickForLength(lib.songs, history, { targetSec: target, oldPercent: ch.oldPercent, newOrder: ch.newOrder, seed: mv.id });
-      if (!mix.enough) {
-        steps.song = {
-          status: "waiting",
-          message: mix.picks.length
-            ? `Chưa đủ nhạc cho kênh “${ch.name}”: kho chỉ có ${minutesLabel(mix.total)} (${mix.picks.length} bài dùng được), cần khoảng ${minutesLabel(target)} — thêm bài vào kho (hoặc đồng bộ kho nhạc từ Drive), hoặc giảm “Độ dài video” trong Cài đặt.${CLIPS_GO_ON}`
-            : `Kho nhạc chưa có bài nào dùng được — thêm nhạc vào Thư mục nhạc (hoặc đồng bộ từ Drive), hoặc tải nhạc lên ở trang Ghép video.${CLIPS_GO_ON}`,
-        };
-      } else {
-        await fs.mkdir(mediaDir(mv.id), { recursive: true });
-        const tmp = path.join(mediaDir(mv.id), `playlist-${Date.now().toString(36)}.flac`);
-        try {
-          const tracks = await buildPlaylistAudio(mix.picks.map((p) => ({ ...p.version, title: p.song.title, code: p.song.code })), tmp);
-          const name = mix.picks.length === 1 ? mix.picks[0].version.name : `Danh sách nhạc ${mix.picks.length} bài.flac`;
-          await addPlaylistAudio(mv.id, tmp, name, mix.picks.length > 1 ? tracks : []);
-        } finally {
-          await fs.rm(tmp, { force: true }).catch(() => undefined);
+    const items = (await readPipeline()).items;
+    const before = songTurn(item, items);
+    if (before) {
+      steps.song = {
+        status: "waiting",
+        message:
+          kindOf(item) === "mv"
+            ? `Chờ playlist “${before.title}” (vòng trước) có nhạc trước, để kênh đúng thứ tự. Kịch bản và clip Muse vẫn làm tiếp.`
+            : `Chờ MV “${before.title}” có nhạc trước (playlist mở đầu bằng bài của các MV trong vòng). Kịch bản và clip Muse vẫn làm tiếp.`,
+      };
+    } else {
+      const title = `${/^\d+$/.test(mv.idea.id) ? `#${mv.idea.id} · ` : ""}${mv.idea.song_title || item.title}`;
+      try {
+        const lib = await loadMusicLibrary(settings.songDir, settings.songSheet);
+        const channels = await readChannels();
+        const ch = channels.find((c) => c.id === itemChannel(item)) ?? channels.find((c) => c.id === mv.idea.channel) ?? channels[0];
+        // Lịch sử kênh không tính chính video này (ghép lại nhạc cho một video đã có trong lịch sử).
+        const history = ch.history.filter((v) => v.id !== mv.id);
+        if (mv.idea.video_kind === "mv" && mv.idea.mv_song) {
+          steps.song = await mvSongStep(mv, mv.idea.mv_song, ch, lib.songs, title);
+        } else {
+          // Mở đầu bằng bài của các MV trong vòng đã có nhạc (MV bị bỏ trước khi có nhạc thì thôi bài đó); tránh bài MV khác đang giữ.
+          const mvCodes = new Set(history.filter((v) => v.kind === "mv").flatMap((v) => v.codes.map(songKey)));
+          const opensWith = (item.opens_with ?? []).filter((c) => mvCodes.has(songKey(c)));
+          const held = items.flatMap((o) =>
+            o.id !== item.id && !finished(o) && itemChannel(o) === ch.id && o.steps.song.status !== "done" && o.idea?.mv_song ? [o.idea.mv_song.code] : [],
+          );
+          steps.song = await playlistSongStep(mv, ch, lib.songs, history, title, opensWith, held, settings.videoMinutes * 60);
         }
-        const files = mix.picks.map((p) => p.version.name);
-        await recordChannelVideo(ch.id, { id: mv.id, date: new Date().toISOString(), title, codes: mix.picks.map((p) => p.song.code), files });
-        const old = mix.picks.filter((p) => p.role === "old").length;
-        const warn = mix.warnings.length ? ` · ⚠ ${mix.warnings.join(" ")}` : "";
-        steps.song = { status: "done", message: `Kênh “${ch.name}”: tự xếp ${mix.picks.length} bài (${old} cũ + ${mix.picks.length - old} mới) · ${minutesLabel(mix.total)}${warn}` };
+      } catch (err) {
+        steps.song = { status: "error", message: (err as Error).message };
       }
-    } catch (err) {
-      steps.song = { status: "error", message: (err as Error).message };
     }
   }
 
@@ -353,8 +530,10 @@ async function feedFromBank(): Promise<boolean> {
   for (let free = cfg.ahead - busy; free > 0; ) {
     const ch = routeChannel(channels, load, skip);
     if (!ch) break;
-    // Bật "chỉ lấy ý tưởng khi còn bài mới": chỉ lấy khi bài kênh chưa dùng còn đủ cho thêm một video (trừ video của kênh đang chờ nhạc).
-    const check = await songCheck(settings, cfg.needSong, ch.id, await waitingForMusic(ch.id));
+    // Video tiếp theo của kênh theo thứ tự sản xuất. MV đã có bài (giữ lúc thêm việc) → không cần kiểm tra kho nhạc. Playlist: bật
+    // "chỉ làm video mới khi còn bài mới" thì chỉ lấy khi bài kênh chưa dùng còn đủ cho thêm một video (trừ video của kênh đang chờ nhạc).
+    const next = (await planner(channels, (await readPipeline()).items)).plan(ch.id);
+    const check = next.kind === "mv" ? null : await songCheck(settings, cfg.needSong, ch.id, await waitingForMusic(ch.id));
     const [idea] = await takeIdeas(1, check ?? undefined, ch.id);
     if (!idea) {
       skip.add(ch.id);
@@ -385,10 +564,16 @@ export function pipelineTick(): Promise<"fast" | "slow" | null> {
       return false;
     });
     const state = await readPipeline();
-    for (const item of state.items.filter((i) => !finished(i))) {
+    // Việc thêm trước làm trước (thứ tự sản xuất của các kênh). Đọc lại từng việc ngay trước khi tính (việc trước có thể vừa đổi nó),
+    // và chỉ ghi các bước lượt này đổi — kịch bản viết xong giữa chừng không bị ghi đè bằng trạng thái cũ.
+    for (const id of inOrder(state.items.filter((i) => !finished(i))).map((i) => i.id)) {
       try {
+        const item = (await readPipeline()).items.find((i) => i.id === id);
+        if (!item || finished(item)) continue;
         const next = await advance(item);
-        if (next) await patch(item.id, (it) => Object.assign(it, next, { steps: { ...it.steps, ...next.steps } }));
+        if (!next) continue;
+        const changed = Object.fromEntries(Object.entries(next.steps ?? {}).filter(([k, v]) => v !== item.steps[k as StepName]));
+        await patch(id, (it) => Object.assign(it, next, { steps: { ...it.steps, ...changed } }));
       } catch (err) {
         mem.error = (err as Error).message;
       }

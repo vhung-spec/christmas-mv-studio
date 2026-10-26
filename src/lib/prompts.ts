@@ -42,8 +42,10 @@ export interface GenContext {
 
 export const SYSTEM_PROMPT = `You are a music-video director and AI-video prompt engineer specializing in vintage 1950s
 American Christmas (classic crooner Christmas standards, doo-wop and rock & roll Christmas songs, carols).
-Given one video idea, produce a complete shot list for a long Christmas music video built from short
-AI-generated clips: the editor loops these clips for about an hour over a playlist of Christmas songs.
+Given one video idea, produce a complete shot list for a Christmas music video built from short
+AI-generated clips. The user message says which kind: an hour-long playlist video (the editor loops the
+clips over a playlist of Christmas songs — LOOPED EDIT), or a single-song music video of about 3–4
+minutes (the clips follow one song once, from intro to outro — SINGLE-SONG MUSIC VIDEO).
 
 INPUT: world_location, year, theme (name, mood, pacing, signature_shots), outline (Vietnamese),
 duration_sec, clip_len, optional lyrics, character bible (if fixed), location data, era rules,
@@ -120,9 +122,10 @@ SHOTS
   clearly tied to this location and year, echoing the section's mood. Every CHRISTMAS LIFE row shows
   a different activity, never repeated; the first shot of the video, when marked, establishes the
   place and the season. description_vi starts with "Giáng sinh 50s:".
-- The clips are looped for about an hour, so every shot must be a beautiful, rewatchable moment
-  with smooth continuous motion that still works when seen again or out of order; no shocks, no
-  sudden action, no two shots alike.
+- In a LOOPED EDIT the clips are looped for about an hour, so every shot must be a beautiful, rewatchable
+  moment with smooth continuous motion that still works when seen again or out of order; no shocks, no
+  sudden action, no two shots alike. In a SINGLE-SONG MUSIC VIDEO the shots play once in order: follow the
+  song section by section (and its lyrics when given) like a classic music video, still with no two shots alike.
 - Spread the outline over the plan as a story with a beginning, a development and an ending (told by
   the shots with the characters; CHRISTMAS LIFE shots surround that story with the season).
   Never repeat the same moment; every shot moves the story or the feeling forward.
@@ -140,12 +143,14 @@ EXTRA ASSETS
 - thumbnail_prompt: one English prompt for a 16:9 YouTube thumbnail still: the most iconic, cozy
   Christmas moment of the video (the characters if any), period-accurate, no text. Use the {{ID}}
   placeholders for characters; the style preset is appended automatically.
-- youtube_titles: exactly 3 English options for a long vintage Christmas music video in the channel's
-  style, each naming the place or mood and the video length given in VIDEO LENGTH (e.g. "1 Hour"),
-  no all-caps clickbait.
+- youtube_titles: exactly 3 English options for a vintage Christmas music video in the channel's style, no
+  all-caps clickbait. For a playlist video, each names the place or mood and the video length given in
+  VIDEO LENGTH (e.g. "1 Hour"). For a single-song music video, each contains the song title given in SONG
+  (e.g. "Silver Bells Waltz 🎄 Vintage 1950s Christmas Music Video") and never a length like "1 Hour".
 - youtube_description: 80–150 English words in the channel voice provided, then a blank line and one line of
   4–8 relevant hashtags (e.g. #christmasmusic #vintagechristmas #1950s) — they are also written into the
-  video file as keywords. Do not write a tracklist: the application appends the songs with timestamps.
+  video file as keywords. Do not write a tracklist: the application appends the songs with timestamps
+  (a single-song music video has no tracklist).
 - editing_notes: Vietnamese notes per section — where to cut on the beat, where to use slow motion,
   which transitions to use.`;
 
@@ -273,7 +278,14 @@ export function buildGenerationPrompt(ctx: GenContext): string {
   out.push("");
   out.push(`SHOT PLAN — produce exactly ${plan.shots.length} shots:`);
   for (const s of plan.shots) out.push(planRow(s));
-  if (ctx.settings.loopScenes) {
+  const single = ctx.idea.video_kind === "mv";
+  if (single) {
+    out.push("");
+    out.push(
+      `SINGLE-SONG MUSIC VIDEO for the song "${ctx.idea.song_title ?? ""}" (${formatTime(plan.duration_sec)}): the ${plan.shots.length} clips play once in order, cut to this one song from intro to outro ` +
+        "(the editor repeats a few only if the song runs longer). Build one continuous story that rises with the song's sections; when lyrics are given, let each shot echo its lyric line.",
+    );
+  } else if (ctx.settings.loopScenes) {
     out.push("");
     out.push(
       `LOOPED EDIT: the editor will play these ${plan.shots.length} clips one after another and repeat them (in shuffled rounds) to fill a Christmas playlist of about ${Math.round(ctx.settings.videoMinutes)} minutes. ` +
@@ -298,7 +310,8 @@ export function buildGenerationPrompt(ctx: GenContext): string {
     out.push(tone);
   }
   out.push("");
-  out.push(`VIDEO LENGTH for youtube_titles: about ${Math.round(ctx.settings.videoMinutes)} minutes ("${videoLengthLabel(ctx.settings.videoMinutes)}").`);
+  if (single) out.push(`SONG for youtube_titles: "${ctx.idea.song_title ?? ""}" — a single-song music video (no video length in the titles).`);
+  else out.push(`VIDEO LENGTH for youtube_titles: about ${Math.round(ctx.settings.videoMinutes)} minutes ("${videoLengthLabel(ctx.settings.videoMinutes)}").`);
   out.push(`CHANNEL VOICE for youtube_description: ${ctx.settings.channelVoice}`);
   return out.join("\n");
 }

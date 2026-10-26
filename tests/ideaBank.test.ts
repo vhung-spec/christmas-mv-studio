@@ -231,6 +231,8 @@ describe("kho ý tưởng", () => {
     await wb.xlsx.writeFile(path.join(songs, "Kho bài hát.xlsx"));
     setSettings({ songDir: songs, videoMinutes: 1 });
     const b = await ch.addChannel("Kênh B");
+    // Test này về playlist: hai kênh chỉ làm playlist (MV mỗi vòng = 0).
+    for (const c of await ch.readChannels()) await ch.updateChannel(c.id, { mvPerRound: 0 });
     await bank.setBankConfig({ ahead: 2, suggest: false });
     // Cột Kênh (tên kênh) thắng; dòng không ghi kênh → chia lần lượt (kênh ít ý tưởng chưa dùng nhất).
     const rows = [{ ...idea("1", "Rockefeller Center Christmas Eve 1954"), channel: "kênh b" }, idea("2", "Woodstock Vermont First Snow 1952"), idea("3", "Beacon Hill Boston Carol Night 1953")];

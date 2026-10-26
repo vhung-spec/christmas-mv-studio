@@ -1,6 +1,6 @@
 "use client";
 
-// Thẻ "Kho nhạc trên Google Drive" ở trang Tự động: link thư mục kho nhạc, đồng bộ ngay / tự đồng bộ, tiến độ và kết quả.
+// Thẻ "Kho nhạc trên Google Drive" ở trang Kênh: link thư mục kho nhạc, đồng bộ ngay / tự đồng bộ, tiến độ và kết quả.
 // Kho chung của mọi kênh: file nhạc + tệp Kho bài hát.xlsx (mức hay, mẫu Bokin). Bài nào kênh nào đã dùng: app tự nhớ (thẻ Kênh).
 
 import Link from "next/link";

@@ -14,10 +14,10 @@ export async function GET() {
   }
 }
 
-/** { action: "add", name } · { action: "update", id, name?, active?, oldPercent?, newOrder? } */
+/** { action: "add", name } · { action: "update", id, name?, active?, oldPercent?, newOrder?, mvPerRound? } */
 export async function POST(req: Request) {
   try {
-    const body = await readJsonBody<{ action: string; id?: unknown; name?: unknown; active?: unknown; oldPercent?: unknown; newOrder?: unknown }>(req);
+    const body = await readJsonBody<{ action: string; id?: unknown; name?: unknown; active?: unknown; oldPercent?: unknown; newOrder?: unknown; mvPerRound?: unknown }>(req);
     if (body.action === "add") {
       await addChannel(typeof body.name === "string" ? body.name : "");
     } else if (body.action === "update") {
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
         ...(typeof body.active === "boolean" ? { active: body.active } : {}),
         ...(body.oldPercent !== undefined ? { oldPercent: Number(body.oldPercent) } : {}),
         ...(body.newOrder === "balanced" || body.newOrder === "best_first" ? { newOrder: body.newOrder } : {}),
+        ...(body.mvPerRound !== undefined ? { mvPerRound: Number(body.mvPerRound) } : {}),
       });
     } else {
       throw new UserError("action không hợp lệ.");

@@ -364,6 +364,8 @@ export function mockGenerate(ctx: GenContext): RawGeneration {
   const place = ctx.locationKey ?? ctx.idea.world_location;
   const title = ctx.idea.song_title || `Christmas in ${place}`;
   const length = videoLengthLabel(ctx.settings.videoMinutes ?? 60);
+  // MV một bài: tiêu đề theo tên bài, không ghi độ dài, không ghép vòng lặp.
+  const single = ctx.idea.video_kind === "mv";
   const outlineParts = ctx.idea.outline.split(/[;.]/).map((x) => x.trim()).filter(Boolean);
   const who = bible.length ? `${bible
     .slice(0, 2)
@@ -377,13 +379,19 @@ export function mockGenerate(ctx: GenContext): RawGeneration {
     })),
     shots,
     thumbnail_prompt: `Cinematic 16:9 still of ${who} at ${ctx.location.landmarks[0] ?? place}, ${warmPlace(ctx) ? "palm trees wrapped in lights" : "snow falling"}, warm golden glow of colored bulbs, period-accurate ${ctx.year} Christmas details`,
-    youtube_titles: [
-      `${title} ${ctx.year} 🎄 Vintage 1950s Christmas Music (${length})`,
-      `Old-Fashioned Christmas in ${place} | 1950s Holiday Songs, ${length}`,
-      `${place}, ${ctx.year}: A Cozy Vintage Christmas (${length} of Classic Christmas Music)`,
-    ],
-    youtube_description: `Pull up a chair by the fire and step into a ${ctx.year} Christmas in ${place}. Snow drifts past glowing windows, colored bulbs twinkle on every porch and the whole town hums a carol. "${title}" is a love letter to the golden age of Christmas — ${ctx.theme.mood}. Let these vintage holiday songs play while you wrap presents, bake cookies or simply watch the snow fall.\n\n#christmasmusic #vintagechristmas #1950s #oldieschristmas #${place.replace(/[^A-Za-z0-9]+/g, "").toLowerCase()}`,
-    editing_notes: mockEditingNotes(ctx.plan, ctx.settings.loopScenes),
+    youtube_titles: single
+      ? [
+          `${title} 🎄 Vintage 1950s Christmas Music Video`,
+          `${title} (${ctx.year}) | Old-Fashioned Christmas Song in ${place}`,
+          `${title} — A Cozy Vintage Christmas in ${place}, ${ctx.year}`,
+        ]
+      : [
+          `${title} ${ctx.year} 🎄 Vintage 1950s Christmas Music (${length})`,
+          `Old-Fashioned Christmas in ${place} | 1950s Holiday Songs, ${length}`,
+          `${place}, ${ctx.year}: A Cozy Vintage Christmas (${length} of Classic Christmas Music)`,
+        ],
+    youtube_description: `Pull up a chair by the fire and step into a ${ctx.year} Christmas in ${place}. Snow drifts past glowing windows, colored bulbs twinkle on every porch and the whole town hums a carol. "${title}" is a love letter to the golden age of Christmas — ${ctx.theme.mood}. ${single ? "Let this vintage holiday song play while" : "Let these vintage holiday songs play while"} you wrap presents, bake cookies or simply watch the snow fall.\n\n#christmasmusic #vintagechristmas #1950s #oldieschristmas #${place.replace(/[^A-Za-z0-9]+/g, "").toLowerCase()}`,
+    editing_notes: mockEditingNotes(ctx.plan, ctx.settings.loopScenes && !single),
   };
 }
 

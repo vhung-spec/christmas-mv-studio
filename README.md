@@ -9,19 +9,21 @@ Bạn chỉ nhập **ý tưởng** của từng video (1 dòng), công cụ tự
 - **Thumbnail prompt**, 3 gợi ý **tiêu đề YouTube** (kèm độ dài, vd. “1 Hour”), **mô tả** theo giọng văn kênh và **ghi chú dựng phim**.
 - **Kiểm tra niên đại** (xe đời sau, điện thoại, đèn LED / đồ bơm hơi, cây thông nhôm trước 1958, ngôi sao pha lê ở Rockefeller Center, tuyết ở Hollywood / Miami…), độ dài prompt, chữ trên màn hình, thương hiệu / nhân vật bản quyền (Rudolph, Frosty…), và **trùng lặp trong series**.
 
-Menu **Tự động** chạy trọn **ý tưởng → kịch bản → danh sách nhạc ~1 tiếng → clip Muse → MP4** bằng một nút (mục 2d): app **tự xếp danh sách
-nhạc như Bokin Playlist Studio** (bài cũ hay + bài mới, theo mức hay trong `Kho bài hát.xlsx` và lịch sử của kênh) từ kho nhạc Giáng sinh (đồng bộ từ
-Google Drive như KHO NHẠC), nối thành khoảng 60 phút, **lặp 20–30 clip** cho hết nhạc, rồi làm ảnh bìa, tiêu đề, mô tả **kèm danh sách bài + mốc thời
-gian** (YouTube tự tạo chương) và thư mục kết quả. Làm cho nhiều **kênh** thì app **tự phân luồng**: mỗi video mới vào kênh đang có ít video nhất; các
-kênh dùng chung kho nhạc, mỗi kênh có lịch sử nhạc và kho ý tưởng riêng.
+Trang **Kênh** (quản lý kênh, kế hoạch sản xuất, giao việc, kho ý tưởng) và trang **Dây chuyền** (sản xuất) chạy trọn **ý tưởng → kịch bản → nhạc →
+clip Muse → MP4** (mục 2d). Mỗi kênh đăng theo vòng: **N MV một bài** (mặc định 3; bài hay nhất kênh chưa dùng, kịch bản bám lời, tiêu đề là tên bài)
+**rồi 1 playlist ~1 tiếng mở đầu bằng các bài vừa có MV**. Playlist: app **tự xếp danh sách nhạc như Bokin Playlist Studio** (bài cũ hay + bài mới,
+theo mức hay trong `Kho bài hát.xlsx` và lịch sử của kênh) từ kho nhạc Giáng sinh (đồng bộ từ Google Drive như KHO NHẠC), nối thành khoảng 60 phút,
+**lặp 20–30 clip** cho hết nhạc, rồi làm ảnh bìa, tiêu đề, mô tả **kèm danh sách bài + mốc thời gian** (YouTube tự tạo chương) và thư mục kết quả.
+Làm cho nhiều **kênh** thì app **tự phân luồng**: mỗi video mới vào kênh đang có ít video nhất; các kênh dùng chung kho nhạc, mỗi kênh có lịch sử
+nhạc và kho ý tưởng riêng.
 
 ### Khác gì MV Prompt Studio (app cũ)
 
 | | MV Prompt Studio (cũ) | Christmas MV Studio (mới) |
 |---|---|---|
 | Nội dung | MV tình yêu rock'n'roll 1950s, luôn có cặp đôi | Giáng sinh 1950s; nhân vật theo ý tưởng (cặp đôi / gia đình / trẻ em / ông bà / chỉ cảnh) |
-| Độ dài video | 1 bài ≈ 3 phút | **~1 tiếng** (Cài đặt → *Độ dài video*, mặc định 60 phút) |
-| Nhạc | 1 bài theo số ý tưởng (ý tưởng 12 → `12.wav`) | **tự xếp ~1 tiếng như Bokin Playlist Studio**: bài cũ hay + bài mới theo `Kho bài hát.xlsx` (mức hay 1–3) và lịch sử của kênh; không cần ghi “đã dùng” |
+| Độ dài video | 1 bài ≈ 3 phút | mỗi vòng **N MV một bài** (dài đúng bài) rồi **1 playlist ~1 tiếng** (Cài đặt → *Độ dài video*, mặc định 60 phút); N riêng từng kênh |
+| Nhạc | 1 bài theo số ý tưởng (ý tưởng 12 → `12.wav`) | MV: bài hay nhất kênh chưa dùng; playlist: **tự xếp ~1 tiếng như Bokin Playlist Studio** — bài cũ hay + bài mới theo `Kho bài hát.xlsx` (mức hay 1–3) và lịch sử của kênh, mở đầu bằng các bài vừa có MV; không cần ghi “đã dùng” |
 | Kênh | một kênh | **nhiều kênh, tự phân luồng** (video mới vào kênh ít video nhất); chung kho nhạc, lịch sử nhạc + kho ý tưởng riêng; kết quả để theo thư mục kênh |
 | Số cảnh | 15–20 | 20–30 (một vòng, khi dựng lặp lại — các vòng sau xáo thứ tự) |
 | Chủ đề | T01–T30 tình yêu | T01–T22 Giáng sinh (Đêm Giáng sinh lãng mạn, Trang trí cây thông, Tuyết đầu mùa…) |
@@ -246,7 +248,7 @@ Phần này chạy ngay trong app (mã ở `src/lib/museEngine/`), không có se
 ### Tạo clip
 
 1. Một MV: trang **🎬 Ghép video với nhạc** → thẻ **Tạo clip bằng Muse** → **🎬 Gửi N cảnh chưa có clip sang Muse**.
-   Nhiều MV: menu **Clip Muse** → chọn MV → **🎬 Gửi sang Muse**. (Chạy hết cả quy trình thì dùng menu **Tự động** — mục 2d.)
+   Nhiều MV: menu **Clip Muse** → chọn MV → **🎬 Gửi sang Muse**. (Chạy hết cả quy trình thì giao việc ở trang **Kênh**, theo dõi ở trang **Dây chuyền** — mục 2d.)
    App hỏi lại trước khi gửi vì **mỗi cảnh là một lượt Muse** (tính vào hạn mức tuần).
 2. Xong. Mỗi cảnh hiện một ô theo tiến độ: **Đang chờ tới lượt** → **Muse đang làm** → **✓ Đã vào MV**. Ô đỏ = lỗi, rê chuột để xem lý do.
 3. MV đủ clip cho mọi cảnh và đã có bài hát → app tự thêm vào **Hàng chờ dựng** và dựng (nếu bật).
@@ -275,29 +277,60 @@ Bấm **🎬 Tạo N cảnh chưa có clip** → app copy sẵn các prompt (cá
 Cảnh lỗi: bấm **Thử lại** ngay trong HaoHao (app tự theo) hoặc **↻ Gửi lại** trong app rồi dán lại. Lỡ mất chữ đã copy: **📋 Copy lại N prompt chờ dán**.
 App không sửa gì bên HaoHao. Đổi cách gửi giữa chừng: cảnh gửi bằng cách cũ được giữ nguyên kèm lời nhắc.
 
-## 2d. Tự động: ý tưởng → MP4 (một nút)
+## 2d. Tự động: ý tưởng → MP4 (trang Kênh + trang Dây chuyền)
 
-Menu **Tự động**: mỗi việc là một video **cho một kênh** (mục *Kênh* bên dưới) chạy qua 4 bước, không cần bấm gì thêm:
+Hai trang, tách phần quản lý khỏi phần sản xuất:
+
+- **Kênh** — quản lý: thẻ **Các kênh & kho nhạc chung** (thêm kênh, bật / tắt, *MV mỗi vòng*, *Bài cũ %*, *Chọn bài mới*, cột *Tiếp theo*; bấm
+  **Xem kênh** để chọn kênh), **Kế hoạch sản xuất** của kênh đang xem (thứ tự vòng, video tiếp theo + bài của nó, các video sắp tới, đang làm, đã làm
+  gần đây), **Giao việc** (từ ý tưởng hoặc từ MV có sẵn — cho kênh đang xem, một kênh khác hoặc chia lần lượt các kênh), **Kho ý tưởng** của kênh
+  và **Kho nhạc trên Google Drive**.
+- **Dây chuyền** — sản xuất: *Chuẩn bị* (Claude / nhạc / Muse đã sẵn sàng chưa), **Tự lấy việc** (dây chuyền tự lấy ý tưởng trong kho các kênh, mỗi
+  lúc N video; *Làm video trước, ghép nhạc sau*) và danh sách **Đang sản xuất** (lọc theo kênh; mỗi việc ghi 📺 kênh và 🎬 MV hay 📀 Playlist).
+
+Mỗi việc là một video **cho một kênh** (mục *Kênh* bên dưới) chạy qua 4 bước, không cần bấm gì thêm:
 
 1. **Kịch bản** — Claude viết từ một dòng ý tưởng (cần **Claude API key**: Cài đặt → *API key của Claude*; chế độ **Demo** cũng chạy được để thử).
-   Kịch bản là **một vòng 20–30 cảnh** (Cài đặt → *Số cảnh mỗi video* và *Độ dài một vòng cảnh*, mặc định 250 giây ≈ 25 clip × 10 giây), không phụ thuộc
-   độ dài nhạc. Nhân vật theo dàn ý: cặp đôi, gia đình, trẻ em, ông bà… hoặc “**Chỉ cảnh, không nhân vật chính**” (Character Bible trống, mọi cảnh là phố
-   phường, làng tuyết, người thường). Viết lần lượt từng video.
-2. **Nhạc** — video chưa có nhạc → app **tự xếp danh sách nhạc như Bokin Playlist Studio** cho kênh của video (mục *Kho nhạc & cách xếp bài* bên
-   dưới) cho đủ **Độ dài video** (Cài đặt, mặc định 60 phút), rồi nối thành một file (FLAC, không mất chất lượng). Ô Nhạc ghi rõ, vd.
-   `Kênh “Kênh Giáng sinh”: tự xếp 19 bài (9 cũ + 10 mới) · 60 phút`, kèm cảnh báo của Bokin khi kho sắp hết bài mới cho kênh. Kho không đủ khoảng
-   90% độ dài video → việc chờ, báo kho có bao nhiêu phút; thêm bài vào kho (hoặc đồng bộ Drive) là app tự chạy tiếp.
-   Cũng có thể tải nhạc lên tay ở trang Ghép video (một file, tối đa 1,5 GB).
+   Playlist: **một vòng 20–30 cảnh** (Cài đặt → *Số cảnh mỗi video* và *Độ dài một vòng cảnh*, mặc định 250 giây ≈ 25 clip × 10 giây), không phụ
+   thuộc độ dài nhạc. **MV một bài**: kịch bản **dài đúng bài**, bám lời bài (thư viện lời trên Drive, nếu có), tiêu đề YouTube là **tên bài**. Nhân vật
+   theo dàn ý: cặp đôi, gia đình, trẻ em, ông bà… hoặc “**Chỉ cảnh, không nhân vật chính**” (Character Bible trống, mọi cảnh là phố phường, làng
+   tuyết, người thường). Viết lần lượt từng video, việc giao trước viết trước.
+2. **Nhạc** — MV: ghép **đúng bài đã giữ** cho MV, ô Nhạc ghi vd. `Kênh “Kênh Giáng sinh”: MV bài “Silver Bells Waltz” (mức 3) · 3:24`. Playlist: app
+   **tự xếp danh sách nhạc như Bokin Playlist Studio** cho kênh của video (mục *Kho nhạc & cách xếp bài* bên dưới) cho đủ **Độ dài video** (Cài đặt,
+   mặc định 60 phút), rồi nối thành một file (FLAC, không mất chất lượng). Ô Nhạc ghi rõ, vd. `Kênh “Kênh Giáng sinh”: tự xếp 19 bài (9 cũ + 10 mới) ·
+   60 phút · mở đầu bằng 3 bài vừa có MV`, kèm cảnh báo của Bokin khi kho sắp hết bài mới cho kênh. Kho không đủ khoảng 90% độ dài video → việc chờ,
+   báo kho có bao nhiêu phút; thêm bài vào kho (hoặc đồng bộ Drive) là app tự chạy tiếp. Cũng có thể tải nhạc lên tay ở trang Ghép video (một file,
+   tối đa 1,5 GB).
 3. **Clip Muse** — gửi các cảnh chưa có clip sang Muse trong app (mục 2c), clip xong tự vào đúng cảnh.
 4. **Dựng MP4** — đủ clip + có nhạc → thêm vào **Hàng chờ dựng**. Clip phát nguyên từng clip, vòng đầu theo thứ tự 1 → N, **các vòng sau xáo thứ tự**,
    lặp cho tới hết nhạc (~14 vòng cho 1 tiếng). Mỗi clip chỉ mã hoá một lần rồi nối bằng stream copy, nên video 1 tiếng dựng gần nhanh như video 4 phút;
    phần lâu nhất là kiểm tra lại toàn bộ file (giải mã hết hình và tiếng). File 1 tiếng 1080p khoảng **3–5 GB** — máy chạy cần đủ chỗ trống (hoặc chọn
    720p trong thiết lập dựng).
 
-Cách dùng: menu **Tự động** → tab **Từ ý tưởng** (dán bảng như trang Nhập ý tưởng → **Đọc bảng** → **＋ Đưa N ý tưởng vào kho**, hoặc **▶ Chạy ngay cả N
-ý tưởng** để đưa cả bảng vào dây chuyền một lúc) hoặc tab **Từ MV có sẵn** (chọn video → **▶ Chạy tự động N MV**). App hỏi lại kèm chi phí ước tính (lượt
-Muse, tiền Claude API). Mỗi việc hiện 4 ô Kịch bản / Nhạc / Clip Muse / Dựng MP4; bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse**
-để Kiểm tra lại / Gửi lại / Bỏ qua cảnh lỗi & dựng (ít cảnh lỗi thì app tự bỏ qua). Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
+Cách dùng: trang **Kênh** → chọn kênh (**Xem kênh**) → thẻ **Giao việc** → tab **Từ ý tưởng** (dán bảng như trang Nhập ý tưởng → **Đọc bảng** →
+**＋ Đưa N ý tưởng vào kho**, hoặc **▶ Chạy ngay cả N ý tưởng** để đưa cả bảng vào dây chuyền một lúc) hoặc tab **Từ MV có sẵn** (chọn video →
+**▶ Chạy tự động N MV**). App hỏi
+lại kèm thứ tự sản xuất của kênh và chi phí ước tính (lượt Muse, tiền Claude API). Theo dõi ở trang **Dây chuyền**: mỗi việc hiện 4 ô Kịch bản /
+Nhạc / Clip Muse / Dựng MP4; bước lỗi có **↻ Thử lại bước lỗi**; cảnh Muse lỗi thì vào **Clip Muse** để Kiểm tra lại / Gửi lại / Bỏ qua cảnh lỗi & dựng
+(ít cảnh lỗi thì app tự bỏ qua). Tiến độ lưu ở `data/pipeline.json`, tắt app mở lại chạy tiếp.
+
+### Thứ tự sản xuất: mỗi kênh N MV một bài rồi 1 playlist
+
+Cột **MV mỗi vòng** (thẻ *Các kênh & kho nhạc chung*, riêng từng kênh, 0–10, mặc định **3**): mỗi vòng kênh làm **N MV một bài** trước rồi mới tới
+**1 playlist ~1 tiếng**, xong lại vòng mới. **0 = chỉ làm playlist** (như trước). Đổi số giữa chừng vẫn đúng: app đếm các MV liền nhau từ sau playlist
+gần nhất.
+
+- **Bài cho MV** — giữ ngay lúc giao việc: bài **kênh chưa dùng lần nào**, **mức hay cao nhất** trước; cùng mức thì bài **có lời** trong thư viện lời
+  trước (kịch bản bám lời), rồi theo thứ tự trong `Kho bài hát.xlsx`. Hai MV đang làm của một kênh không trùng bài. MV dài đúng bài (~3–4 phút),
+  tên video là tên bài; thư mục kết quả `021 - MV <tên bài> - <địa điểm>`.
+- **Playlist cuối vòng mở đầu bằng các bài vừa có MV** (theo thứ tự MV; tính là bài cũ, bài có nhiều bản thì dùng bản kênh chưa dùng như luật dùng lại
+  của Bokin), phần còn lại xếp như cũ; không lấy bài mà MV vòng sau đang giữ.
+- **Kho chưa còn bài nào cho MV** (vd. kho nhạc chưa xong) → app làm **playlist trước** (đóng vòng sớm, mở đầu bằng các bài MV đã có của vòng); kho có
+  bài là MV làm tiếp. Video giao khi chưa có nhạc thì chờ ở bước Nhạc, kịch bản và clip Muse vẫn làm.
+- **Nhạc ghép đúng thứ tự** để lịch sử kênh đúng vòng: playlist chờ các MV của vòng có nhạc trước, MV vòng sau chờ playlist vòng trước (ô Nhạc ghi
+  rõ đang chờ video nào); trong lúc chờ, kịch bản và clip Muse vẫn làm tiếp.
+- Kho ý tưởng cấp ý tưởng cho cả MV lẫn playlist (MV chỉ lấy ý tưởng trong kho của kênh, bài thì app chọn). Thẻ **Kế hoạch sản xuất** (trang Kênh) cho
+  thấy video tiếp theo của kênh là MV mấy / playlist và bài nào.
 
 ### Video hoàn thiện: ảnh bìa, tiêu đề, mô tả có danh sách bài, thư mục kết quả
 
@@ -323,7 +356,7 @@ Kho trên Drive giống KHO NHẠC của kênh cũ, thêm **một tệp `Kho bà
   **Mã bài**, **Tên bài** (tên hiện trong danh sách bài của mô tả YouTube), *Tệp nhạc* (tên file; bỏ trống thì lấy các file đánh số theo Mã bài, vd. mã
   `12` → `12.wav`, `12 (1).wav`), **Mức hay** (1–3; ghi số, chữ hay ★ đều được; trống = 1), *Dùng lại* (Bình thường · Thưa hơn · Rất thưa · Không dùng
   lại · Loại khỏi kho), *Nghệ sĩ*, *Thể loại*, *Ghi chú*. Bài có file trong Thư mục nhạc mà chưa có dòng trong tệp = **mức 1**. Dòng sai (thiếu mã, mức
-  lạ, không thấy file) hiện ở thẻ **Kênh & kho nhạc**. Để tệp ở chỗ khác: Cài đặt → *Tệp Kho bài hát*.
+  lạ, không thấy file) hiện ở thẻ **Các kênh & kho nhạc chung** (trang Kênh). Để tệp ở chỗ khác: Cài đặt → *Tệp Kho bài hát*.
 - Các thư mục bài đánh số (mỗi thư mục một Google Doc: địa điểm, chủ đề, dàn ý, lời) và thư mục file nhạc đặt tên theo số (`12.wav`, `12 (1).wav` = bản
   thứ hai, `76_1.mp3`). **Không cần ghi “đã dùng” nữa**: app tự nhớ kênh nào đã dùng bài nào (bài cũ hay còn được dùng lại).
 
@@ -339,28 +372,29 @@ Mỗi video, app xếp danh sách nhạc **theo đúng luật của Bokin Playli
 - Thiếu bài mới: dùng lại thêm bài mức 2–3 → rồi bài mức 1 → rồi báo “Kho chỉ đủ …”; kho chỉ còn ít bài mới cho kênh (≤ 3 video) thì nhắc thêm bài.
 - Lịch sử từng kênh (bài nào ở video nào) lưu ở `data/channels.json` (không commit).
 
-Thẻ **Kho nhạc trên Google Drive** (trang Tự động): dán link thư mục gốc (chia sẻ “Bất kỳ ai có đường liên kết”) → app tải `Kho bài hát.xlsx` (Google
+Thẻ **Kho nhạc trên Google Drive** (trang Kênh): dán link thư mục gốc (chia sẻ “Bất kỳ ai có đường liên kết”) → app tải `Kho bài hát.xlsx` (Google
 Sheet thì tải bản xlsx), đọc lời, tải **mọi file nhạc còn thiếu** về **Thư mục nhạc**; file nào trên Drive đổi tên thì đổi tên bản ở máy cho khớp. Tệp
 `Kho bài hát.xlsx` bạn đã sửa ở máy thì không bị ghi đè. Tự đồng bộ mỗi 6 giờ. Không xoá file nào.
 
 ### Kênh: tự phân luồng video cho từng kênh
 
-Thẻ **Kênh & kho nhạc** (trang Tự động): ban đầu có một kênh “Kênh Giáng sinh”; **＋ Thêm kênh** để làm cho nhiều kênh. Mỗi kênh: bật / tắt (tắt = tạm
-không làm video mới), đổi tên, *Bài cũ %*, *Chọn bài mới*; cột *Video* (đã làm + đang làm) và *Bài mới còn* (đủ cho khoảng mấy video).
+Thẻ **Các kênh & kho nhạc chung** (trang Kênh): ban đầu có một kênh “Kênh Giáng sinh”; **＋ Thêm kênh** để làm cho nhiều kênh. Mỗi kênh: bật / tắt
+(tắt = tạm không làm video mới), đổi tên, *MV mỗi vòng*, *Bài cũ %*, *Chọn bài mới*; cột *Video* (đã làm + đang làm), *Tiếp theo* (MV mấy / playlist)
+và *Bài mới còn* (đủ cho khoảng mấy video).
 
-- **Tự phân luồng**: mỗi video mới vào **kênh đang bật có ít video nhất** (bằng nhau thì kênh đứng trước) — các kênh đều nhau. Thẻ **Thêm việc** có ô
-  **Kênh**: *Chia lần lượt các kênh* (mặc định) hoặc một kênh cụ thể; bảng ý tưởng có dòng tiêu đề với cột **Kênh** (tên kênh) thì dòng đó thuộc
-  kênh đó.
-- Mỗi việc trong dây chuyền ghi 📺 tên kênh; ô Nhạc ghi kênh và số bài cũ / mới.
+- **Tự phân luồng**: mỗi video mới vào **kênh đang bật có ít video nhất** (bằng nhau thì kênh đứng trước) — các kênh đều nhau. Thẻ **Giao việc** có ô
+  **Kênh**: kênh đang xem (mặc định), một kênh khác hoặc *Chia lần lượt các kênh*; bảng ý tưởng có dòng tiêu đề với cột **Kênh** (tên kênh) thì
+  dòng đó thuộc kênh đó.
+- Mỗi việc trong dây chuyền ghi 📺 tên kênh và 🎬 MV / 📀 Playlist; ô Nhạc ghi kênh và số bài cũ / mới.
 - Các kênh **dùng chung một kho nhạc**; bài cũ / mới tính theo **lịch sử riêng** của từng kênh (bài mới của kênh này có thể là bài kênh khác đã dùng).
 - Mỗi kênh **một kho ý tưởng riêng** (mục dưới); kết quả để trong thư mục con theo tên kênh.
 
 ### Kho ý tưởng: mỗi kênh một kho, chạy liên tục, hết ý tưởng thì Claude đề xuất thêm
 
-Thẻ **Kho ý tưởng** (trang Tự động) có **một tab cho mỗi kênh**, giữ ý tưởng của kênh và đánh dấu **chưa dùng / đã dùng** (lưu ở `data/ideas.json`;
+Thẻ **Kho ý tưởng** (trang Kênh, kho của kênh đang xem) giữ ý tưởng của kênh và đánh dấu **chưa dùng / đã dùng** (lưu ở `data/ideas.json`;
 app mới bắt đầu với kho trống). Ý tưởng trùng (cùng địa điểm + dàn ý) chỉ bị bỏ qua trong cùng một kênh:
 
-- **Dây chuyền tự lấy ý tưởng trong kho các kênh, lần lượt đều các kênh, mỗi lúc N video** (mặc định 2): chỉ lấy ý tưởng mới khi số video đang viết
+- **Dây chuyền tự lấy ý tưởng trong kho các kênh, lần lượt đều các kênh, mỗi lúc N video** (thẻ **Tự lấy việc**, trang Dây chuyền; mặc định 2): chỉ lấy ý tưởng mới khi số video đang viết
   kịch bản hoặc chờ clip Muse ít hơn N — dây chuyền tự đi theo tốc độ của Muse.
 - **Chỉ làm video mới khi kho nhạc còn bài mới cho kênh đó** (bật sẵn): kênh hết bài mới thì ý tưởng của kênh nằm chờ (các kênh khác vẫn chạy);
   thêm bài vào kho là tự chạy tiếp. **Kho nhạc chưa xong → bỏ tick** (hoặc bấm *Làm video trước, ghép nhạc sau*): dây chuyền cứ viết kịch bản và
@@ -389,7 +423,7 @@ Tailscale, kể cả đăng nhập Muse — mục dưới), app **tự cập nh�
   mã nguồn + dữ liệu của bạn (cài đặt, chủ đề, địa điểm, cặp đôi, thư viện lời, kênh + lịch sử nhạc từng kênh, kho ý tưởng). **Không** có API key (`.env*`),
   phiên đăng nhập Muse, nhạc, video hay lịch sử MV. `Dong-goi-cap-nhat.bat` → bản chỉ có mã nguồn, giải nén đè để cập nhật app
   ở máy kia mà giữ nguyên dữ liệu ở đó. Thêm `--ra <thư mục>` để đổi nơi để file zip.
-- **Kho nhạc trên Google Drive** (trang Tự động): dán link thư mục kho nhạc (chia sẻ “Bất kỳ ai có đường liên kết”) → **Đồng bộ
+- **Kho nhạc trên Google Drive** (trang Kênh): dán link thư mục kho nhạc (chia sẻ “Bất kỳ ai có đường liên kết”) → **Đồng bộ
   ngay**. App tải `Kho bài hát.xlsx`, đọc lời từ các thư mục bài đánh số vào `data/song_library.json`, tải mọi file nhạc còn
   thiếu về Thư mục nhạc, file nào trên Drive đổi tên thì đổi tên bản ở máy cho khớp; không xoá file nào.
   **Tự đồng bộ mỗi 6 giờ** (bật sẵn) — chỉ tải bản mới. Mã: `src/lib/driveSync.ts`.
@@ -408,7 +442,7 @@ Tailscale, kể cả đăng nhập Muse — mục dưới), app **tự cập nh�
   - Tick **Cho phép điều khiển app** → mở được **mọi trang, mọi chức năng** như ngồi tại máy (cổng chuyển tiếp tới app ở 127.0.0.1; tải MP4 về,
     tải nhạc / clip lên); thanh menu hiện “🌐 Từ xa · Đăng xuất”, trên điện thoại menu gập thành nút ☰. Không tick = chỉ xem tiến độ
     (`/_remote/`: dây chuyền, MV đã xong + tải MP4, Muse, kênh, dung lượng ổ, lỗi cần chú ý; 5 giây/lần).
-  - **Đăng nhập Muse từ xa**: bấm *Đăng nhập Muse* (trang Clip Muse / Tự động / Cài đặt) → khung **Cửa sổ Chrome của Muse** hiện ngay trong
+  - **Đăng nhập Muse từ xa**: bấm *Đăng nhập Muse* (trang Clip Muse / Dây chuyền / Cài đặt) → khung **Cửa sổ Chrome của Muse** hiện ngay trong
     trang: ảnh cửa sổ tự làm mới, bấm vào ảnh = bấm vào trang, ô gõ chữ (che được, cho mật khẩu / mã 2 bước), phím Enter / Xoá / Tab, cuộn, quay
     lại, tải lại, theo cả tab đăng nhập bật lên; *Hiện trang kiểu điện thoại* cho trang đăng nhập vừa màn hình nhỏ (tự tắt khi đăng nhập xong).
     Chữ gõ chuyển thẳng vào trang Muse, app không lưu. Mã: `src/lib/museEngine/screen.ts`, `src/components/muse/MuseScreen.tsx`.
@@ -526,9 +560,11 @@ src/lib/
   songSheet.ts          đọc Kho bài hát.xlsx / .csv (mẫu Bokin: Mã bài, Tên bài, Tệp nhạc, Mức hay, Dùng lại…)
   musicLibrary.ts       kho nhạc = tệp Kho bài hát + file trong thư mục nhạc (gom các bản của một bài, đo thời lượng)
   channels.ts           kênh (data/channels.json): tự xếp bài kiểu Bokin (chuyển từ loop_music/channels.py), đủ độ dài video,
-                        chọn bản, phân luồng kênh; channelTypes.ts = kiểu, channelsView.ts = thẻ Kênh & kho nhạc
+                        chọn bản, phân luồng kênh, thứ tự sản xuất (N MV rồi playlist, bài cho MV); channelTypes.ts = kiểu,
+                        channelsView.ts = thẻ Các kênh & kho nhạc chung
   playlist.ts           nối danh sách nhạc thành một file, danh sách bài + mốc thời gian cho mô tả YouTube
-  pipeline.ts           dây chuyền tự động: kịch bản → bài hát → clip Muse → MP4 (data/pipeline.json); pipelineSteps.ts = kiểu + nhãn
+  pipeline.ts           dây chuyền tự động: kịch bản → bài hát → clip Muse → MP4 (data/pipeline.json), lập kế hoạch MV / playlist từng
+                        kênh (planner), nhạc ghép đúng thứ tự; pipelineSteps.ts = kiểu + nhãn
   haohao.ts             đọc (chỉ đọc) hàng đợi tasks.json và thư mục lưu của tool HaoHao (cách dán tay)
   museJobs.ts           theo dõi các cảnh (data/muse.json), dò chạy nền, đưa clip vào đúng cảnh, tự thêm vào hàng chờ dựng
   monitor.ts, remote.ts  cổng từ xa qua Tailscale: đăng nhập (cookie phiên), chống giả mạo, chuyển tiếp mọi trang tới app; monitorPage.ts = trang theo dõi
@@ -538,7 +574,8 @@ src/lib/
   quality.ts            preset YouTube (chuyển từ loop_music/quality.py)
   branding.ts, fonts.ts logo kênh, intro tiêu đề, thông tin MP4 (chuyển từ loop_music/branding.py, mp4meta.py)
 src/app/                các trang: Nhập ý tưởng, Chạy batch, claude.ai (/manual), Kết quả (/mv/[id]), Ghép video (/mv/[id]/video), Clip Muse (/muse),
-                        Hàng chờ dựng (/render-queue), Lịch sử, Thư viện, Cài đặt; API trong src/app/api/
+                        Kênh (/channels: quản lý, kế hoạch, giao việc, kho ý tưởng), Dây chuyền (/pipeline: sản xuất), Hàng chờ dựng
+                        (/render-queue), Lịch sử, Thư viện, Cài đặt; API trong src/app/api/; thẻ của hai trang ở src/components/channels, pipeline
 scripts/start.mjs       khởi động một lệnh (dùng bởi Chay-Christmas-MV-Studio.bat / .command); vòng chạy: app tự tắt mã 75 → cài bản mới → chạy lại
 scripts/cap-nhat.mjs    tự cập nhật phía trình khởi động: chép bản mới, giữ dữ liệu, file thừa sang dự phòng, quay về bản cũ khi lỗi
 tests/                  vitest (fakeMuse.ts = "Muse giả" điều khiển được, cho test)

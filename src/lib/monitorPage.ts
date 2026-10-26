@@ -96,7 +96,7 @@ function render(s) {
   if (s.drive.error) alerts.push("Kho nhạc Drive: " + s.drive.error);
   if (s.bank.error) alerts.push("Đề xuất ý tưởng: " + s.bank.error);
   for (const ev of (m.failover || [])) alerts.push(ev.kind === "switch" ? "Đã tự đổi tài khoản Muse “" + ev.from + "” → “" + ev.to + "” (" + time(ev.at) + "): " + ev.reason : "Tài khoản Muse “" + ev.from + "” bị lỗi và hết tài khoản dự phòng (" + time(ev.at) + ") — cần bạn xử lý.");
-  if (s.bank.proposals) alerts.push(s.bank.proposals + " ý tưởng Claude đề xuất đang chờ bạn duyệt (trang Tự động → Kho ý tưởng).");
+  if (s.bank.proposals) alerts.push(s.bank.proposals + " ý tưởng Claude đề xuất đang chờ bạn duyệt (trang Kênh → Kho ý tưởng).");
   for (const c of (s.channels || [])) if (c.active && c.videosLeft <= 1 && s.library) alerts.push("Kênh “" + c.name + "” sắp hết bài mới (còn " + c.unused + " bài chưa dùng) — thêm bài vào kho nhạc trên Drive.");
   if (disk && disk.free < 10 * 1073741824) alerts.push("Ổ " + disk.path + " sắp đầy: còn " + gb(disk.free) + ".");
   $("alerts").hidden = !alerts.length;
@@ -124,7 +124,7 @@ function render(s) {
   rows.push("<tr><td>Kho nhạc Drive</td><td>" + (d.running ? esc(d.phase || "Đang đồng bộ…") : d.last ? "Đồng bộ lúc " + esc(time(d.last.at)) + " · " + d.last.audio + " file nhạc trên Drive · tải mới " + d.last.downloaded + (d.last.sheet ? " · " + esc(d.last.sheet) : "") : "Chưa đồng bộ") + "</td></tr>");
   const lib = s.library;
   if (lib) rows.push("<tr><td>Kho nhạc</td><td>" + lib.songs + " bài · mức 3 / 2 / 1: " + lib.levels[3] + " / " + lib.levels[2] + " / " + lib.levels[1] + (lib.sheet ? "" : " · chưa có Kho bài hát.xlsx (mọi bài mức 1)") + (lib.problems ? " · " + lib.problems + " dòng cần sửa" : "") + "</td></tr>");
-  for (const c of (s.channels || [])) rows.push("<tr><td>Kênh " + esc(c.name) + (c.active ? "" : " (tắt)") + "</td><td>" + c.videos + " video" + (c.inProgress ? " (" + c.inProgress + " đang làm)" : "") + " · " + c.ideas + " ý tưởng chưa dùng" + (lib ? " · " + c.unused + " bài mới (~" + c.videosLeft + " video)" : "") + "</td></tr>");
+  for (const c of (s.channels || [])) rows.push("<tr><td>Kênh " + esc(c.name) + (c.active ? "" : " (tắt)") + "</td><td>" + c.videos + " video" + (c.inProgress ? " (" + c.inProgress + " đang làm)" : "") + " · " + c.ideas + " ý tưởng chưa dùng" + (lib ? " · " + c.unused + " bài mới (~" + c.videosLeft + " playlist)" : "") + "</td></tr>");
   rows.push("<tr><td>Kho ý tưởng</td><td>" + (s.bank.proposals ? s.bank.proposals + " ý tưởng chờ duyệt" : "không có ý tưởng chờ duyệt") + (s.bank.suggesting ? " · Claude đang nghĩ ý tưởng mới" : "") + "</td></tr>");
   $("system").innerHTML = "<table>" + rows.join("") + "</table>";
 }

@@ -1,4 +1,4 @@
-// Dây chuyền tự động (ý tưởng → kịch bản → danh sách nhạc → clip Muse → MP4) với chế độ Demo + "Muse giả" + thư mục nhạc tạm:
+// Dây chuyền tự động (ý tưởng → kịch bản → danh sách nhạc / bài của MV → clip Muse → MP4) với chế độ Demo + "Muse giả" + thư mục nhạc tạm:
 // chạy thật từ đầu tới cuối (dựng MP4 bằng ffmpeg), không tốn lượt Muse, không gọi Claude.
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -42,7 +42,7 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
   beforeAll(async () => {
     bin = (await import("@/lib/ffmpeg")).findFfmpeg().path!;
     mkdirSync(songs, { recursive: true });
-    // Kho đánh số: bài 1 có hai bản. Mức hay trong Kho bài hát.xlsx: 1 = rất hay, 2 = hay, 3 = bình thường. Video dài 1 phút.
+    // Kho đánh số: bài 1 có hai bản. Mức hay trong Kho bài hát.xlsx: 3 = rất hay, 2 = hay, 1 = bình thường. Video dài 1 phút.
     tone("1.mp3", 25);
     tone("1 (1).mp3", 25, 360);
     tone("2.mp3", 20, 392);
@@ -52,6 +52,8 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
       ["2", "Snow On Main Street", 2],
       ["3", "Candle In The Window", 1],
     ]);
+    // Các test playlist: kênh mặc định chỉ làm playlist (MV mỗi vòng = 0); thứ tự MV → playlist có test riêng ở cuối.
+    await (await import("@/lib/channels")).updateChannel("kenh-1", { mvPerRound: 0 });
     const clip = make(["-f", "lavfi", "-i", "testsrc2=size=320x180:rate=24:duration=2", "-c:v", "libx264", "-preset", "ultrafast"], path.join(tmp, "clip.mp4"));
     fake = new FakeMuse(readFileSync(clip));
     engine = (await import("@/lib/museEngine")).initMuseEngine({ dir: path.join(tmp, "muse-engine"), page: fake, worker: FAST });
@@ -214,6 +216,7 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
 
     // Kênh mới có lịch sử riêng: ý tưởng 1 (đã có MV ở kênh Giáng sinh) chạy được cho kênh mới, xếp toàn bài mới.
     const b = await channels.addChannel("Kênh B");
+    await channels.updateChannel(b.id, { mvPerRound: 0 });
     const r2 = await pl.addToPipeline({ ideas: [one], channel: b.id });
     expect(r2.added).toBe(1);
     for (let k = 0; k < 2; k++) {
@@ -279,4 +282,127 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     expect(existsSync(media.mediaPath(d.mv_id!, d.output!))).toBe(true);
     for (const it of (await pl.readPipeline()).items) await pl.removeFromPipeline(it.id);
   }, 300000);
+
+  it("thứ tự sản xuất: kênh 2 MV mỗi vòng → MV bài hay nhất kênh chưa dùng (dài đúng bài, bám lời) → MV → playlist mở đầu bằng 2 bài đó → MV vòng sau chờ playlist", async () => {
+    const pl = await import("@/lib/pipeline");
+    const bank = await import("@/lib/ideaBank");
+    const jobs = await import("@/lib/museJobs");
+    const queue = await import("@/lib/queue");
+    const media = await import("@/lib/media");
+    const store = await import("@/lib/store");
+    const channels = await import("@/lib/channels");
+    const { channelsView } = await import("@/lib/channelsView");
+    // Playlist 1 tiếng: kho chưa đủ nhạc (MV một bài thì đủ).
+    setSettings({ videoMinutes: 60 });
+    await bank.setBankConfig({ feed: false });
+    // Thêm bài 5, 6 (mức 3, ngắn); bài 6 có lời trong thư viện lời (từ Drive).
+    tone("5.mp3", 12, 523);
+    tone("6.mp3", 12, 587);
+    await sheet([
+      ["1", "Silver Bells Waltz", 3],
+      ["2", "Snow On Main Street", 2],
+      ["3", "Candle In The Window", 1],
+      ["4", "Sleigh Ride Home", 2],
+      ["5", "Jingle Bell Jamboree", 3],
+      ["6", "Mistletoe Moonlight", 3],
+    ]);
+    await (await import("@/lib/songLibrary")).writeSongLibrary({
+      songs: [{ n: 6, world_location: "Mistletoe Moonlight", theme_code: "T01", theme_name: "", outline: "", hook: "", mood: "", lyrics: "[Verse 1]\nSnow on the window\n[Chorus]\nMeet me under mistletoe moonlight" }],
+    });
+    const c = await channels.addChannel("Kênh MV");
+    await channels.updateChannel(c.id, { mvPerRound: 2 });
+    const idea = (id: string, place: string) => ({ id, world_location: place, theme_code: "T03", outline: `Một đêm Giáng sinh ở ${place}` });
+    const r = await pl.addToPipeline({
+      ideas: [idea("21", "Chicago Union Station 1953"), idea("22", "Vermont Covered Bridge 1951"), idea("23", "Times Square Toy Shop 1954"), idea("24", "San Francisco Cable Car 1957")],
+      channel: c.id,
+    });
+    expect(r.added).toBe(4);
+    const item = async (id: string) => (await pl.readPipeline()).items.find((i) => i.idea?.id === id)!;
+    const summary = async () => (await channelsView()).channels.find((x) => x.id === c.id)!;
+
+    // Kênh chưa dùng bài nào: MV 1 = bài mức 3 có lời (bài 6), MV 2 = bài mức 3 kế tiếp (bài 1), playlist mở đầu bằng 2 bài đó, MV 1 vòng
+    // sau giữ bài 5. MV: tên bài làm tên video, kịch bản dài đúng bài, lời lấy từ thư viện lời.
+    const [m1, m2, p, m3] = [await item("21"), await item("22"), await item("23"), await item("24")];
+    expect([m1.kind, m1.title, m1.idea!.mv_song!.code, m1.idea!.duration_sec]).toEqual(["mv", "Mistletoe Moonlight", "6", 12]);
+    expect(m1.idea!.lyrics).toContain("Meet me under mistletoe moonlight");
+    expect([m2.kind, m2.title, m2.idea!.mv_song!.code, m2.idea!.duration_sec, m2.idea!.lyrics]).toEqual(["mv", "Silver Bells Waltz", "1", 25, undefined]);
+    expect([p.kind, p.title, p.opens_with]).toEqual(["playlist", "Times Square Toy Shop 1954", ["6", "1"]]);
+    expect([m3.kind, m3.idea!.mv_song!.code]).toEqual(["mv", "5"]);
+    // Trang Kênh: tiếp theo là MV 2 của vòng sau (bài mức 2 đầu tiên trong kho).
+    expect(await summary()).toMatchObject({ mvPerRound: 2, next: { kind: "mv", index: 2, song: "Snow On Main Street" } });
+
+    // Kịch bản lần lượt cả 4 video; MV có nhạc ngay, playlist chờ đủ nhạc, MV vòng sau chờ playlist — clip Muse vẫn gửi.
+    for (let k = 0; k < 4; k++) {
+      await pl.pipelineTick();
+      await pl.pipelineIdle();
+    }
+    await pl.pipelineTick();
+    const mv1 = (await store.loadMV((await item("21")).mv_id!))!;
+    expect(mv1.structure.duration_sec).toBe(12);
+    expect(mv1.youtube_titles[0]).toMatch(/^Mistletoe Moonlight 🎄/);
+    expect((await item("21")).steps.song).toMatchObject({ status: "done", message: "Kênh “Kênh MV”: MV bài “Mistletoe Moonlight” (mức 3) · 0:12" });
+    expect((await media.loadProject(mv1.id)).audio).toMatchObject({ name: "6.mp3" });
+    expect((await item("22")).steps.song.status).toBe("done");
+    expect((await item("23")).steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/^Chưa đủ nhạc cho kênh “Kênh MV”/) });
+    expect((await item("24")).steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/^Chờ playlist “Times Square Toy Shop 1954” \(vòng trước\)/) });
+    expect((await item("24")).clips_sent).toBe(true);
+
+    // Đủ nhạc → playlist mở đầu bằng bài 6 rồi bài 1 (bản "1 (1)" kênh chưa dùng), không lấy bài 5 (MV vòng sau đang giữ); rồi tới MV đó.
+    setSettings({ videoMinutes: 1 });
+    await pl.pipelineTick();
+    const p2 = await item("23");
+    expect(p2.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/ · mở đầu bằng 2 bài vừa có MV/) });
+    const tracks = (await media.loadProject(p2.mv_id!)).audio!.tracks!;
+    expect(tracks.slice(0, 2).map((t) => [t.code, t.name])).toEqual([
+      ["6", "6.mp3"],
+      ["1", "1 (1).mp3"],
+    ]);
+    expect(tracks.length).toBeGreaterThan(2);
+    expect(tracks.some((t) => t.code === "5")).toBe(false);
+    expect((await item("24")).steps.song.status).toBe("done");
+    const history = (await channels.readChannels()).find((x) => x.id === c.id)!.history;
+    expect(history.map((v) => [v.kind ?? "playlist", v.codes[0]])).toEqual([
+      ["mv", "6"],
+      ["mv", "1"],
+      ["playlist", "6"],
+      ["mv", "5"],
+    ]);
+    expect((await summary()).recent.map((v) => v.kind)).toEqual(["mv", "playlist", "mv", "mv"]);
+
+    // Muse giả làm xong → dựng: MV dài đúng bài, thư mục kết quả "MV <tên bài>" trong thư mục của kênh.
+    await museFinishAll();
+    await jobs.museTick();
+    await pl.pipelineTick();
+    await queue.idle();
+    await pl.pipelineTick();
+    const done = await item("21");
+    expect(done.done_at).toBeTruthy();
+    const rendered = (await media.loadProject(done.mv_id!)).renders[0];
+    expect(rendered.duration).toBeCloseTo(12, 0);
+    expect(rendered.result_dir).toBe(path.join(tmp, "ket-qua", "Kênh MV", "021 - MV Mistletoe Moonlight - Chicago Union Station 1953"));
+    for (const it of (await pl.readPipeline()).items) await pl.removeFromPipeline(it.id);
+  }, 300000);
+
+  it("lượt chạy liên tiếp (kịch bản xong giữa lượt): mỗi việc đúng một kịch bản, viết đúng thứ tự giao", async () => {
+    const pl = await import("@/lib/pipeline");
+    const store = await import("@/lib/store");
+    const channels = await import("@/lib/channels");
+    setSettings({ videoMinutes: 1 });
+    const c = await channels.addChannel("Kênh chạy liền");
+    await channels.updateChannel(c.id, { mvPerRound: 0 });
+    const ideas = ["41", "42", "43"].map((id, k) => ({ id, world_location: `Kansas City Union Depot Christmas ${1950 + k}`, theme_code: "T04", outline: "Ông bà đón cháu ở ga tuyết" }));
+    expect((await pl.addToPipeline({ ideas, channel: c.id })).added).toBe(3);
+    const mine = async () => (await pl.readPipeline()).items.filter((i) => i.channel === c.id);
+    // Không chờ kịch bản viết xong giữa các lượt: kịch bản xong ngay trong lúc lượt đang tính các việc khác.
+    for (let k = 0; k < 300 && (await mine()).some((i) => i.steps.script.status !== "done"); k++) await pl.pipelineTick();
+    await pl.pipelineIdle();
+    expect((await mine()).map((i) => [i.idea!.id, i.steps.script.status])).toEqual([
+      ["41", "done"],
+      ["42", "done"],
+      ["43", "done"],
+    ]);
+    const made = (await store.listMVs()).filter((m) => m.idea.channel === c.id).sort((a, b) => a.created_at.localeCompare(b.created_at));
+    expect(made.map((m) => m.idea.id)).toEqual(["41", "42", "43"]);
+    for (const it of await mine()) await pl.removeFromPipeline(it.id);
+  }, 120000);
 });

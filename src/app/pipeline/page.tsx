@@ -1,26 +1,18 @@
 "use client";
 
+// Trang Dây chuyền: sản xuất — mỗi việc là một video (MV một bài hoặc playlist ~1 tiếng) của một kênh, chạy qua Kịch bản → Nhạc →
+// Clip Muse → Dựng MP4. Quản lý kênh, giao việc, kế hoạch sản xuất và kho ý tưởng ở trang Kênh.
+
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { KindBadge } from "@/components/channels/ChannelPlanCard";
 import { MuseStatus, useMuse } from "@/components/muse/MusePanels";
-import { ChannelsCard } from "@/components/pipeline/ChannelsCard";
-import { DriveSyncCard } from "@/components/pipeline/DriveSyncCard";
-import { type BankData, IdeaBankCard } from "@/components/pipeline/IdeaBankCard";
+import { FeedCard } from "@/components/pipeline/FeedCard";
+import type { BankData } from "@/components/pipeline/IdeaBankCard";
 import { Card, ErrorBox, Spinner } from "@/components/ui";
 import { api, mediaUrl } from "@/lib/client";
-import type { ParseResult } from "@/lib/parser";
-import { STEP_LABEL, type AddResult, type PipelineItem, type PipelineView, type StepName, type StepStatus } from "@/lib/pipelineSteps";
-import type { IdeaRow } from "@/lib/types";
-
-interface Candidate {
-  id: string;
-  idea_id: string;
-  title: string;
-  series: string;
-  shot_count: number;
-  clip_count: number;
-  audio: { name: string; duration: number } | null;
-}
+import type { BankConfig } from "@/lib/ideaBankTypes";
+import { STEP_LABEL, itemChannelOf, type PipelineItem, type PipelineView, type StepName, type StepStatus } from "@/lib/pipelineSteps";
 
 type View = PipelineView & {
   settings: { mode: "claude" | "mock" | "manual"; songDir: string; museMode: "gateway" | "haohao"; minShots: number; maxShots: number; videoMinutes: number };
@@ -48,35 +40,21 @@ function focus(it: PipelineItem): { name: StepName; status: StepStatus; message?
 export default function PipelinePage() {
   const [view, setView] = useState<View | null>(null);
   const [bank, setBank] = useState<BankData | null>(null);
-  const [mvs, setMvs] = useState<Candidate[] | null>(null);
-  const [tab, setTab] = useState<"ideas" | "mvs">("ideas");
-  const [text, setText] = useState("");
-  const [parsed, setParsed] = useState<ParseResult | null>(null);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  /** Kênh đang xem ở thẻ Kho ý tưởng; kênh nhận việc / ý tưởng mới ("auto" = chia lần lượt các kênh). */
-  const [bankChannel, setBankChannel] = useState<string | undefined>(undefined);
-  const [target, setTarget] = useState("auto");
-  /** Tăng lên để thẻ Kênh đọc lại (vd. vừa đồng bộ kho nhạc). */
-  const [channelsTick, setChannelsTick] = useState(0);
+  /** Lọc danh sách theo kênh ("" = mọi kênh). */
+  const [only, setOnly] = useState("");
   const muse = useMuse();
 
   const reload = useCallback(() => api<View>("/api/pipeline").then(setView, (e) => setError((e as Error).message)), []);
-  const loadMvs = useCallback(() => api<{ mvs: Candidate[] }>("/api/render-queue").then((r) => setMvs(r.mvs), () => {}), []);
-  const loadBank = useCallback(
-    () => api<BankData>(`/api/ideas${bankChannel ? `?channel=${encodeURIComponent(bankChannel)}` : ""}`).then(setBank, () => {}),
-    [bankChannel],
-  );
+  const loadBank = useCallback(() => api<BankData>("/api/ideas").then(setBank, () => {}), []);
   const channelName = (id?: string) => view?.channels.find((c) => c.id === id)?.name ?? view?.channels[0]?.name ?? "";
   useEffect(() => {
     void reload();
-    void loadMvs();
     void loadBank();
-  }, [reload, loadMvs, loadBank]);
+  }, [reload, loadBank]);
   const open = view?.items.some((i) => !i.done_at) ?? false;
-  const watchBank = Boolean(bank?.suggesting || (bank?.config.feed && bank.counts.new));
+  const watchBank = Boolean(bank?.config.feed && bank.channels.some((c) => c.counts.new));
   useEffect(() => {
     if (!open && !watchBank) return;
     const t = setInterval(() => {
@@ -86,105 +64,45 @@ export default function PipelinePage() {
     return () => clearInterval(t);
   }, [open, watchBank, reload, loadBank]);
 
-  const busyMvs = useMemo(() => new Set((view?.items ?? []).filter((i) => !i.done_at && i.mv_id).map((i) => i.mv_id!)), [view]);
-
-  async function run<T>(fn: () => Promise<T>) {
+  async function run(fn: () => Promise<void>) {
     setBusy(true);
     setError(null);
-    setNotice(null);
     try {
-      return await fn();
+      await fn();
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
-
-  async function parse() {
-    await run(async () => setParsed(await api<ParseResult>("/api/parse", { method: "POST", json: { text } })));
-  }
-
-  async function start(payload: { ideas?: IdeaRow[]; mvIds?: string[] }) {
-    const ideas = payload.ideas?.length ?? 0;
-    const chosen = (mvs ?? []).filter((m) => payload.mvIds?.includes(m.id));
-    const shots = chosen.reduce((n, m) => n + Math.max(0, m.shot_count - m.clip_count), 0);
-    const cfg = view?.settings;
-    const range = cfg ? (cfg.minShots === cfg.maxShots ? `${cfg.minShots}` : `${cfg.minShots}–${cfg.maxShots}`) : "20–30";
-    const lines = [
-      ideas ? (cfg?.mode === "mock" ? `• Chế độ Demo ghép ${ideas} kịch bản từ mẫu (không tốn phí).` : `• Claude viết ${ideas} kịch bản (khoảng 0,10–0,30 USD mỗi video qua API).`) : "",
-      ideas ? `• Mỗi video mới ${range} cảnh = ${range} lượt Muse.` : "",
-      chosen.length ? `• ${chosen.length} video có sẵn: khoảng ${shots} cảnh thiếu clip = ${shots} lượt Muse.` : "",
-      `• Kênh: ${target === "auto" ? "chia lần lượt các kênh đang bật (kênh ít video nhất trước; dòng có cột Kênh thì theo cột đó)" : channelName(target)}.`,
-      `• Nhạc: tự xếp bài kiểu Bokin theo lịch sử kênh (bài cũ mức 2–3 + bài mới, mức 3 mở đầu) cho đủ khoảng ${cfg?.videoMinutes ?? 60} phút; đủ clip + có nhạc thì tự dựng MP4 (clip lặp lại cho hết nhạc).`,
-    ].filter(Boolean);
-    const muse = cfg?.museMode === "gateway" ? "Lượt Muse tính vào hạn mức tuần của tài khoản Meta." : "Đang dùng cách dán tay vào HaoHao: bước Clip Muse chờ bạn dán prompt ở trang Clip Muse.";
-    if (!confirm(`Chạy tự động ${ideas + chosen.length} việc?\n\n${lines.join("\n")}\n\n${muse}`)) return;
-    await run(async () => {
-      const r = await api<PipelineView & AddResult>("/api/pipeline", { method: "POST", json: { action: "add", ...payload, channel: target } });
-      const skip = r.skipped.length
-        ? ` Bỏ qua ${r.skipped.length} việc (tránh làm trùng MV, trùng nhạc): ${r.skipped
-            .slice(0, 8)
-            .map((s) => `${s.title} — ${s.reason}`)
-            .join("; ")}${r.skipped.length > 8 ? "; …" : ""}.`
-        : "";
-      setNotice(`Đã thêm ${r.added} việc vào dây chuyền.${skip}`);
-      setParsed(null);
-      setSelected(new Set());
-      await reload();
-    });
-  }
-
-  async function addToBank(ideas: IdeaRow[]) {
-    const c = bank?.config;
-    const cfg = view?.settings;
-    const range = cfg ? (cfg.minShots === cfg.maxShots ? `${cfg.minShots}` : `${cfg.minShots}–${cfg.maxShots}`) : "20–30";
-    const lines = [
-      `• Vào kho của ${target === "auto" ? "các kênh đang bật, chia lần lượt (dòng có cột Kênh thì theo cột đó)" : `kênh “${channelName(target)}”`}.`,
-      c?.feed
-        ? `• Dây chuyền tự lấy lần lượt đều các kênh, mỗi lúc ${c.ahead} video.`
-        : "• “Tự lấy ý tưởng” đang tắt: ý tưởng nằm chờ trong kho cho tới khi bạn bật.",
-      cfg?.mode === "mock" ? "• Chế độ Demo: kịch bản ghép từ mẫu (không tốn phí)." : "• Mỗi video: Claude viết kịch bản (khoảng 0,10–0,30 USD qua API).",
-      `• Mỗi video ${range} cảnh = ${range} lượt Muse.`,
-      c?.suggest ? `• Kho sắp hết: Claude đề xuất thêm ${c.batch} ý tưởng (${c.autoApprove ? "dùng luôn" : "chờ bạn duyệt"}).` : "",
-    ].filter(Boolean);
-    if (!confirm(`Đưa ${ideas.length} ý tưởng vào kho?\n\n${lines.join("\n")}`)) return;
-    await run(async () => {
-      const r = await api<BankData & { added: number; duplicates: number }>("/api/ideas", { method: "POST", json: { action: "add", ideas, channel: target } });
-      setBank(r);
-      setNotice(`Đã thêm ${r.added} ý tưởng vào kho${r.duplicates ? ` (bỏ qua ${r.duplicates} ý tưởng đã có)` : ""}.`);
-      setParsed(null);
-      await reload();
-    });
-  }
-
-  async function postBank(json: Record<string, unknown>) {
-    await run(async () => {
-      setBank(await api<BankData>("/api/ideas", { method: "POST", json }));
-      await reload();
-    });
-  }
-
-  async function post(json: unknown) {
-    await run(async () => {
+  const post = (json: unknown) =>
+    run(async () => {
       await api("/api/pipeline", { method: "POST", json });
       await reload();
     });
-  }
+  const setConfig = (patch: Partial<BankConfig>) =>
+    run(async () => {
+      setBank(await api<BankData>("/api/ideas", { method: "POST", json: { action: "config", config: patch } }));
+      await reload();
+    });
 
   const s = view?.settings;
+  const items = (view?.items ?? []).filter((i) => !only || itemChannelOf(i) === only);
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-3xl uppercase">Tự động: ý tưởng → MP4</h1>
+        <h1 className="text-3xl uppercase">Dây chuyền sản xuất</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
-          Mỗi việc là một video cho một <b>kênh</b> (tự chia lần lượt đều các kênh), chạy qua 4 bước: <b>Kịch bản</b> (Claude viết một vòng 20–30 cảnh) →{" "}
-          <b>Nhạc</b> (tự xếp bài như Bokin Playlist theo lịch sử của kênh: bài cũ hay + bài mới, bài hay mở đầu, đủ ~1 tiếng) → <b>Clip Muse</b> (tự gửi
-          từng cảnh, clip xong tự vào đúng cảnh) → <b>Dựng MP4</b> (clip lặp lại cho hết nhạc). Tắt app giữa chừng không sao: mở lại là chạy tiếp.
+          Mỗi việc là một video cho một <b>kênh</b> — <b>MV một bài</b> (~3–4 phút) hoặc <b>playlist ~1 tiếng</b>, theo thứ tự sản xuất của kênh — chạy qua 4
+          bước: <b>Kịch bản</b> → <b>Nhạc</b> (MV: đúng bài đã chọn; playlist: tự xếp bài như Bokin Playlist) → <b>Clip Muse</b> (tự gửi từng cảnh) →{" "}
+          <b>Dựng MP4</b>. Giao việc, kế hoạch và kho ý tưởng từng kênh ở trang{" "}
+          <Link href="/channels" className="underline">
+            Kênh
+          </Link>
+          . Tắt app giữa chừng không sao: mở lại là chạy tiếp.
         </p>
       </div>
       <ErrorBox error={error} />
-      {notice && <p className="text-sm font-semibold text-mint-dark">{notice}</p>}
 
       <Card title="Chuẩn bị">
         {!s ? (
@@ -211,7 +129,7 @@ export default function PipelinePage() {
               <b>Nhạc:</b>{" "}
               {s.songDir ? (
                 <span>
-                  tự xếp bài từ kho <code>{s.songDir}</code> (Kho bài hát.xlsx cho mức hay) cho đủ khoảng <b>{s.videoMinutes} phút</b> mỗi video
+                  kho <code>{s.songDir}</code> (Kho bài hát.xlsx cho mức hay) — MV một bài dài đúng bài, playlist đủ khoảng <b>{s.videoMinutes} phút</b>
                 </span>
               ) : (
                 <span className="text-amber-800">
@@ -230,185 +148,54 @@ export default function PipelinePage() {
         )}
       </Card>
 
-      <DriveSyncCard
-        onSynced={() => {
-          void loadBank();
-          setChannelsTick((n) => n + 1);
-        }}
-      />
-
-      <ChannelsCard
-        refresh={channelsTick}
-        onChanged={() => {
-          void reload();
-          void loadBank();
-        }}
-      />
+      <FeedCard bank={bank} busy={busy} onConfig={(patch) => void setConfig(patch)} />
 
       <Card
-        title="1. Thêm việc"
+        title="Đang sản xuất"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-1 text-xs">
               Kênh:
-              <select className="input w-auto py-0.5 text-xs" value={target} onChange={(e) => setTarget(e.target.value)} data-testid="pipeline-target">
-                <option value="auto">Chia lần lượt các kênh</option>
+              <select className="input w-auto py-0.5 text-xs" value={only} onChange={(e) => setOnly(e.target.value)} data-testid="pipeline-filter">
+                <option value="">Mọi kênh</option>
                 {(view?.channels ?? []).map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
-                    {c.active ? "" : " (đang tắt)"}
                   </option>
                 ))}
               </select>
             </label>
-            <div className="flex gap-1">
-              <button className={`btn-sm ${tab === "ideas" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("ideas")}>
-                Từ ý tưởng
+            {view?.items.some((i) => i.done_at) && (
+              <button className="btn-ghost btn-sm" disabled={busy} onClick={() => void post({ action: "clear" })}>
+                Bỏ các việc đã xong
               </button>
-              <button className={`btn-sm ${tab === "mvs" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("mvs")}>
-                Từ MV có sẵn
-              </button>
-            </div>
-          </div>
-        }
-      >
-        {tab === "ideas" ? (
-          <div className="space-y-3">
-            <p className="text-xs text-muted">
-              Dán bảng ý tưởng như ở trang Nhập ý tưởng (mỗi dòng: id | địa điểm + năm | chủ đề | dàn ý | …; copy thẳng từ Google Docs / Sheets cũng được; bảng có
-              dòng tiêu đề thì thêm cột <b>Kênh</b> = tên kênh, dòng đó thuộc kênh đó). Dàn ý ghi rõ nhân vật (cặp đôi, gia đình, trẻ em… hoặc “Chỉ cảnh, không nhân vật chính”).
-              Nhạc không cần ghi: app tự xếp bài cho từng kênh. <b>Đưa vào kho</b>: vào kho của kênh đã chọn (hoặc chia lần lượt), dây chuyền lấy dần lần lượt
-              đều các kênh, kho của kênh sắp hết thì Claude đề xuất thêm. <b>Chạy ngay</b>: đưa cả bảng vào dây chuyền một lúc.
-            </p>
-            <textarea
-              className="input min-h-28 font-mono text-xs"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="1 | Rockefeller Center Christmas Eve 1955 | T02 | Cặp đôi trẻ trượt băng dưới cây thông khổng lồ"
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <button className="btn-ghost btn-sm" disabled={busy || !text.trim()} onClick={() => void parse()}>
-                Đọc bảng
-              </button>
-              {parsed && (
-                <>
-                  <button className="btn-primary" disabled={busy || !parsed.rows.length} onClick={() => void addToBank(parsed.rows)} data-testid="pipeline-bank-ideas">
-                    {busy && <Spinner />} ＋ Đưa {parsed.rows.length} ý tưởng vào kho
-                  </button>
-                  <button className="btn-ghost" disabled={busy || !parsed.rows.length} onClick={() => void start({ ideas: parsed.rows })} data-testid="pipeline-start-ideas">
-                    ▶ Chạy ngay cả {parsed.rows.length} ý tưởng
-                  </button>
-                </>
-              )}
-            </div>
-            {parsed && (
-              <div className="text-sm">
-                {parsed.warnings.length > 0 && <ErrorBox error={parsed.warnings.join(" · ")} />}
-                <ul className="mt-2 space-y-0.5">
-                  {parsed.rows.map((r) => (
-                    <li key={r.id}>
-                      <b>#{r.id}</b> {r.song_title ? `“${r.song_title}” · ` : ""}
-                      {r.world_location} · {r.theme_code}
-                      {r.channel && <span className="badge ml-1">📺 {r.channel}</span>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
             )}
           </div>
-        ) : !mvs ? (
-          <Spinner />
-        ) : !mvs.length ? (
-          <p className="text-sm text-muted">Chưa có MV nào.</p>
-        ) : (
-          <div className="space-y-3">
-            <div className="max-h-[24rem] overflow-auto rounded-lg border border-ink/15">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-cream-dark text-left text-xs uppercase tracking-wide text-muted">
-                  <tr>
-                    <th className="w-8 px-2 py-1.5"></th>
-                    <th className="px-2 py-1.5">MV</th>
-                    <th className="px-2 py-1.5">Clip</th>
-                    <th className="px-2 py-1.5">Bài hát</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mvs.map((m) => (
-                    <tr key={m.id} className="border-t border-ink/10">
-                      <td className="px-2 py-1.5">
-                        <input
-                          type="checkbox"
-                          disabled={busyMvs.has(m.id)}
-                          title={busyMvs.has(m.id) ? "Đang chạy trong dây chuyền" : ""}
-                          checked={selected.has(m.id)}
-                          onChange={() =>
-                            setSelected((cur) => {
-                              const next = new Set(cur);
-                              if (next.has(m.id)) next.delete(m.id);
-                              else next.add(m.id);
-                              return next;
-                            })
-                          }
-                        />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <span className="font-semibold">
-                          #{m.idea_id} · {m.title}
-                        </span>
-                        {m.series && <div className="text-xs text-muted">{m.series}</div>}
-                      </td>
-                      <td className="px-2 py-1.5">
-                        {m.clip_count}/{m.shot_count}
-                      </td>
-                      <td className="px-2 py-1.5">{m.audio ? "✓" : <span className="text-muted">chưa có</span>}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <button className="btn-primary" disabled={busy || !selected.size} onClick={() => void start({ mvIds: [...selected] })} data-testid="pipeline-start-mvs">
-              {busy && <Spinner />} ▶ Chạy tự động {selected.size} MV
-            </button>
-          </div>
-        )}
-      </Card>
-
-      <IdeaBankCard
-        bank={bank}
-        busy={busy}
-        onPost={(json) => void postBank(json)}
-        onChannel={(id) => {
-          setBankChannel(id);
-          setTarget(id);
-        }}
-      />
-
-      <Card
-        title="2. Dây chuyền"
-        actions={
-          view?.items.some((i) => i.done_at) ? (
-            <button className="btn-ghost btn-sm" disabled={busy} onClick={() => void post({ action: "clear" })}>
-              Bỏ các việc đã xong
-            </button>
-          ) : undefined
         }
       >
         {!view ? (
           <Spinner />
-        ) : !view.items.length ? (
-          <p className="text-sm text-muted">Chưa có việc nào.</p>
+        ) : !items.length ? (
+          <p className="text-sm text-muted">
+            Chưa có việc nào{only ? " của kênh này" : ""}. Giao việc ở trang{" "}
+            <Link href="/channels" className="underline">
+              Kênh
+            </Link>
+            .
+          </p>
         ) : (
           <div className="space-y-3">
             {view.error && <p className="text-xs text-cherry-dark">Lần chạy gần nhất: {view.error}</p>}
-            {view.items.map((it) => {
+            {items.map((it) => {
               const f = focus(it);
               const hasError = STEPS.some((st) => it.steps[st].status === "error");
               return (
                 <div key={it.id} className="rounded-lg border border-ink/15 p-3" data-testid={`pipeline-${it.id}`}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="badge border-sky-600/40 bg-sky-50" title="Kênh làm video này" data-testid="pipeline-channel">
-                      📺 {channelName(it.channel ?? it.idea?.channel)}
+                      📺 {channelName(itemChannelOf(it))}
                     </span>
+                    <KindBadge kind={it.kind ?? it.idea?.video_kind ?? "playlist"} />
                     <span className="font-semibold">{it.title}</span>
                     {STEPS.map((st) => (
                       <span key={st} className={`badge ${CHIP[it.steps[st].status]}`} title={it.steps[st].message ?? ""} data-step={st} data-status={it.steps[st].status}>
@@ -440,7 +227,7 @@ export default function PipelinePage() {
                     <div className="mt-2 flex flex-wrap items-start gap-3">
                       {it.mv_id && it.cover && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={mediaUrl(it.mv_id, it.cover)} alt="Ảnh bìa" className="w-48 rounded border border-ink/15" />
+                        <img src={mediaUrl(it.mv_id, it.cover)} alt="Ảnh bìa" className="w-48 max-w-full rounded border border-ink/15" />
                       )}
                       <div className="min-w-0 flex-1 space-y-1 text-xs">
                         <p className="font-semibold text-mint-dark">✓ Xong — {it.output}</p>
@@ -450,7 +237,7 @@ export default function PipelinePage() {
                           </p>
                         )}
                         {it.result_dir && (
-                          <p className="text-muted">
+                          <p className="break-all text-muted">
                             Thư mục kết quả: <code>{it.result_dir}</code>
                           </p>
                         )}

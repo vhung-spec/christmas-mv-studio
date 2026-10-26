@@ -25,10 +25,11 @@ export const safeName = (s: string) =>
     .trim()
     .slice(0, 100);
 
-/** Tên thư mục kết quả của MV: số ý tưởng (3 chữ số, để xếp đúng thứ tự) + địa điểm. */
+/** Tên thư mục kết quả của MV: số ý tưởng (3 chữ số, để xếp đúng thứ tự) + địa điểm; MV một bài thêm "MV" + tên bài. */
 export function resultFolderName(mv: Pick<MVResult, "idea">): string {
   const id = /^\d+$/.test(mv.idea.id) ? mv.idea.id.padStart(3, "0") : safeName(mv.idea.id);
-  return `${id} - ${safeName(mv.idea.world_location) || "MV"}`;
+  const place = safeName(mv.idea.world_location) || "MV";
+  return mv.idea.video_kind === "mv" ? `${id} - MV ${safeName(mv.idea.song_title ?? "") || place} - ${place}`.slice(0, 120) : `${id} - ${place}`;
 }
 
 async function exists(p: string) {

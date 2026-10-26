@@ -65,27 +65,33 @@ C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm 
        * một thư mục file nhạc đặt tên theo số: 1.wav, 1 (1).wav (bản thứ hai), 2.mp3, 2_1.mp3…
    - KHÔNG cần ghi "đã dùng" vào tên file nữa: app tự nhớ kênh nào đã dùng bài nào.
    - Chia sẻ thư mục gốc: "Bất kỳ ai có đường liên kết" → copy link.
-   - Trong app: trang Tự động → thẻ "Kho nhạc trên Google Drive" → dán link → bấm "Đồng bộ ngay". App tải Kho bài hát.xlsx và mọi
+   - Trong app: trang Kênh → thẻ "Kho nhạc trên Google Drive" → dán link → bấm "Đồng bộ ngay". App tải Kho bài hát.xlsx và mọi
      file nhạc còn thiếu về C:\Christmas-MV-Studio\KHO NHAC GIANG SINH (dòng "Lưu nhạc vào" trên thẻ cho biết chính xác thư mục),
-     rồi tự đồng bộ mỗi 6 giờ. Xem lại ở thẻ "Kênh & kho nhạc": số bài, số bài mức 3 / 2 / 1, các dòng trong tệp cần sửa.
-4. Độ dài video và cách xếp nhạc: Cài đặt → "Độ dài video (phút)", mặc định 60. Mỗi video app tự xếp danh sách nhạc GIỐNG BOKIN
-   PLAYLIST STUDIO cho đủ khoảng chừng ấy phút, rồi lặp 20–30 clip Muse cho hết nhạc:
+     rồi tự đồng bộ mỗi 6 giờ. Xem lại ở thẻ "Các kênh & kho nhạc chung": số bài, số bài mức 3 / 2 / 1, các dòng trong tệp cần sửa.
+4. Độ dài video và cách xếp nhạc: Cài đặt → "Độ dài video (phút)", mặc định 60. Mỗi PLAYLIST app tự xếp danh sách nhạc GIỐNG BOKIN
+   PLAYLIST STUDIO cho đủ khoảng chừng ấy phút, rồi lặp 20–30 clip Muse cho hết nhạc (MV một bài thì dài đúng bài — mục 5):
    - khoảng 46% là bài cũ (bài mức 2–3 kênh đã dùng, bài lâu chưa dùng nhất trước), còn lại là bài mới (kênh chưa dùng lần nào);
    - bài mức 1 chỉ dùng làm bài mới; danh sách xếp mức 3 → 2 → 1; bài mở đầu khác bài mở đầu video trước;
    - bài có 2 bản (12.wav, 12 (1).wav): lần dùng lại lấy bản kênh đó ít dùng hơn.
-   Video đầu của mỗi kênh toàn bài mới. Thẻ "Kênh & kho nhạc" cho biết mỗi kênh còn bao nhiêu bài mới, đủ cho khoảng mấy video;
+   Video đầu của mỗi kênh toàn bài mới. Thẻ "Các kênh & kho nhạc chung" cho biết mỗi kênh còn bao nhiêu bài mới, đủ cho khoảng mấy video;
    kênh hết bài mới thì ý tưởng của kênh nằm chờ cho tới khi bạn thêm bài vào kho trên Drive (app tự chạy tiếp).
-   KHO NHẠC CHƯA XONG mà muốn làm video trước: trang Tự động → thẻ "Kho ý tưởng" → bấm "Làm video trước, ghép nhạc sau" (hoặc bỏ tick
+   KHO NHẠC CHƯA XONG mà muốn làm video trước: trang Dây chuyền → thẻ "Tự lấy việc" → bấm "Làm video trước, ghép nhạc sau" (hoặc bỏ tick
    "Chỉ làm video mới khi kho nhạc còn bài mới"). App vẫn viết kịch bản và làm clip Muse; mỗi video dừng ở bước Nhạc ("chờ nhạc").
    Khi kho nhạc có bài (đồng bộ Drive), app tự xếp bài cho từng video rồi dựng MP4 — không phải làm gì thêm. Kho đủ rồi thì tick lại ô đó.
    Lưu ý: mỗi video vẫn tốn 20–30 lượt Muse ngay lúc làm clip.
-5. Kênh: trang Tự động → thẻ "Kênh & kho nhạc". Ban đầu có một kênh "Kênh Giáng sinh" (đổi tên được). Làm cho nhiều kênh YouTube thì
+5. Kênh: app có hai trang — "Kênh" (quản lý kênh, kế hoạch sản xuất, giao việc, kho ý tưởng) và "Dây chuyền" (theo dõi sản xuất).
+   Trang Kênh → thẻ "Các kênh & kho nhạc chung". Ban đầu có một kênh "Kênh Giáng sinh" (đổi tên được). Làm cho nhiều kênh YouTube thì
    gõ tên kênh → "＋ Thêm kênh". Từ đó app TỰ CHIA: mỗi video mới vào kênh đang có ít video nhất, các kênh đều nhau.
    Các kênh dùng chung kho nhạc, nhưng bài cũ / bài mới tính riêng theo từng kênh. Bỏ tick "Bật" = tạm không làm video cho kênh đó.
    Video xong nằm trong thư mục con theo tên kênh, và tệp "Tiêu đề - mô tả.txt" ghi tên kênh ở dòng đầu.
-6. Kho ý tưởng: MỖI KÊNH MỘT KHO (các nút 📺 tên kênh trên thẻ "Kho ý tưởng"). App mới bắt đầu với kho TRỐNG. Dán bảng ý tưởng ở
-   thẻ "Thêm việc" → chọn ô "Kênh" (Chia lần lượt các kênh, hoặc một kênh) → "Đọc bảng" → "Đưa vào kho"; hoặc bấm
-   "✨ Nhờ Claude đề xuất ngay" (cho kênh đang xem). Mỗi dòng: số | địa điểm + dịp lễ + năm 1950–1959 | mã chủ đề | dàn ý, ví dụ
+   THỨ TỰ SẢN XUẤT: cột "MV mỗi vòng" (mặc định 3). Mỗi vòng kênh làm 3 MV một bài (~3–4 phút: bài hay nhất kênh chưa dùng, kịch bản
+   bám lời bài, tiêu đề YouTube là tên bài) rồi 1 playlist 1 tiếng mở đầu bằng 3 bài đó, xong lại vòng mới. Đặt 0 = chỉ làm playlist.
+   Bấm "Xem kênh" để xem kế hoạch của kênh: video tiếp theo là MV mấy hay playlist, bài nào, các video đang làm / đã làm gần đây.
+   Kho chưa có bài nào cho MV thì app làm playlist trước; kho có bài là MV làm tiếp.
+6. Kho ý tưởng: MỖI KÊNH MỘT KHO (trang Kênh → "Xem kênh" → thẻ "Kho ý tưởng" của kênh đó). App mới bắt đầu với kho TRỐNG. Dán bảng
+   ý tưởng ở thẻ "Giao việc" → chọn ô "Kênh" (kênh đang xem, một kênh khác, hoặc Chia lần lượt các kênh) → "Đọc bảng" → "Đưa vào kho";
+   hoặc bấm "✨ Nhờ Claude đề xuất ngay" (cho kênh đang xem). Ý tưởng dùng cho cả MV lẫn playlist (bài của MV thì app tự chọn).
+   Theo dõi từng video ở trang Dây chuyền. Mỗi dòng: số | địa điểm + dịp lễ + năm 1950–1959 | mã chủ đề | dàn ý, ví dụ
        1 | Rockefeller Center Christmas Eve 1954 | T01 | Cặp đôi trẻ hẹn nhau ở sân băng dưới cây thông khổng lồ.
        2 | Woodstock Vermont First Snow 1952 | T18 | Chỉ cảnh, không nhân vật chính: làng tuyết, xe trượt ngựa kéo.
    Bảng có dòng tiêu đề (vd. Số | Địa điểm | Chủ đề | Dàn ý | Kênh) thì cột Kênh ghi tên kênh nào, dòng đó vào kho của kênh đó.
@@ -127,7 +133,7 @@ và máy cùng wifi không vào được; app vẫn chỉ mở trong máy chạy
    mạng → bấm "Allow access" (Cho phép).
 3. Trên điện thoại: mở Tailscale (đang Connected) → mở trình duyệt → gõ địa chỉ đó → gõ mật khẩu → Đăng nhập. Điện thoại nhớ đăng nhập
    30 ngày. Menu trình duyệt → "Thêm vào màn hình chính" để lần sau bấm là mở. Trên điện thoại, menu của app là nút ☰ Menu.
-4. Đăng nhập Muse từ điện thoại: Clip Muse (hoặc Tự động) → "Đăng nhập Muse" → khung "Cửa sổ Chrome của Muse" hiện ngay trong trang
+4. Đăng nhập Muse từ điện thoại: Clip Muse (hoặc Dây chuyền) → "Đăng nhập Muse" → khung "Cửa sổ Chrome của Muse" hiện ngay trong trang
    (ảnh cửa sổ Chrome trên máy chạy, tự làm mới):
    - tick "Hiện trang kiểu điện thoại" cho chữ to vừa màn hình;
    - bấm vào ô trên ảnh (vd. ô Email) → gõ vào ô bên dưới ảnh → "Gõ vào trang"; làm tương tự với mật khẩu (chữ được che), rồi bấm nút

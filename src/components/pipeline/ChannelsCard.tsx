@@ -1,14 +1,14 @@
 "use client";
 
-// Thẻ "Kênh & kho nhạc" ở trang Tự động: các kênh (bật / tắt, tỉ lệ bài cũ, cách chọn bài mới, số video, bài mới còn lại), thêm kênh,
-// và tình trạng kho nhạc chung (Kho bài hát.xlsx mẫu Bokin: số bài theo mức hay, lỗi trong tệp).
+// Thẻ "Các kênh & kho nhạc chung" ở trang Kênh: các kênh (bật / tắt, tỉ lệ bài cũ, cách chọn bài mới, số MV mỗi vòng, video tiếp theo, số
+// video, bài mới còn lại), chọn kênh để xem kế hoạch / giao việc, thêm kênh, và tình trạng kho nhạc chung (Kho bài hát.xlsx mẫu Bokin).
 
 import { useCallback, useEffect, useState } from "react";
 import { Card, ErrorBox, Spinner } from "@/components/ui";
-import { NEW_ORDERS, OLD_PERCENT_RANGE, type ChannelSummary, type LibrarySummary, type NewOrder } from "@/lib/channelTypes";
+import { MV_PER_ROUND_RANGE, NEW_ORDERS, OLD_PERCENT_RANGE, type ChannelSummary, type LibrarySummary, type NewOrder } from "@/lib/channelTypes";
 import { api } from "@/lib/client";
 
-interface ChannelsData {
+export interface ChannelsData {
   channels: ChannelSummary[];
   library: LibrarySummary | null;
   videoMinutes: number;
@@ -46,13 +46,34 @@ function CommitInput({ value, onCommit, className, type = "text", min, max, disa
   );
 }
 
-export function ChannelsCard({ onChanged, refresh = 0 }: { onChanged?: () => void; refresh?: number }) {
+export function ChannelsCard({
+  onChanged,
+  refresh = 0,
+  selected,
+  onSelect,
+  onData,
+}: {
+  onChanged?: () => void;
+  refresh?: number;
+  /** Kênh đang chọn (trang Kênh: xem kế hoạch, giao việc, kho ý tưởng của kênh này). */
+  selected?: string;
+  onSelect?: (id: string) => void;
+  /** Dữ liệu kênh mới (sau khi đọc / sửa) cho trang. */
+  onData?: (d: ChannelsData) => void;
+}) {
   const [data, setData] = useState<ChannelsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState("");
 
-  const load = useCallback(() => api<ChannelsData>("/api/channels").then(setData, (e) => setError((e as Error).message)), []);
+  const take = useCallback(
+    (d: ChannelsData) => {
+      setData(d);
+      onData?.(d);
+    },
+    [onData],
+  );
+  const load = useCallback(() => api<ChannelsData>("/api/channels").then(take, (e) => setError((e as Error).message)), [take]);
   useEffect(() => {
     void load();
   }, [load, refresh]);
@@ -61,7 +82,7 @@ export function ChannelsCard({ onChanged, refresh = 0 }: { onChanged?: () => voi
     setBusy(true);
     setError(null);
     try {
-      setData(await api<ChannelsData>("/api/channels", { method: "POST", json }));
+      take(await api<ChannelsData>("/api/channels", { method: "POST", json }));
       onChanged?.();
       return true;
     } catch (e) {
@@ -74,7 +95,7 @@ export function ChannelsCard({ onChanged, refresh = 0 }: { onChanged?: () => voi
 
   if (!data) {
     return (
-      <Card title="Kênh & kho nhạc">
+      <Card title="Các kênh & kho nhạc chung">
         {error ? <ErrorBox error={error} /> : <Spinner />}
       </Card>
     );
@@ -82,13 +103,15 @@ export function ChannelsCard({ onChanged, refresh = 0 }: { onChanged?: () => voi
   const lib = data.library;
   const update = (id: string, patch: Record<string, unknown>) => void post({ action: "update", id, ...patch });
   return (
-    <Card title="Kênh & kho nhạc" actions={<button className="btn-ghost btn-sm" onClick={() => void load()}>↻ Xem lại</button>}>
+    <Card title="Các kênh & kho nhạc chung" actions={<button className="btn-ghost btn-sm" onClick={() => void load()}>↻ Xem lại</button>}>
       <div className="space-y-3 text-sm" data-testid="channels-card">
         <ErrorBox error={error} />
         <p className="text-xs text-muted">
           Tự xếp bài như <b>Bokin Playlist Studio</b>: mỗi video gồm bài cũ (bài mức 2–3 kênh đã dùng, bài lâu chưa dùng trước) và bài mới (kênh chưa dùng
           lần nào), đủ khoảng <b>{data.videoMinutes} phút</b>; bài mức 1 chỉ dùng làm bài mới; danh sách xếp mức 3 → 2 → 1, bài mở đầu khác video trước. Các
-          kênh dùng chung một kho nhạc, bài cũ / mới tính theo lịch sử riêng của từng kênh. Video mới tự chia lần lượt cho kênh đang có ít video nhất.
+          kênh dùng chung một kho nhạc, bài cũ / mới tính theo lịch sử riêng của từng kênh. Video mới tự chia lần lượt cho kênh đang có ít video nhất. Mỗi
+          kênh có thứ tự sản xuất riêng: mỗi vòng <b>N MV một bài</b> (bài mức hay cao nhất kênh chưa dùng, dài đúng bài) rồi <b>1 playlist</b> mở đầu bằng
+          N bài đó (cột MV mỗi vòng; 0 = chỉ playlist).
         </p>
 
         {!lib ? (
@@ -139,15 +162,20 @@ export function ChannelsCard({ onChanged, refresh = 0 }: { onChanged?: () => voi
                   Bài cũ %
                 </th>
                 <th className="px-2 py-1.5">Chọn bài mới</th>
+                <th className="px-2 py-1.5" title="Mỗi vòng: chừng này MV một bài rồi 1 playlist (mở đầu bằng các bài đó); 0 = chỉ làm playlist">
+                  MV mỗi vòng
+                </th>
+                <th className="px-2 py-1.5">Tiếp theo</th>
                 <th className="px-2 py-1.5" title="Video của kênh (đã làm + đang làm): video mới vào kênh có ít video nhất">
                   Video
                 </th>
                 <th className="px-2 py-1.5">Bài mới còn</th>
+                {onSelect && <th className="px-2 py-1.5"></th>}
               </tr>
             </thead>
             <tbody>
               {data.channels.map((c) => (
-                <tr key={c.id} className="border-t border-ink/10" data-testid={`channel-${c.id}`}>
+                <tr key={c.id} className={`border-t border-ink/10 ${selected === c.id ? "bg-mint/20" : ""}`} data-testid={`channel-${c.id}`}>
                   <td className="px-2 py-1.5">
                     <input type="checkbox" checked={c.active} disabled={busy} onChange={(e) => update(c.id, { active: e.target.checked })} title="Tắt = tạm không làm video mới cho kênh này" />
                   </td>
@@ -174,12 +202,34 @@ export function ChannelsCard({ onChanged, refresh = 0 }: { onChanged?: () => voi
                       ))}
                     </select>
                   </td>
+                  <td className="px-2 py-1.5">
+                    <CommitInput
+                      type="number"
+                      min={MV_PER_ROUND_RANGE[0]}
+                      max={MV_PER_ROUND_RANGE[1]}
+                      value={String(c.mvPerRound)}
+                      disabled={busy}
+                      onCommit={(v) => update(c.id, { mvPerRound: Number(v) })}
+                      className="w-14 text-center"
+                    />
+                  </td>
+                  <td className="px-2 py-1.5 text-xs" title={c.next.song ? `Bài: ${c.next.song}` : undefined}>
+                    {c.next.kind === "mv" ? `🎬 MV ${c.next.index}/${c.mvPerRound}` : "📀 Playlist"}
+                    {c.next.song && <div className="max-w-40 truncate text-muted">{c.next.song}</div>}
+                  </td>
                   <td className="px-2 py-1.5 text-xs">
                     {c.videos} video{c.inProgress ? ` (${c.inProgress} đang làm)` : ""}
                   </td>
                   <td className={`px-2 py-1.5 text-xs ${lib && c.videosLeft <= 3 ? "font-semibold text-cherry-dark" : ""}`}>
-                    {lib ? `${c.unused} bài (~${c.videosLeft} video)` : "—"}
+                    {lib ? `${c.unused} bài (~${c.videosLeft} playlist)` : "—"}
                   </td>
+                  {onSelect && (
+                    <td className="px-2 py-1.5">
+                      <button className={`btn-sm ${selected === c.id ? "btn-primary" : "btn-ghost"}`} onClick={() => onSelect(c.id)}>
+                        {selected === c.id ? "Đang xem" : "Xem kênh"}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

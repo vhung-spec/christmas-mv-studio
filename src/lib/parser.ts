@@ -11,7 +11,8 @@ export interface ParseResult {
   delimiter: "tab" | "pipe" | "comma" | "matrix" | "lines";
 }
 
-type Field = keyof IdeaRow | "tempo_or_bpm";
+/** Cột đọc được từ bảng dán vào (loại video / bài của MV do dây chuyền tự đặt, không đọc từ bảng). */
+type Field = Exclude<keyof IdeaRow, "video_kind" | "mv_song"> | "tempo_or_bpm";
 
 /** Bỏ dấu tiếng Việt và ký tự không phải chữ/số để so khớp tiêu đề cột. */
 export function normalizeKey(s: string): string {

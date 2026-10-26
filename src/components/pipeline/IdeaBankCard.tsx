@@ -1,8 +1,10 @@
 "use client";
 
-// Thẻ "Kho ý tưởng" ở trang Tự động: đếm ý tưởng đã dùng / chưa dùng, bật tắt tự lấy ý tưởng và tự đề xuất,
-// duyệt các ý tưởng Claude đề xuất.
+// Thẻ "Kho ý tưởng" của một kênh (trang Kênh): đếm ý tưởng đã dùng / chưa dùng, kho nhạc còn bài mới cho kênh, tự đề xuất ý tưởng
+// (Claude), duyệt các ý tưởng Claude đề xuất. Cách dây chuyền tự lấy việc (bật / tắt, mỗi lúc mấy video, chờ nhạc) ở FeedCard (trang
+// Dây chuyền).
 
+import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
 import { Card, ErrorBox, Spinner } from "@/components/ui";
 import { formatUsd } from "@/lib/cost";
@@ -11,7 +13,7 @@ import { BANK_LIMITS, type BankConfig, type BankIdea, type BankView } from "@/li
 export type BankData = BankView & { mode: "claude" | "mock" | "manual" };
 
 /** Ô số: chỉ lưu khi rời ô hoặc bấm Enter (gõ "10" không bị lưu thành "1" giữa chừng). */
-function NumberBox({ value, range, onCommit, disabled }: { value: number; range: readonly [number, number]; onCommit: (n: number) => void; disabled?: boolean }) {
+export function NumberBox({ value, range, onCommit, disabled }: { value: number; range: readonly [number, number]; onCommit: (n: number) => void; disabled?: boolean }) {
   const [text, setText] = useState(String(value));
   useEffect(() => setText(String(value)), [value]);
   const commit = () => {
@@ -54,12 +56,15 @@ export function IdeaBankCard({
   busy,
   onPost,
   onChannel,
+  fixedChannel = false,
 }: {
   bank: BankData | null;
   busy: boolean;
   onPost: (json: Record<string, unknown>) => void;
   /** Chọn kênh để xem kho ý tưởng của kênh đó. */
   onChannel?: (id: string) => void;
+  /** Trang Kênh: kho của kênh đang chọn ở trang (không hiện các nút chọn kênh trong thẻ). */
+  fixedChannel?: boolean;
 }) {
   if (!bank) {
     return (
@@ -77,7 +82,7 @@ export function IdeaBankCard({
   const current = bank.channels.find((x) => x.id === bank.channel);
   return (
     <Card
-      title="Kho ý tưởng"
+      title={fixedChannel && bank.channels.length > 1 ? `Kho ý tưởng — ${bank.channels.find((x) => x.id === bank.channel)?.name ?? ""}` : "Kho ý tưởng"}
       actions={
         <button className="btn-ghost btn-sm" disabled={busy || bank.suggesting || manual} onClick={() => post({ action: "suggest" })} title="Claude nghĩ thêm ý tưởng mới cho kênh này ngay bây giờ">
           {bank.suggesting && <Spinner />} ✨ Nhờ Claude đề xuất ngay
@@ -85,7 +90,7 @@ export function IdeaBankCard({
       }
     >
       <div className="space-y-3 text-sm">
-        {bank.channels.length > 1 && (
+        {bank.channels.length > 1 && !fixedChannel && (
           <div className="flex flex-wrap gap-1" data-testid="bank-channels">
             {bank.channels.map((x) => (
               <button
@@ -101,7 +106,7 @@ export function IdeaBankCard({
           </div>
         )}
         <p>
-          {bank.channels.length > 1 && current ? <b>{current.name}: </b> : null}
+          {bank.channels.length > 1 && current && !fixedChannel ? <b>{current.name}: </b> : null}
           Chưa dùng <b>{bank.counts.new}</b> · Đã dùng <b>{bank.counts.used}</b> · Claude đề xuất chờ duyệt <b>{bank.counts.proposed}</b>
           {bank.counts.rejected ? ` · Đã bỏ ${bank.counts.rejected}` : ""}
         </p>
@@ -124,7 +129,7 @@ export function IdeaBankCard({
                 <button className="btn-ghost btn-sm" disabled={busy} onClick={() => setConfig({ needSong: false })}>
                   Làm video trước, ghép nhạc sau
                 </button>
-                <span className="text-muted">(bỏ tick ô “Chỉ làm video mới khi kho nhạc còn bài mới” bên dưới)</span>
+                <span className="text-muted">(bỏ tick ô “Chỉ làm video mới khi kho nhạc còn bài mới” ở trang Dây chuyền)</span>
               </p>
             )}
           </div>
@@ -148,17 +153,13 @@ export function IdeaBankCard({
         )}
 
         <div className="space-y-1.5">
-          <label className="flex flex-wrap items-center gap-2">
-            <input type="checkbox" checked={c.feed} disabled={busy} onChange={(e) => setConfig({ feed: e.target.checked })} />
-            Dây chuyền tự lấy ý tưởng trong kho các kênh (lần lượt đều các kênh), mỗi lúc
-            <NumberBox value={c.ahead} range={BANK_LIMITS.ahead} disabled={busy} onCommit={(ahead) => setConfig({ ahead })} />
-            video (đang viết kịch bản hoặc chờ clip Muse)
-          </label>
-          <label className="flex flex-wrap items-center gap-2 pl-6">
-            <input type="checkbox" checked={c.needSong} disabled={busy} onChange={(e) => setConfig({ needSong: e.target.checked })} />
-            Chỉ làm video mới khi kho nhạc còn bài mới cho kênh đó (hết thì ý tưởng của kênh nằm chờ, thêm nhạc là tự chạy). Bỏ tick khi kho nhạc chưa
-            xong: cứ làm kịch bản + clip Muse trước, video chờ ở bước Nhạc, có nhạc là tự xếp bài và dựng
-          </label>
+          <p className="text-xs text-muted">
+            Dây chuyền {c.feed ? `đang tự lấy ý tưởng trong kho các kênh, mỗi lúc ${c.ahead} video` : "đang tắt tự lấy ý tưởng"} — đổi ở trang{" "}
+            <Link href="/pipeline" className="underline">
+              Dây chuyền
+            </Link>{" "}
+            (thẻ Tự lấy việc).
+          </p>
           <label className="flex flex-wrap items-center gap-2">
             <input type="checkbox" checked={c.suggest} disabled={busy} onChange={(e) => setConfig({ suggest: e.target.checked })} />
             Kho của kênh sắp hết thì nhờ Claude đề xuất
@@ -245,11 +246,11 @@ export function IdeaBankCard({
           </details>
         ) : bank.counts.new > 0 ? (
           <p className="text-xs text-amber-800">
-            {bank.counts.new} ý tưởng đang chờ: kho nhạc hết bài mới cho kênh này — thêm bài vào kho nhạc (Drive) là dây chuyền tự lấy, hoặc bỏ tick “Chỉ lấy ý
-            tưởng của kênh khi kho nhạc còn bài mới”.
+            {bank.counts.new} ý tưởng đang chờ: kho nhạc hết bài mới cho kênh này — thêm bài vào kho nhạc (Drive) là dây chuyền tự lấy, hoặc bấm “Làm video
+            trước, ghép nhạc sau”.
           </p>
         ) : (
-          !bank.proposals.length && <p className="text-xs text-muted">Kho chưa có ý tưởng chưa dùng — dán bảng ý tưởng ở thẻ “Thêm việc” rồi bấm “Đưa vào kho”.</p>
+          !bank.proposals.length && <p className="text-xs text-muted">Kho chưa có ý tưởng chưa dùng — dán bảng ý tưởng ở thẻ “Giao việc” rồi bấm “Đưa vào kho”.</p>
         )}
       </div>
     </Card>

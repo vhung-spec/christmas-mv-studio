@@ -7,6 +7,8 @@
 //   lấy thêm bài cũ mức 2–3 (rồi mới tới mức 1), kèm cảnh báo.
 // App này thêm: lấy bao nhiêu bài cho đủ Độ dài video (~60 phút), tỉ lệ bài cũ theo % (Bokin: 6 / 13), bài nhiều bản thì khi dùng lại
 // lấy bản ít dùng nhất. Phân luồng: video mới giao cho kênh đang có ít video nhất (routeChannel).
+// Thứ tự sản xuất (quyết định cùng người dùng 2026-10-26): mỗi vòng của kênh N MV một bài (bài mức hay cao nhất kênh chưa dùng) rồi
+// 1 playlist mở đầu bằng N bài đó; lặp lại; N đặt riêng từng kênh (0 = chỉ playlist).
 // Lưu ở data/channels.json. Phần xếp bài là hàm thuần (test được), phần đọc / ghi chỉ dùng phía server.
 
 import { randomUUID } from "node:crypto";
@@ -14,12 +16,16 @@ import path from "node:path";
 import {
   DEFAULT_CHANNEL_ID,
   DEFAULT_CHANNEL_NAME,
+  DEFAULT_MV_PER_ROUND,
   DEFAULT_OLD_PERCENT,
+  MV_PER_ROUND_RANGE,
   NEW_ORDERS,
   OLD_PERCENT_RANGE,
   type Channel,
   type ChannelVideo,
   type NewOrder,
+  type NextVideo,
+  type VideoKind,
 } from "./channelTypes";
 import { UserError } from "./errors";
 import { hashSeed, rng } from "./mock";
@@ -217,17 +223,28 @@ export interface MixResult {
 
 /**
  * Bài cho video dài `targetSec` giây: tăng dần số bài (bài cũ = `oldPercent`% số bài, như 6 / 13 của Bokin) tới khi tổng thời lượng đủ
- * độ dài video (bài cuối có thể vượt một chút). Hết bài thì dừng, `enough` cho biết đã đủ 90% độ dài chưa.
+ * độ dài video (bài cuối có thể vượt một chút). Hết bài thì dừng, `enough` cho biết đã đủ 90% độ dài chưa. `opensWith`: các bài phải có
+ * mặt và đứng đầu; `avoid`: các bài không lấy (bài các MV đang làm của kênh đã giữ).
  */
-export function pickForLength(songs: LibSong[], history: ChannelVideo[], opts: { targetSec: number; oldPercent: number; newOrder?: NewOrder; seed?: string }): MixResult {
+export function pickForLength(
+  songs: LibSong[],
+  history: ChannelVideo[],
+  opts: { targetSec: number; oldPercent: number; newOrder?: NewOrder; seed?: string; opensWith?: string[]; avoid?: string[] },
+): MixResult {
   const usable = songs.filter((s) => s.exists && !s.excluded).length;
   const fileUses = new Map<string, number>();
   for (const v of history) for (const f of v.files) fileUses.set(plain(path.basename(f)), (fileUses.get(plain(path.basename(f))) ?? 0) + 1);
+  // Playlist cuối vòng: các bài vừa có MV phải có mặt và đứng đầu (theo thứ tự MV), phần còn lại xếp như cũ.
+  const first = (opts.opensWith ?? []).map(key);
+  const rank = (s: LibSong) => {
+    const i = first.indexOf(key(s.code));
+    return i < 0 ? first.length : i;
+  };
   let result: MixResult | null = null;
   for (let count = 1; count <= Math.max(1, usable); count++) {
     const old = Math.min(count - 1, Math.round((count * opts.oldPercent) / 100));
-    const r = pickSongs(songs, history, { total: count, old, newOrder: opts.newOrder, seed: opts.seed });
-    const picks = r.picks.map((p) => ({ ...p, version: chooseVersion(p.song, p.role, fileUses) }));
+    const r = pickSongs(songs, history, { total: count, old, newOrder: opts.newOrder, seed: opts.seed, keep: opts.opensWith, avoid: opts.avoid });
+    const picks = r.picks.map((p) => ({ ...p, version: chooseVersion(p.song, p.role, fileUses) })).sort((a, b) => rank(a.song) - rank(b.song));
     const total = picks.reduce((a, p) => a + p.version.duration, 0);
     result = { picks, total, enough: total >= opts.targetSec * ENOUGH_RATIO, count, old, warnings: r.warnings, stats: r.stats };
     if (total >= opts.targetSec || picks.length < count) break;
@@ -242,6 +259,41 @@ export function newPerVideo(songs: LibSong[], targetSec: number, oldPercent: num
   const avg = usable.reduce((a, s) => a + s.versions[0].duration, 0) / usable.length;
   const count = Math.max(1, Math.ceil(targetSec / Math.max(1, avg)));
   return Math.max(1, count - Math.min(count - 1, Math.round((count * oldPercent) / 100)));
+}
+
+// ---------- Thứ tự sản xuất: mỗi vòng N MV một bài rồi 1 playlist ----------
+
+/** Một video trong chuỗi video của kênh (đã làm hoặc đang làm): loại và mã bài. */
+export interface SeqEntry {
+  kind: VideoKind;
+  codes: string[];
+}
+
+/** Chuỗi video của kênh theo thứ tự làm: lịch sử (đã xếp nhạc) rồi các việc đang làm chưa có trong lịch sử. */
+export function channelSequence(history: ChannelVideo[], open: SeqEntry[] = []): SeqEntry[] {
+  return [...history.map((v) => ({ kind: v.kind ?? ("playlist" as const), codes: v.codes })), ...open];
+}
+
+/**
+ * Video tiếp theo của kênh: từ sau playlist gần nhất chưa đủ `mvPerRound` MV → MV thứ (số MV đã có + 1); đủ → playlist, mở đầu bằng
+ * các bài của những MV đó. Đổi số MV giữa chừng vẫn đúng: chỉ đếm MV liền nhau ở cuối chuỗi.
+ */
+export function nextVideo(seq: SeqEntry[], mvPerRound: number): NextVideo {
+  let i = seq.length;
+  while (i > 0 && seq[i - 1].kind === "mv") i--;
+  const mvs = seq.slice(i);
+  if (mvs.length < mvPerRound) return { kind: "mv", index: mvs.length + 1, opensWith: [] };
+  return { kind: "playlist", index: 0, opensWith: mvs.flatMap((m) => m.codes) };
+}
+
+/**
+ * Bài cho MV một bài: bài kênh chưa dùng lần nào (không trùng bài các MV đang làm của kênh), mức hay cao nhất trước, bài có lời trước
+ * (kịch bản bám lời), rồi theo thứ tự trong kho. null = kho không còn bài nào như vậy.
+ */
+export function pickMvSong(songs: LibSong[], history: ChannelVideo[], reserved: string[] = [], hasLyrics: (s: LibSong) => boolean = () => false): LibSong | null {
+  const used = new Set([...history.flatMap((v) => v.codes), ...reserved].map(key));
+  const list = songs.filter((s) => s.exists && !s.excluded && s.versions.length && !used.has(key(s.code)));
+  return list.sort((a, b) => b.level - a.level || Number(hasLyrics(b)) - Number(hasLyrics(a)))[0] ?? null;
 }
 
 /** Phân luồng: kênh đang bật có ít video nhất (đang làm + đã xong) — bằng nhau thì kênh đứng trước trong danh sách. */
@@ -266,6 +318,7 @@ const defaultChannel = (): Channel => ({
   active: true,
   oldPercent: DEFAULT_OLD_PERCENT,
   newOrder: "balanced",
+  mvPerRound: DEFAULT_MV_PER_ROUND,
   created_at: new Date(0).toISOString(),
   history: [],
 });
@@ -273,6 +326,10 @@ const defaultChannel = (): Channel => ({
 const clampPercent = (v: unknown, fallback: number) => {
   const x = Math.round(Number(v));
   return Number.isFinite(x) ? Math.min(OLD_PERCENT_RANGE[1], Math.max(OLD_PERCENT_RANGE[0], x)) : fallback;
+};
+const clampMvs = (v: unknown, fallback: number) => {
+  const x = Math.round(Number(v));
+  return v !== undefined && v !== null && Number.isFinite(x) ? Math.min(MV_PER_ROUND_RANGE[1], Math.max(MV_PER_ROUND_RANGE[0], x)) : fallback;
 };
 
 function normalize(c: Partial<Channel>): Channel {
@@ -283,8 +340,11 @@ function normalize(c: Partial<Channel>): Channel {
     active: c.active !== false,
     oldPercent: clampPercent(c.oldPercent, d.oldPercent),
     newOrder: c.newOrder && c.newOrder in NEW_ORDERS ? c.newOrder : d.newOrder,
+    mvPerRound: clampMvs(c.mvPerRound, d.mvPerRound),
     created_at: c.created_at ?? d.created_at,
-    history: Array.isArray(c.history) ? c.history.filter((v) => v && typeof v.id === "string" && Array.isArray(v.codes)).map((v) => ({ ...v, files: v.files ?? [] })) : [],
+    history: Array.isArray(c.history)
+      ? c.history.filter((v) => v && typeof v.id === "string" && Array.isArray(v.codes)).map((v) => ({ ...v, files: v.files ?? [], ...(v.kind === "mv" ? { kind: "mv" as const } : { kind: undefined }) }))
+      : [],
   };
 }
 
@@ -319,8 +379,8 @@ export function addChannel(name: string): Promise<Channel> {
   });
 }
 
-/** Đổi tên / bật tắt / tỉ lệ bài cũ / cách chọn bài mới của một kênh. */
-export function updateChannel(id: string, patch: Partial<Pick<Channel, "name" | "active" | "oldPercent" | "newOrder">>): Promise<Channel> {
+/** Đổi tên / bật tắt / tỉ lệ bài cũ / cách chọn bài mới / số MV mỗi vòng của một kênh. */
+export function updateChannel(id: string, patch: Partial<Pick<Channel, "name" | "active" | "oldPercent" | "newOrder" | "mvPerRound">>): Promise<Channel> {
   return updateChannels((list) => {
     const c = list.find((x) => x.id === id);
     if (!c) throw new UserError("Không tìm thấy kênh.", 404);
@@ -331,6 +391,7 @@ export function updateChannel(id: string, patch: Partial<Pick<Channel, "name" | 
     }
     if (patch.oldPercent !== undefined) c.oldPercent = clampPercent(patch.oldPercent, c.oldPercent);
     if (patch.newOrder && patch.newOrder in NEW_ORDERS) c.newOrder = patch.newOrder;
+    if (patch.mvPerRound !== undefined) c.mvPerRound = clampMvs(patch.mvPerRound, c.mvPerRound);
     return c;
   });
 }

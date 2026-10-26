@@ -1,5 +1,6 @@
 // Dây chuyền tự động — kiểu dữ liệu và nhãn các bước (thuần, dùng được cả phía server lẫn trình duyệt). Phần chạy: pipeline.ts.
 
+import { DEFAULT_CHANNEL_ID } from "./channelTypes";
 import type { IdeaRow } from "./types";
 
 export type StepName = "script" | "song" | "clips" | "render";
@@ -19,6 +20,10 @@ export interface PipelineItem {
   mv_id?: string;
   /** Kênh làm video này (phân luồng lúc thêm việc: kênh của ý tưởng, hoặc kênh đang có ít video nhất). */
   channel?: string;
+  /** MV một bài hay playlist — đặt lúc thêm việc theo thứ tự sản xuất của kênh (không ghi = playlist). */
+  kind?: "mv" | "playlist";
+  /** Playlist cuối vòng: mã các bài vừa có MV của kênh, xếp đầu playlist. */
+  opens_with?: string[];
   steps: Record<StepName, PipelineStep>;
   /** Đã gửi các cảnh thiếu clip sang Muse. */
   clips_sent?: boolean;
@@ -54,3 +59,6 @@ export interface PipelineView {
 }
 
 export const STEP_LABEL: Record<StepName, string> = { script: "Kịch bản", song: "Nhạc", clips: "Clip Muse", render: "Dựng MP4" };
+
+/** Kênh của một việc (dùng được cả phía trình duyệt; phía server: itemChannel trong pipeline.ts). */
+export const itemChannelOf = (it: Pick<PipelineItem, "channel" | "idea">) => it.channel ?? it.idea?.channel ?? DEFAULT_CHANNEL_ID;

@@ -11,6 +11,13 @@ export const DEFAULT_CHANNEL_NAME = "Kênh Giáng sinh";
 export const DEFAULT_OLD_PERCENT = 46;
 export const OLD_PERCENT_RANGE = [0, 90] as const;
 
+/** Loại video: MV một bài (~3–4 phút, kịch bản theo bài) hoặc playlist ~1 tiếng. */
+export type VideoKind = "mv" | "playlist";
+export const VIDEO_KINDS: Record<VideoKind, string> = { mv: "MV một bài", playlist: "Playlist 1 tiếng" };
+/** Thứ tự sản xuất mặc định của kênh: mỗi vòng 3 MV một bài rồi 1 playlist (mở đầu bằng 3 bài đó). 0 = chỉ làm playlist. */
+export const DEFAULT_MV_PER_ROUND = 3;
+export const MV_PER_ROUND_RANGE = [0, 10] as const;
+
 /** Một video trong lịch sử kênh: các bài theo thứ tự trong video (mã bài) và file nhạc đã dùng. */
 export interface ChannelVideo {
   /** Mã MV. */
@@ -19,6 +26,8 @@ export interface ChannelVideo {
   title: string;
   codes: string[];
   files: string[];
+  /** Không ghi = playlist (lịch sử trước khi có MV một bài). */
+  kind?: VideoKind;
 }
 
 export interface Channel {
@@ -28,8 +37,19 @@ export interface Channel {
   active: boolean;
   oldPercent: number;
   newOrder: NewOrder;
+  /** Mỗi vòng: chừng này MV một bài rồi 1 playlist; 0 = chỉ playlist. */
+  mvPerRound: number;
   created_at: string;
   history: ChannelVideo[];
+}
+
+/** Video tiếp theo của kênh theo thứ tự sản xuất. */
+export interface NextVideo {
+  kind: VideoKind;
+  /** MV thứ mấy trong vòng (1…mvPerRound); playlist = 0. */
+  index: number;
+  /** Playlist cuối vòng: mã các bài vừa có MV, đặt ở đầu playlist. */
+  opensWith: string[];
 }
 
 /** Kênh cho giao diện: cài đặt + số video đã làm, đang làm, bài mới còn lại cho kênh. */
@@ -39,6 +59,11 @@ export interface ChannelSummary {
   active: boolean;
   oldPercent: number;
   newOrder: NewOrder;
+  mvPerRound: number;
+  /** Video tiếp theo (MV thứ mấy / playlist) và bài sẽ dùng cho MV đó nếu kho có. */
+  next: NextVideo & { song: string | null };
+  /** Video đã xếp nhạc gần đây (mới nhất trước): loại, tên, số bài. */
+  recent: { id: string; date: string; title: string; kind: VideoKind; songs: number }[];
   /** Video của kênh: đã có danh sách nhạc (lịch sử kênh) + đang làm mà chưa xếp nhạc — số dùng để chia lần lượt. */
   videos: number;
   /** Trong số đó, video đang trong dây chuyền (chưa xong). */

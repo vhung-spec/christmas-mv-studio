@@ -1,6 +1,7 @@
-// Tự xếp bài kiểu Bokin Playlist Studio (chuyển từ tests/test_channels.py của Bokin) + phần lấy đủ độ dài video + phân luồng kênh.
+// Tự xếp bài kiểu Bokin Playlist Studio (chuyển từ tests/test_channels.py của Bokin) + phần lấy đủ độ dài video + phân luồng kênh +
+// thứ tự sản xuất (N MV một bài rồi playlist).
 import { describe, expect, it } from "vitest";
-import { lastUse, pickForLength, pickSongs, resting, routeChannel, type PickSong } from "@/lib/channels";
+import { channelSequence, lastUse, nextVideo, pickForLength, pickMvSong, pickSongs, resting, routeChannel, type PickSong, type SeqEntry } from "@/lib/channels";
 import type { ChannelVideo } from "@/lib/channelTypes";
 import type { LibSong } from "@/lib/musicLibrary";
 import type { Level, ReuseRule } from "@/lib/songSheet";
@@ -177,6 +178,48 @@ describe("pickForLength — đủ độ dài video, tỉ lệ bài cũ theo %", 
     const all = pickForLength(mixed, [], { targetSec: 3600, oldPercent: 46, seed: "x" });
     expect(all.picks).toHaveLength(5);
     expect(all.enough).toBe(false);
+  });
+
+  it("playlist cuối vòng: các bài vừa có MV đứng đầu theo thứ tự MV (là bài cũ, bản kênh chưa dùng); không lấy bài các MV sau đang giữ", () => {
+    const mvs = ["12", "5", "30"];
+    const history: ChannelVideo[] = mvs.map((c) => ({ ...video(`mv${c}`, [c]), files: [`${c}.wav`], kind: "mv" as const }));
+    const r = pickForLength(kho(), history, { targetSec: 3600, oldPercent: 46, seed: "c", opensWith: mvs, avoid: ["1", "2"] });
+    expect(r.picks.slice(0, 3).map((p) => [p.song.code, p.role, p.version.name])).toEqual(mvs.map((c) => [c, "old", `${c} (1).wav`]));
+    // Kênh mới chỉ có 3 bài MV đã dùng → các bài còn lại đều mới; đủ 1 tiếng, không trùng bài, không có bài 1, 2.
+    expect(r.picks.filter((p) => p.role === "old")).toHaveLength(3);
+    expect([r.picks.length, r.enough]).toEqual([20, true]);
+    expect(new Set(r.picks.map((p) => p.song.code)).size).toBe(20);
+    expect(r.picks.some((p) => ["1", "2"].includes(p.song.code))).toBe(false);
+  });
+});
+
+describe("thứ tự sản xuất — N MV một bài rồi 1 playlist mỗi vòng", () => {
+  const mv = (c: string): SeqEntry => ({ kind: "mv", codes: [c] });
+  const pl: SeqEntry = { kind: "playlist", codes: ["1", "2"] };
+
+  it("3 MV mỗi vòng: MV 1 → 2 → 3 → playlist mở đầu bằng 3 bài đó → vòng mới; 0 = chỉ playlist; đổi số MV giữa chừng vẫn đúng", () => {
+    expect(nextVideo([], 3)).toEqual({ kind: "mv", index: 1, opensWith: [] });
+    expect(nextVideo([pl, mv("7")], 3)).toEqual({ kind: "mv", index: 2, opensWith: [] });
+    expect(nextVideo([mv("7"), mv("8"), mv("9")], 3)).toEqual({ kind: "playlist", index: 0, opensWith: ["7", "8", "9"] });
+    expect(nextVideo([mv("7"), mv("8"), mv("9"), pl], 3)).toEqual({ kind: "mv", index: 1, opensWith: [] });
+    expect(nextVideo([pl, pl], 0)).toEqual({ kind: "playlist", index: 0, opensWith: [] });
+    // Đã có 2 MV, đổi từ 3 xuống 1 → làm playlist luôn, mở đầu bằng cả 2 bài.
+    expect(nextVideo([pl, mv("7"), mv("8")], 1)).toEqual({ kind: "playlist", index: 0, opensWith: ["7", "8"] });
+  });
+
+  it("chuỗi video của kênh: lịch sử (video cũ chưa ghi loại là playlist) rồi các việc đang làm", () => {
+    const seq = channelSequence([video("a", ["1", "2"]), { ...video("b", ["5"]), kind: "mv" }], [mv("6")]);
+    expect(seq).toEqual([{ kind: "playlist", codes: ["1", "2"] }, mv("5"), mv("6")]);
+    expect(nextVideo(seq, 2)).toEqual({ kind: "playlist", index: 0, opensWith: ["5", "6"] });
+  });
+
+  it("bài cho MV: bài kênh chưa dùng, mức cao nhất trước; cùng mức thì bài có lời trước, rồi theo thứ tự kho; bỏ bài đang giữ, bị loại, thiếu file", () => {
+    const kho = [libSong(1, 2, 180), libSong(2, 3, 200), libSong(3, 3, 190), { ...libSong(4, 3, 210), excluded: true }, { ...libSong(5, 3, 200), exists: false }, libSong(6, 1, 150)];
+    expect(pickMvSong(kho, [])?.code).toBe("2");
+    expect(pickMvSong(kho, [], [], (s) => s.code === "3")?.code).toBe("3");
+    expect(pickMvSong(kho, [video("a", ["2"])])?.code).toBe("3");
+    expect(pickMvSong(kho, [video("a", ["2"])], ["3"])?.code).toBe("1");
+    expect(pickMvSong(kho, [video("a", ["2", "3", "1"])], ["6"])).toBeNull();
   });
 });
 
