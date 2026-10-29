@@ -52,8 +52,10 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
       ["2", "Snow On Main Street", 2],
       ["3", "Candle In The Window", 1],
     ]);
-    // Các test playlist: kênh mặc định chỉ làm playlist (MV mỗi vòng = 0); thứ tự MV → playlist có test riêng ở cuối.
+    // Các test playlist: kênh mặc định chỉ làm playlist (MV mỗi vòng = 0); thứ tự MV → playlist và tự sản xuất có test riêng ở cuối.
     await (await import("@/lib/channels")).updateChannel("kenh-1", { mvPerRound: 0 });
+    // Không tự lấy việc / tự nghĩ ý tưởng (kho trống) trong các test chạy tay từng việc.
+    await (await import("@/lib/ideaBank")).setBankConfig({ feed: false, suggest: false });
     const clip = make(["-f", "lavfi", "-i", "testsrc2=size=320x180:rate=24:duration=2", "-c:v", "libx264", "-preset", "ultrafast"], path.join(tmp, "clip.mp4"));
     fake = new FakeMuse(readFileSync(clip));
     engine = (await import("@/lib/museEngine")).initMuseEngine({ dir: path.join(tmp, "muse-engine"), page: fake, worker: FAST });
@@ -283,7 +285,7 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     for (const it of (await pl.readPipeline()).items) await pl.removeFromPipeline(it.id);
   }, 300000);
 
-  it("thứ tự sản xuất: kênh 2 MV mỗi vòng → MV bài hay nhất kênh chưa dùng (dài đúng bài, bám lời) → MV → playlist mở đầu bằng 2 bài đó → MV vòng sau chờ playlist", async () => {
+  it("thứ tự sản xuất: kênh 2 MV mỗi vòng → MV (cảnh Giáng sinh, bài hay nhất kênh chưa dùng chọn lúc ghép nhạc) → MV → playlist mở đầu bằng 2 bài đó → MV vòng sau chờ playlist", async () => {
     const pl = await import("@/lib/pipeline");
     const bank = await import("@/lib/ideaBank");
     const jobs = await import("@/lib/museJobs");
@@ -295,7 +297,7 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     // Playlist 1 tiếng: kho chưa đủ nhạc (MV một bài thì đủ).
     setSettings({ videoMinutes: 60 });
     await bank.setBankConfig({ feed: false });
-    // Thêm bài 5, 6 (mức 3, ngắn); bài 6 có lời trong thư viện lời (từ Drive).
+    // Thêm bài 5, 6 (mức 3, ngắn).
     tone("5.mp3", 12, 523);
     tone("6.mp3", 12, 587);
     await sheet([
@@ -306,12 +308,9 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
       ["5", "Jingle Bell Jamboree", 3],
       ["6", "Mistletoe Moonlight", 3],
     ]);
-    await (await import("@/lib/songLibrary")).writeSongLibrary({
-      songs: [{ n: 6, world_location: "Mistletoe Moonlight", theme_code: "T01", theme_name: "", outline: "", hook: "", mood: "", lyrics: "[Verse 1]\nSnow on the window\n[Chorus]\nMeet me under mistletoe moonlight" }],
-    });
     const c = await channels.addChannel("Kênh MV");
     await channels.updateChannel(c.id, { mvPerRound: 2 });
-    const idea = (id: string, place: string) => ({ id, world_location: place, theme_code: "T03", outline: `Một đêm Giáng sinh ở ${place}` });
+    const idea = (id: string, place: string) => ({ id, world_location: place, theme_code: "T03", outline: `Chỉ cảnh, không nhân vật chính: Giáng sinh ở ${place}` });
     const r = await pl.addToPipeline({
       ideas: [idea("21", "Chicago Union Station 1953"), idea("22", "Vermont Covered Bridge 1951"), idea("23", "Times Square Toy Shop 1954"), idea("24", "San Francisco Cable Car 1957")],
       channel: c.id,
@@ -320,61 +319,57 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     const item = async (id: string) => (await pl.readPipeline()).items.find((i) => i.idea?.id === id)!;
     const summary = async () => (await channelsView()).channels.find((x) => x.id === c.id)!;
 
-    // Kênh chưa dùng bài nào: MV 1 = bài mức 3 có lời (bài 6), MV 2 = bài mức 3 kế tiếp (bài 1), playlist mở đầu bằng 2 bài đó, MV 1 vòng
-    // sau giữ bài 5. MV: tên bài làm tên video, kịch bản dài đúng bài, lời lấy từ thư viện lời.
+    // MV chưa giữ bài: kịch bản là một vòng cảnh 3 phút (không theo bài nào), làm ngay; bài chọn lúc ghép nhạc.
     const [m1, m2, p, m3] = [await item("21"), await item("22"), await item("23"), await item("24")];
-    expect([m1.kind, m1.title, m1.idea!.mv_song!.code, m1.idea!.duration_sec]).toEqual(["mv", "Mistletoe Moonlight", "6", 12]);
-    expect(m1.idea!.lyrics).toContain("Meet me under mistletoe moonlight");
-    expect([m2.kind, m2.title, m2.idea!.mv_song!.code, m2.idea!.duration_sec, m2.idea!.lyrics]).toEqual(["mv", "Silver Bells Waltz", "1", 25, undefined]);
-    expect([p.kind, p.title, p.opens_with]).toEqual(["playlist", "Times Square Toy Shop 1954", ["6", "1"]]);
-    expect([m3.kind, m3.idea!.mv_song!.code]).toEqual(["mv", "5"]);
-    // Trang Kênh: tiếp theo là MV 2 của vòng sau (bài mức 2 đầu tiên trong kho).
-    expect(await summary()).toMatchObject({ mvPerRound: 2, next: { kind: "mv", index: 2, song: "Snow On Main Street" } });
+    expect([m1.kind, m2.kind, p.kind, m3.kind]).toEqual(["mv", "mv", "playlist", "mv"]);
+    expect([m1.idea!.video_kind, m1.idea!.duration_sec, m1.idea!.mv_song, m1.title]).toEqual(["mv", 180, undefined, "Chicago Union Station 1953"]);
+    expect(p.idea!.duration_sec).toBeUndefined();
+    // Trang Kênh: tiếp theo là MV 2 của vòng sau; 3 MV đang làm sẽ lấy 3 bài mức 3 → bài dự kiến là bài mức 2 đầu tiên trong kho.
+    expect(await summary()).toMatchObject({ mvPerRound: 2, next: { kind: "mv", index: 2, song: "Snow On Main Street" }, unposted: 4 });
 
-    // Kịch bản lần lượt cả 4 video; MV có nhạc ngay, playlist chờ đủ nhạc, MV vòng sau chờ playlist — clip Muse vẫn gửi.
+    // Kịch bản lần lượt cả 4 video; MV có nhạc ngay (bài mức 3 theo thứ tự kho: 1 rồi 5), playlist chờ đủ nhạc, MV vòng sau chờ playlist.
     for (let k = 0; k < 4; k++) {
       await pl.pipelineTick();
       await pl.pipelineIdle();
     }
     await pl.pipelineTick();
     const mv1 = (await store.loadMV((await item("21")).mv_id!))!;
-    expect(mv1.structure.duration_sec).toBe(12);
-    expect(mv1.youtube_titles[0]).toMatch(/^Mistletoe Moonlight 🎄/);
-    expect((await item("21")).steps.song).toMatchObject({ status: "done", message: "Kênh “Kênh MV”: MV bài “Mistletoe Moonlight” (mức 3) · 0:12" });
-    expect((await media.loadProject(mv1.id)).audio).toMatchObject({ name: "6.mp3" });
-    expect((await item("22")).steps.song.status).toBe("done");
+    expect(mv1.structure.duration_sec).toBe(180);
+    expect((await item("21")).steps.song).toMatchObject({ status: "done", message: "Kênh “Kênh MV”: MV bài “Silver Bells Waltz” (mức 3) · 0:25" });
+    expect((await item("21")).title).toBe("Silver Bells Waltz");
+    // Có bài rồi mới đặt tên: tên bài vào ý tưởng của MV và lên đầu các tiêu đề YouTube.
+    expect(mv1.idea.song_title).toBe("Silver Bells Waltz");
+    expect(mv1.youtube_titles.length).toBeGreaterThan(0);
+    for (const t of mv1.youtube_titles) expect(t).toMatch(/^Silver Bells Waltz \| /);
+    expect((await media.loadProject(mv1.id)).audio).toMatchObject({ name: "1.mp3" });
+    expect((await item("22")).steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/MV bài “Jingle Bell Jamboree”/) });
     expect((await item("23")).steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/^Chưa đủ nhạc cho kênh “Kênh MV”/) });
     expect((await item("24")).steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/^Chờ playlist “Times Square Toy Shop 1954” \(vòng trước\)/) });
     expect((await item("24")).clips_sent).toBe(true);
-    // Nhạc đã dùng của kênh: 2 MV đã có nhạc; bài 5 đang giữ cho MV vòng sau (chưa ghép nhạc).
     const before = await usedSongsView(c.id);
     expect(before.videos.map((v) => [v.kind, v.tracks.map((t) => t.code)])).toEqual([
+      ["mv", ["5"]],
       ["mv", ["1"]],
-      ["mv", ["6"]],
     ]);
-    expect(before.held).toEqual([{ code: "5", title: "Jingle Bell Jamboree", video: "Jingle Bell Jamboree" }]);
-    expect(before.unused.map((x) => x.code)).not.toContain("5");
+    expect(before.held).toEqual([]);
 
-    // Đủ nhạc → playlist mở đầu bằng bài 6 rồi bài 1 (bản "1 (1)" kênh chưa dùng), không lấy bài 5 (MV vòng sau đang giữ); rồi tới MV đó.
+    // Đủ nhạc → playlist mở đầu bằng bài 1 (bản "1 (1)" kênh chưa dùng) rồi bài 5; rồi tới MV vòng sau: bài hay nhất kênh còn chưa dùng.
     setSettings({ videoMinutes: 1 });
     await pl.pipelineTick();
     const p2 = await item("23");
     expect(p2.steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/ · mở đầu bằng 2 bài vừa có MV/) });
     const tracks = (await media.loadProject(p2.mv_id!)).audio!.tracks!;
     expect(tracks.slice(0, 2).map((t) => [t.code, t.name])).toEqual([
-      ["6", "6.mp3"],
       ["1", "1 (1).mp3"],
+      ["5", "5.mp3"],
     ]);
     expect(tracks.length).toBeGreaterThan(2);
-    expect(tracks.some((t) => t.code === "5")).toBe(false);
     expect((await item("24")).steps.song.status).toBe("done");
     const history = (await channels.readChannels()).find((x) => x.id === c.id)!.history;
-    expect(history.map((v) => [v.kind ?? "playlist", v.codes[0]])).toEqual([
-      ["mv", "6"],
-      ["mv", "1"],
-      ["playlist", "6"],
-      ["mv", "5"],
-    ]);
+    expect(history.map((v) => v.kind ?? "playlist")).toEqual(["mv", "mv", "playlist", "mv"]);
+    expect(tracks.map((t) => t.code)).not.toContain(history[3].codes[0]);
+    expect(["1", "5"]).not.toContain(history[3].codes[0]);
+    expect(history.every((v) => v.posted === false)).toBe(true);
     expect((await summary()).recent.map((v) => v.kind)).toEqual(["mv", "playlist", "mv", "mv"]);
 
     // Danh sách nhạc từng video (mới nhất trước), giờ bắt đầu từng bài như trong mô tả YouTube; từng bài dùng ở đâu.
@@ -382,22 +377,21 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     expect(used.videos.map((v) => v.kind)).toEqual(["mv", "playlist", "mv", "mv"]);
     const playlist = used.videos[1];
     expect(playlist.tracks.slice(0, 2).map((t) => [t.code, t.title, t.file])).toEqual([
-      ["6", "Mistletoe Moonlight", "6.mp3"],
       ["1", "Silver Bells Waltz", "1 (1).mp3"],
+      ["5", "Jingle Bell Jamboree", "5.mp3"],
     ]);
     expect(playlist.tracks[0].start).toBe(0);
-    expect(playlist.tracks[1].start).toBeCloseTo(12, 0);
+    expect(playlist.tracks[1].start).toBeCloseTo(25, 0);
     expect(playlist.total).toBeCloseTo(tracks.reduce((a, t) => a + t.duration, 0), 0);
-    expect(used.videos[3].tracks).toMatchObject([{ code: "6", start: 0, level: 3 }]);
-    expect(used.videos[3].tracks[0].duration).toBeCloseTo(12, 0);
-    const six = used.songs.find((x) => x.code === "6")!;
-    expect(six.uses.map((u) => [u.kind, u.title, u.position])).toEqual([
+    expect(used.videos[3].tracks).toMatchObject([{ code: "1", start: 0, level: 3 }]);
+    expect(used.videos[3].tracks[0].duration).toBeCloseTo(25, 0);
+    const one = used.songs.find((x) => x.code === "1")!;
+    expect(one.uses.map((u) => [u.kind, u.title, u.position])).toEqual([
       ["playlist", "#23 · Times Square Toy Shop 1954", 1],
-      ["mv", "#21 · Mistletoe Moonlight", 1],
+      ["mv", "#21 · Silver Bells Waltz", 1],
     ]);
-    expect(used.held).toEqual([]);
 
-    // Muse giả làm xong → dựng: MV dài đúng bài, thư mục kết quả "MV <tên bài>" trong thư mục của kênh.
+    // Muse giả làm xong → dựng: MV dài đúng bài, thư mục kết quả "MV <tên bài>" trong thư mục của kênh, tiêu đề bắt đầu bằng tên bài.
     await museFinishAll();
     await jobs.museTick();
     await pl.pipelineTick();
@@ -406,8 +400,9 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     const done = await item("21");
     expect(done.done_at).toBeTruthy();
     const rendered = (await media.loadProject(done.mv_id!)).renders[0];
-    expect(rendered.duration).toBeCloseTo(12, 0);
-    expect(rendered.result_dir).toBe(path.join(tmp, "ket-qua", "Kênh MV", "021 - MV Mistletoe Moonlight - Chicago Union Station 1953"));
+    expect(rendered.duration).toBeCloseTo(25, 0);
+    expect(rendered.result_dir).toBe(path.join(tmp, "ket-qua", "Kênh MV", "021 - MV Silver Bells Waltz - Chicago Union Station 1953"));
+    expect(rendered.tags!.title).toMatch(/^Silver Bells Waltz \| /);
     for (const it of (await pl.readPipeline()).items) await pl.removeFromPipeline(it.id);
   }, 300000);
 
@@ -432,5 +427,77 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     const made = (await store.listMVs()).filter((m) => m.idea.channel === c.id).sort((a, b) => a.created_at.localeCompare(b.created_at));
     expect(made.map((m) => m.idea.id)).toEqual(["41", "42", "43"]);
     for (const it of await mine()) await pl.removeFromPipeline(it.id);
+  }, 120000);
+
+  it("tự sản xuất: kho trống → Claude (Demo) tự nghĩ ý tưởng chỉ cảnh, dùng luôn → kênh làm đủ N video chưa đăng rồi dừng; bấm Đã đăng → làm bù", async () => {
+    const pl = await import("@/lib/pipeline");
+    const bank = await import("@/lib/ideaBank");
+    const channels = await import("@/lib/channels");
+    const { channelsView } = await import("@/lib/channelsView");
+    setSettings({ videoMinutes: 1 });
+    // Chỉ kênh mới tự làm (các kênh khác Làm sẵn = 0); mỗi vòng 1 MV rồi 1 playlist, giữ sẵn 2 video chưa đăng.
+    for (const x of await channels.readChannels()) await channels.updateChannel(x.id, { stock: 0 });
+    const c = await channels.addChannel("Kênh tự làm");
+    await channels.updateChannel(c.id, { mvPerRound: 1, stock: 2 });
+    await bank.setBankConfig({ feed: true, ahead: 3, suggest: true, autoApprove: true, needSong: false, batch: 3 });
+    const mine = async () => (await bank.readBank()).ideas.filter((x) => x.channel === c.id);
+    const items = async () => (await pl.readPipeline()).items.filter((i) => i.channel === c.id);
+
+    // Kho của kênh trống → lượt chạy nhờ Claude (Demo) nghĩ 3 ý tưởng: chỉ cảnh, dùng luôn (không chờ duyệt).
+    expect(await mine()).toEqual([]);
+    await pl.pipelineTick();
+    await bank.suggestIdle();
+    const ideas = await mine();
+    expect(ideas).toHaveLength(3);
+    for (const x of ideas) {
+      expect([x.status, x.source]).toEqual(["new", "claude"]);
+      expect(x.idea.outline).toMatch(/^Chỉ cảnh, không nhân vật chính:/);
+    }
+
+    // Lấy đủ 2 video (MV rồi playlist, đúng thứ tự dù thêm ở hai lần khác nhau) rồi dừng, dù kho còn ý tưởng; đủ rồi thì không nhờ Claude nữa.
+    for (let k = 0; k < 4; k++) {
+      await pl.pipelineTick();
+      await pl.pipelineIdle();
+    }
+    let list = await items();
+    expect(list.map((i) => [i.kind, i.seq! > 0]).sort()).toEqual([
+      ["mv", true],
+      ["playlist", true],
+    ]);
+    const [first, second] = [...list].sort((a, b) => a.seq! - b.seq!);
+    expect([first.kind, second.kind]).toEqual(["mv", "playlist"]);
+    expect(bank.isSuggesting()).toBe(false);
+    expect(await mine()).toHaveLength(3);
+    expect((await channelsView()).channels.find((x) => x.id === c.id)).toMatchObject({ stock: 2, unposted: 2 });
+
+    // Có nhạc: MV rồi playlist vào lịch sử kênh là video làm sẵn chưa đăng; vẫn đủ 2 → không lấy thêm.
+    await pl.pipelineTick();
+    list = await items();
+    expect(list.every((i) => i.steps.song.status === "done")).toBe(true);
+    const history = () => channels.readChannels().then((l) => l.find((x) => x.id === c.id)!.history);
+    expect((await history()).map((v) => [v.kind ?? "playlist", v.posted])).toEqual([
+      ["mv", false],
+      ["playlist", false],
+    ]);
+    const view = (await channelsView()).channels.find((x) => x.id === c.id)!;
+    expect([view.unposted, view.ready.map((v) => v.kind)]).toEqual([2, ["playlist", "mv"]]);
+
+    // Bấm "Đã đăng" cho MV → còn 1 video chưa đăng → lượt sau làm bù một video (vòng mới: MV).
+    await channels.setPosted(c.id, first.mv_id!, true);
+    expect((await history())[0]).toMatchObject({ posted: true, posted_at: expect.any(String) });
+    await pl.pipelineTick();
+    list = await items();
+    expect(list).toHaveLength(3);
+    expect([...list].sort((a, b) => a.seq! - b.seq!).map((i) => i.kind)).toEqual(["mv", "playlist", "mv"]);
+    const after = (await channelsView()).channels.find((x) => x.id === c.id)!;
+    expect([after.unposted, after.postedRecent.map((v) => v.id)]).toEqual([2, [first.mv_id]]);
+    // Ghép lại nhạc cho video đã đăng vẫn giữ là đã đăng; bỏ đánh dấu thì lại là video làm sẵn.
+    await channels.recordChannelVideo(c.id, { ...(await history())[0], posted: false });
+    expect((await history()).find((v) => v.id === first.mv_id)).toMatchObject({ posted: true });
+    await channels.setPosted(c.id, first.mv_id!, false);
+    expect((await history()).find((v) => v.id === first.mv_id)!.posted).toBe(false);
+
+    await bank.setBankConfig({ feed: false, suggest: false });
+    for (const it of await items()) await pl.removeFromPipeline(it.id);
   }, 120000);
 });

@@ -45,7 +45,8 @@ American Christmas (classic crooner Christmas standards, doo-wop and rock & roll
 Given one video idea, produce a complete shot list for a Christmas music video built from short
 AI-generated clips. The user message says which kind: an hour-long playlist video (the editor loops the
 clips over a playlist of Christmas songs — LOOPED EDIT), or a single-song music video of about 3–4
-minutes (the clips follow one song once, from intro to outro — SINGLE-SONG MUSIC VIDEO).
+minutes for one traditional Christmas song that the application picks later (the clips play once in
+order and a few repeat at the end if the song is longer — SINGLE-SONG MUSIC VIDEO).
 
 INPUT: world_location, year, theme (name, mood, pacing, signature_shots), outline (Vietnamese),
 duration_sec, clip_len, optional lyrics, character bible (if fixed), location data, era rules,
@@ -124,8 +125,9 @@ SHOTS
   place and the season. description_vi starts with "Giáng sinh 50s:".
 - In a LOOPED EDIT the clips are looped for about an hour, so every shot must be a beautiful, rewatchable
   moment with smooth continuous motion that still works when seen again or out of order; no shocks, no
-  sudden action, no two shots alike. In a SINGLE-SONG MUSIC VIDEO the shots play once in order: follow the
-  song section by section (and its lyrics when given) like a classic music video, still with no two shots alike.
+  sudden action, no two shots alike. In a SINGLE-SONG MUSIC VIDEO the song is not known yet: build one gentle
+  flow of Christmas scenes from an establishing opening to a warm closing that suits any classic carol; never
+  depend on lyrics; still no two shots alike.
 - Spread the outline over the plan as a story with a beginning, a development and an ending (told by
   the shots with the characters; CHRISTMAS LIFE shots surround that story with the season).
   Never repeat the same moment; every shot moves the story or the feeling forward.
@@ -145,12 +147,13 @@ EXTRA ASSETS
   placeholders for characters; the style preset is appended automatically.
 - youtube_titles: exactly 3 English options for a vintage Christmas music video in the channel's style, no
   all-caps clickbait. For a playlist video, each names the place or mood and the video length given in
-  VIDEO LENGTH (e.g. "1 Hour"). For a single-song music video, each contains the song title given in SONG
-  (e.g. "Silver Bells Waltz 🎄 Vintage 1950s Christmas Music Video") and never a length like "1 Hour".
+  VIDEO LENGTH (e.g. "1 Hour"). For a single-song music video the song is picked later and the application
+  puts its title in front: name the place, year or mood, never a song title and never a length (e.g.
+  "Christmas in Woodstock Vermont, 1952 🎄 Vintage 1950s Christmas Music Video").
 - youtube_description: 80–150 English words in the channel voice provided, then a blank line and one line of
   4–8 relevant hashtags (e.g. #christmasmusic #vintagechristmas #1950s) — they are also written into the
   video file as keywords. Do not write a tracklist: the application appends the songs with timestamps
-  (a single-song music video has no tracklist).
+  (a single-song music video has no tracklist and names no song).
 - editing_notes: Vietnamese notes per section — where to cut on the beat, where to use slow motion,
   which transitions to use.`;
 
@@ -282,8 +285,9 @@ export function buildGenerationPrompt(ctx: GenContext): string {
   if (single) {
     out.push("");
     out.push(
-      `SINGLE-SONG MUSIC VIDEO for the song "${ctx.idea.song_title ?? ""}" (${formatTime(plan.duration_sec)}): the ${plan.shots.length} clips play once in order, cut to this one song from intro to outro ` +
-        "(the editor repeats a few only if the song runs longer). Build one continuous story that rises with the song's sections; when lyrics are given, let each shot echo its lyric line.",
+      `SINGLE-SONG MUSIC VIDEO: one traditional Christmas song of about 3–4 minutes, picked by the application after this script, plays under these ${plan.shots.length} clips ` +
+        `(${formatTime(plan.duration_sec)} of scenes); they play once in order and the editor repeats a few at the end if the song runs longer. ` +
+        "Build one gentle flow of Christmas scenes of this place, from an establishing opening to a warm closing; never depend on lyrics.",
     );
   } else if (ctx.settings.loopScenes) {
     out.push("");
@@ -310,7 +314,7 @@ export function buildGenerationPrompt(ctx: GenContext): string {
     out.push(tone);
   }
   out.push("");
-  if (single) out.push(`SONG for youtube_titles: "${ctx.idea.song_title ?? ""}" — a single-song music video (no video length in the titles).`);
+  if (single) out.push("SONG for youtube_titles: none — the song is picked later and the application puts its title in front of each title (no song title, no video length).");
   else out.push(`VIDEO LENGTH for youtube_titles: about ${Math.round(ctx.settings.videoMinutes)} minutes ("${videoLengthLabel(ctx.settings.videoMinutes)}").`);
   out.push(`CHANNEL VOICE for youtube_description: ${ctx.settings.channelVoice}`);
   return out.join("\n");
@@ -393,17 +397,17 @@ export interface IdeasPromptInput {
 }
 
 export const IDEAS_SYSTEM =
-  "You are the creative lead of a YouTube channel of hour-long vintage 1950s American Christmas music videos. You invent fresh, specific, period-accurate video ideas. Answer only with JSON matching the schema.";
+  "You are the creative lead of a YouTube channel of vintage 1950s American Christmas music videos — single traditional Christmas songs and hour-long playlists — made only of Christmas scenes of one place, without main characters. You invent fresh, specific, period-accurate video ideas. Answer only with JSON matching the schema.";
 
 export function buildIdeasPrompt(input: IdeasPromptInput): string {
   const line = (i: IdeaRow) => `${i.world_location} | ${i.theme_code} | ${i.outline.replace(/\s+/g, " ").slice(0, 160)}`;
   return [
-    `Write ${input.count} NEW Christmas video ideas for the channel, in the same format and spirit as the examples.`,
+    `Write ${input.count} NEW Christmas video ideas for the channel, in the same format as the examples. Every video is a flow of Christmas scenes of one place — Christmas in that town, city or region — with no main characters.`,
     "Each idea:",
     '- world_location: English, "<real American place> <Christmas-season moment> <year>", year between 1950 and 1959 (e.g. "Woodstock Vermont Christmas Eve 1952", "Rockefeller Center First Snow 1955"). The place must have existed in that year; the moment falls in the holiday season, from the first snow and the tree lots of late November to New Year\'s Eve.',
     "- theme_code: one code from the theme list. Prefer the least-used themes so the channel stays varied.",
-    "- outline: Vietnamese, one or two sentences — who the video follows and the specific little Christmas story (where they are, what happens, the feeling). Say the cast clearly: a couple, a family with children, children, grandparents, friends, someone far from home — or \"Chỉ cảnh, không nhân vật chính: …\" for a scenery-only video.",
-    "Rules: every world_location must be new (not a place + moment already listed below) and every story different from the listed ones; vary regions, years, holiday moments and casts (include a few scenery-only ideas); no brand names, no real people, no copyrighted characters.",
+    '- outline: Vietnamese, starting with "Chỉ cảnh, không nhân vật chính:" and then one or two sentences on the Christmas scenes of that place to show — streets, homes, landscapes, local traditions, ordinary unnamed townsfolk — and the feeling.',
+    "Rules: every world_location must be new (not a place + moment already listed below) and every outline different from the listed ones; vary regions, years and holiday moments; never a couple, a family or any main character, even when an example has one; no brand names, no real people, no copyrighted characters.",
     "- In warm places (California, Florida, New Orleans) the story shows Christmas through lights, palm trees and gifts, not snow.",
     input.series
       ? `These ideas continue the series "${input.series}": stay with these regions, return series_name as the regions part of that label.`

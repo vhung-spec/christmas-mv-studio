@@ -379,12 +379,19 @@ export function mockGenerate(ctx: GenContext): RawGeneration {
     })),
     shots,
     thumbnail_prompt: `Cinematic 16:9 still of ${who} at ${ctx.location.landmarks[0] ?? place}, ${warmPlace(ctx) ? "palm trees wrapped in lights" : "snow falling"}, warm golden glow of colored bulbs, period-accurate ${ctx.year} Christmas details`,
+    // MV một bài: bài chọn lúc ghép nhạc, app đặt tên bài lên đầu tiêu đề (MV cũ đã có tên bài thì dùng luôn).
     youtube_titles: single
-      ? [
-          `${title} 🎄 Vintage 1950s Christmas Music Video`,
-          `${title} (${ctx.year}) | Old-Fashioned Christmas Song in ${place}`,
-          `${title} — A Cozy Vintage Christmas in ${place}, ${ctx.year}`,
-        ]
+      ? ctx.idea.song_title
+        ? [
+            `${title} 🎄 Vintage 1950s Christmas Music Video`,
+            `${title} (${ctx.year}) | Old-Fashioned Christmas Song in ${place}`,
+            `${title} — A Cozy Vintage Christmas in ${place}, ${ctx.year}`,
+          ]
+        : [
+            `Christmas in ${place}, ${ctx.year} 🎄 Vintage 1950s Christmas Music Video`,
+            `Old-Fashioned Christmas in ${place} (${ctx.year}) | Classic Christmas Song`,
+            `A Cozy Vintage Christmas in ${place}, ${ctx.year}`,
+          ]
       : [
           `${title} ${ctx.year} 🎄 Vintage 1950s Christmas Music (${length})`,
           `Old-Fashioned Christmas in ${place} | 1950s Holiday Songs, ${length}`,
@@ -429,12 +436,13 @@ const IDEA_PLACES = [
   "Miami Beach",
 ];
 const IDEA_MOMENTS = ["Christmas Eve", "First Snow", "Christmas Morning", "Tree Lot Evening", "Carol Night", "New Year's Eve"];
+// Ý tưởng tự nghĩ luôn là "chỉ cảnh": các cảnh Giáng sinh nối tiếp nhau của một vùng đất, không nhân vật chính.
 const IDEA_STORIES = [
-  (p: string) => `Một cặp đôi trẻ hẹn nhau ở ${p} đêm Giáng sinh; tuyết rơi và món quà nhỏ giấu trong túi áo.`,
-  (p: string) => `Cả gia đình đi chọn cây thông và trang trí nhà ở ${p}; khoảnh khắc đèn cây bật sáng làm bọn trẻ reo lên.`,
-  (p: string) => `Hai đứa trẻ ở ${p} thức chờ ông già Noel, nhìn trộm qua cầu thang và tìm thấy quà sáng hôm sau.`,
   (p: string) => `Chỉ cảnh, không nhân vật chính: ${p} mùa Giáng sinh — tuyết rơi, đèn phố, người hát mừng và những ô cửa ấm áp.`,
-  (p: string) => `Ông bà ở ${p} chuẩn bị đón con cháu về đêm Giáng sinh; bàn ăn, lò sưởi và cái ôm ở cửa nhà.`,
+  (p: string) => `Chỉ cảnh, không nhân vật chính: chợ cây thông và các cửa hàng trang trí ở ${p}, xe ngựa kéo và khói bếp trên mái nhà.`,
+  (p: string) => `Chỉ cảnh, không nhân vật chính: những con phố ${p} đêm Giáng sinh, cây thông bên cửa sổ, nhà thờ sáng nến.`,
+  (p: string) => `Chỉ cảnh, không nhân vật chính: ${p} sáng Giáng sinh — tuyết phủ, quà dưới cây thông, đường sá yên ắng.`,
+  (p: string) => `Chỉ cảnh, không nhân vật chính: tàu hơi nước chạy qua tuyết tới ${p}, nhà ga treo vòng nguyệt quế, phố chợ đông vui.`,
 ];
 
 /** Ý tưởng mẫu cho chế độ demo: ghép địa điểm + thời điểm mùa lễ + năm chưa có trong kho, chủ đề ít dùng nhất. */

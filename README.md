@@ -10,8 +10,9 @@ Bạn chỉ nhập **ý tưởng** của từng video (1 dòng), công cụ tự
 - **Kiểm tra niên đại** (xe đời sau, điện thoại, đèn LED / đồ bơm hơi, cây thông nhôm trước 1958, ngôi sao pha lê ở Rockefeller Center, tuyết ở Hollywood / Miami…), độ dài prompt, chữ trên màn hình, thương hiệu / nhân vật bản quyền (Rudolph, Frosty…), và **trùng lặp trong series**.
 
 Trang **Kênh** (quản lý kênh, kế hoạch sản xuất, giao việc, kho ý tưởng) và trang **Dây chuyền** (sản xuất) chạy trọn **ý tưởng → kịch bản → nhạc →
-clip Muse → MP4** (mục 2d). Mỗi kênh đăng theo vòng: **N MV một bài** (mặc định 3; bài hay nhất kênh chưa dùng, kịch bản bám lời, tiêu đề là tên bài)
-**rồi 1 playlist ~1 tiếng mở đầu bằng các bài vừa có MV**. Playlist: app **tự xếp danh sách nhạc như Bokin Playlist Studio** (bài cũ hay + bài mới,
+clip Muse → MP4** (mục 2d) và **tự sản xuất**: mỗi kênh luôn có sẵn N video chưa đăng, kho hết ý tưởng thì Claude tự nghĩ (Giáng sinh ở một vùng đất,
+chỉ cảnh, không nhân vật chính) và dùng luôn. Mỗi kênh đăng theo vòng: **N MV một bài** (mặc định 3; các cảnh Giáng sinh, bài Giáng sinh truyền thống
+hay nhất kênh chưa dùng chọn lúc ghép nhạc, tiêu đề là tên bài) **rồi 1 playlist ~1 tiếng mở đầu bằng các bài vừa có MV**. Playlist: app **tự xếp danh sách nhạc như Bokin Playlist Studio** (bài cũ hay + bài mới,
 theo mức hay trong `Kho bài hát.xlsx` và lịch sử của kênh) từ kho nhạc Giáng sinh (đồng bộ từ Google Drive như KHO NHẠC), nối thành khoảng 60 phút,
 **lặp 20–30 clip** cho hết nhạc, rồi làm ảnh bìa, tiêu đề, mô tả **kèm danh sách bài + mốc thời gian** (YouTube tự tạo chương) và thư mục kết quả.
 Làm cho nhiều **kênh** thì app **tự phân luồng**: mỗi video mới vào kênh đang có ít video nhất; các kênh dùng chung kho nhạc, mỗi kênh có lịch sử
@@ -22,7 +23,7 @@ nhạc và kho ý tưởng riêng.
 | | MV Prompt Studio (cũ) | Christmas MV Studio (mới) |
 |---|---|---|
 | Nội dung | MV tình yêu rock'n'roll 1950s, luôn có cặp đôi | Giáng sinh 1950s; nhân vật theo ý tưởng (cặp đôi / gia đình / trẻ em / ông bà / chỉ cảnh) |
-| Độ dài video | 1 bài ≈ 3 phút | mỗi vòng **N MV một bài** (dài đúng bài) rồi **1 playlist ~1 tiếng** (Cài đặt → *Độ dài video*, mặc định 60 phút); N riêng từng kênh |
+| Độ dài video | 1 bài ≈ 3 phút | mỗi vòng **N MV một bài** (~3–4 phút) rồi **1 playlist ~1 tiếng** (Cài đặt → *Độ dài video*, mặc định 60 phút); N riêng từng kênh |
 | Nhạc | 1 bài theo số ý tưởng (ý tưởng 12 → `12.wav`) | MV: bài hay nhất kênh chưa dùng; playlist: **tự xếp ~1 tiếng như Bokin Playlist Studio** — bài cũ hay + bài mới theo `Kho bài hát.xlsx` (mức hay 1–3) và lịch sử của kênh, mở đầu bằng các bài vừa có MV; không cần ghi “đã dùng” |
 | Kênh | một kênh | **nhiều kênh, tự phân luồng** (video mới vào kênh ít video nhất); chung kho nhạc, lịch sử nhạc + kho ý tưởng riêng; kết quả để theo thư mục kênh |
 | Số cảnh | 15–20 | 20–30 (một vòng, khi dựng lặp lại — các vòng sau xáo thứ tự) |
@@ -292,10 +293,13 @@ Mỗi việc là một video **cho một kênh** (mục *Kênh* bên dưới) ch
 
 1. **Kịch bản** — Claude viết từ một dòng ý tưởng (cần **Claude API key**: Cài đặt → *API key của Claude*; chế độ **Demo** cũng chạy được để thử).
    Playlist: **một vòng 20–30 cảnh** (Cài đặt → *Số cảnh mỗi video* và *Độ dài một vòng cảnh*, mặc định 250 giây ≈ 25 clip × 10 giây), không phụ
-   thuộc độ dài nhạc. **MV một bài**: kịch bản **dài đúng bài**, bám lời bài (thư viện lời trên Drive, nếu có), tiêu đề YouTube là **tên bài**. Nhân vật
-   theo dàn ý: cặp đôi, gia đình, trẻ em, ông bà… hoặc “**Chỉ cảnh, không nhân vật chính**” (Character Bible trống, mọi cảnh là phố phường, làng
-   tuyết, người thường). Viết lần lượt từng video, việc giao trước viết trước.
-2. **Nhạc** — MV: ghép **đúng bài đã giữ** cho MV, ô Nhạc ghi vd. `Kênh “Kênh Giáng sinh”: MV bài “Silver Bells Waltz” (mức 3) · 3:24`. Playlist: app
+   thuộc độ dài nhạc. **MV một bài**: một vòng cảnh **3 phút** (ngắn hơn một bài ~3–4 phút để clip nào cũng được dùng, cuối bài lặp lại vài cảnh),
+   không theo bài nào — nên làm ngay, không chờ nhạc. Nhân vật theo dàn ý; ý tưởng app tự nghĩ luôn là “**Chỉ cảnh, không nhân vật chính**”
+   (Character Bible trống, mọi cảnh là phố phường, làng tuyết, người thường — các cảnh Giáng sinh nối tiếp nhau). Viết lần lượt từng video, việc
+   giao trước viết trước.
+2. **Nhạc** — MV: lấy bài lúc này — **bài Giáng sinh mức hay cao nhất kênh chưa dùng**; tên bài đứng đầu các tiêu đề YouTube (vd. `Silent Night |
+   Christmas in Woodstock Vermont, 1952 🎄 …`), lên ảnh bìa và tên thư mục kết quả; ô Nhạc ghi vd. `Kênh “Kênh Giáng sinh”: MV bài “Silver Bells
+   Waltz” (mức 3) · 3:24`. Kho chưa có bài kênh chưa dùng thì MV chờ ở bước Nhạc (clip vẫn làm). Playlist: app
    **tự xếp danh sách nhạc như Bokin Playlist Studio** cho kênh của video (mục *Kho nhạc & cách xếp bài* bên dưới) cho đủ **Độ dài video** (Cài đặt,
    mặc định 60 phút), rồi nối thành một file (FLAC, không mất chất lượng). Ô Nhạc ghi rõ, vd. `Kênh “Kênh Giáng sinh”: tự xếp 19 bài (9 cũ + 10 mới) ·
    60 phút · mở đầu bằng 3 bài vừa có MV`, kèm cảnh báo của Bokin khi kho sắp hết bài mới cho kênh. Kho không đủ khoảng 90% độ dài video → việc chờ,
@@ -320,17 +324,30 @@ Cột **MV mỗi vòng** (thẻ *Các kênh & kho nhạc chung*, riêng từng k
 **1 playlist ~1 tiếng**, xong lại vòng mới. **0 = chỉ làm playlist** (như trước). Đổi số giữa chừng vẫn đúng: app đếm các MV liền nhau từ sau playlist
 gần nhất.
 
-- **Bài cho MV** — giữ ngay lúc giao việc: bài **kênh chưa dùng lần nào**, **mức hay cao nhất** trước; cùng mức thì bài **có lời** trong thư viện lời
-  trước (kịch bản bám lời), rồi theo thứ tự trong `Kho bài hát.xlsx`. Hai MV đang làm của một kênh không trùng bài. MV dài đúng bài (~3–4 phút),
-  tên video là tên bài; thư mục kết quả `021 - MV <tên bài> - <địa điểm>`.
+- **MV một bài** = các cảnh Giáng sinh nối tiếp nhau của một vùng đất (ý tưởng trong kho của kênh), cho **một bài Giáng sinh truyền thống**. Bài chọn
+  **lúc ghép nhạc**: bài **kênh chưa dùng lần nào**, **mức hay cao nhất** trước, rồi theo thứ tự trong `Kho bài hát.xlsx` — MV ghép nhạc trước lấy bài
+  đầu danh sách. Tên bài làm tên video; thư mục kết quả `021 - MV <tên bài> - <địa điểm>`. Thẻ Kế hoạch sản xuất ghi **bài dự kiến** cho MV tiếp theo.
 - **Playlist cuối vòng mở đầu bằng các bài vừa có MV** (theo thứ tự MV; tính là bài cũ, bài có nhiều bản thì dùng bản kênh chưa dùng như luật dùng lại
-  của Bokin), phần còn lại xếp như cũ; không lấy bài mà MV vòng sau đang giữ.
-- **Kho chưa còn bài nào cho MV** (vd. kho nhạc chưa xong) → app làm **playlist trước** (đóng vòng sớm, mở đầu bằng các bài MV đã có của vòng); kho có
-  bài là MV làm tiếp. Video giao khi chưa có nhạc thì chờ ở bước Nhạc, kịch bản và clip Muse vẫn làm.
+  của Bokin), phần còn lại xếp như cũ.
+- **Kho nhạc chưa xong**: MV và playlist vẫn làm ngay (kịch bản + clip Muse), chờ ở bước Nhạc; kho có bài là app tự ghép nhạc theo đúng thứ tự rồi dựng.
 - **Nhạc ghép đúng thứ tự** để lịch sử kênh đúng vòng: playlist chờ các MV của vòng có nhạc trước, MV vòng sau chờ playlist vòng trước (ô Nhạc ghi
   rõ đang chờ video nào); trong lúc chờ, kịch bản và clip Muse vẫn làm tiếp.
-- Kho ý tưởng cấp ý tưởng cho cả MV lẫn playlist (MV chỉ lấy ý tưởng trong kho của kênh, bài thì app chọn). Thẻ **Kế hoạch sản xuất** (trang Kênh) cho
-  thấy video tiếp theo của kênh là MV mấy / playlist và bài nào.
+- Kho ý tưởng cấp ý tưởng cho cả MV lẫn playlist (bài thì app chọn). Thẻ **Kế hoạch sản xuất** (trang Kênh) cho thấy video tiếp theo của kênh là MV
+  mấy / playlist và bài dự kiến.
+
+### Tự sản xuất: mỗi kênh luôn có sẵn N video chưa đăng
+
+Cột **Làm sẵn** (thẻ *Các kênh & kho nhạc chung*, riêng từng kênh, 0–40, mặc định **4** = một vòng 3 MV + 1 playlist): kênh luôn có chừng ấy video
+**chưa đăng** (đã làm xong + đang làm). Thiếu thì dây chuyền tự làm thêm; kho ý tưởng của kênh sắp hết (kể cả kho trống) thì **Claude tự nghĩ ý tưởng**
+(Giáng sinh ở một vùng đất, chỉ cảnh, không nhân vật chính) và **dùng luôn**, không chờ duyệt. Đủ thì kênh dừng, không tốn thêm lượt Muse hay tiền Claude.
+
+- Đăng một video lên YouTube xong thì bấm **✓ Đã đăng** — ở thẻ **Kế hoạch sản xuất** (mục *Làm sẵn*, danh sách video chưa đăng) hoặc ở video đã xong
+  trên trang **Dây chuyền**. Kênh bớt một video làm sẵn, app tự làm bù. Bấm nhầm thì **↺ Chưa đăng** (mục *Đã đăng gần đây*).
+- **0 = không tự làm** video cho kênh đó (vẫn giao việc tay được). Kênh tắt (bỏ tick Bật) cũng không tự làm.
+- Video làm trước khi có phần này mà không còn trong dây chuyền được coi là đã đăng; video còn trong dây chuyền thì là chưa đăng cho tới khi bấm
+  **✓ Đã đăng**. Bản cập nhật chuyển cài đặt kho ý tưởng một lần sang: tự lấy việc, Claude tự nghĩ, dùng luôn,
+  làm video trước rồi ghép nhạc sau — đổi lại được ở thẻ Kho ý tưởng và Tự lấy việc.
+- Số video làm cùng lúc vẫn theo ô *mỗi lúc N video* (thẻ Tự lấy việc), nên dây chuyền đi theo tốc độ của Muse; Muse hết lượt tuần thì app tự dừng gửi.
 
 ### Nhạc đã dùng: theo kênh, theo video
 
@@ -409,17 +426,17 @@ app mới bắt đầu với kho trống). Ý tưởng trùng (cùng địa đi�
 
 - **Dây chuyền tự lấy ý tưởng trong kho các kênh, lần lượt đều các kênh, mỗi lúc N video** (thẻ **Tự lấy việc**, trang Dây chuyền; mặc định 2): chỉ lấy ý tưởng mới khi số video đang viết
   kịch bản hoặc chờ clip Muse ít hơn N — dây chuyền tự đi theo tốc độ của Muse.
-- **Chỉ làm video mới khi kho nhạc còn bài mới cho kênh đó** (bật sẵn): kênh hết bài mới thì ý tưởng của kênh nằm chờ (các kênh khác vẫn chạy);
-  thêm bài vào kho là tự chạy tiếp. **Kho nhạc chưa xong → bỏ tick** (hoặc bấm *Làm video trước, ghép nhạc sau*): dây chuyền cứ viết kịch bản và
+- **Chỉ làm video mới khi kho nhạc còn bài mới cho kênh đó** (tắt sẵn — làm video trước, ghép nhạc sau): bật thì kênh hết bài mới thì ý tưởng của
+  kênh nằm chờ (các kênh khác vẫn chạy); thêm bài vào kho là tự chạy tiếp. **Kho nhạc chưa xong → để tắt** (hoặc bấm *Làm video trước, ghép nhạc sau*): dây chuyền cứ viết kịch bản và
   làm clip Muse, video chờ ở bước Nhạc (bước Clip Muse không chờ nhạc; video chờ nhạc không tính là “đang làm” nên dây chuyền lấy tiếp ý tưởng
   mới); kho có nhạc (đồng bộ Drive / thả bài vào Thư mục nhạc) thì trong vòng nửa phút app tự xếp bài kiểu Bokin cho từng video rồi dựng. Nhớ: mỗi
-  video vẫn tốn 20–30 lượt Muse, và kho có ít bài mới thì các video làm trước sẽ dùng lại nhiều bài cũ. Kho đủ rồi thì tick lại.
-- **Kho của kênh sắp hết thì nhờ Claude đề xuất M ý tưởng mới** cho kênh đó (mặc định 10; nối số và series theo ý tưởng của kênh, tránh trùng mọi kênh):
-  Claude viết ý tưởng **cùng kiểu**: “địa điểm có thật ở Mỹ + dịp lễ + năm 1950–1959”
-  (vd. `Woodstock Vermont Christmas Eve 1952`, `Rockefeller Center First Snow 1955`), mã chủ đề có trong thư viện (ưu tiên chủ đề ít dùng), dàn ý tiếng
-  Việt ghi rõ nhân vật — đủ kiểu: cặp đôi, gia đình, trẻ em, ông bà, bạn bè, và vài ý tưởng **chỉ cảnh**. Vùng nắng ấm (California, Florida, New Orleans)
-  thì thể hiện Giáng sinh qua đèn, cây cọ, quà — không có tuyết.
-- **Chờ tôi duyệt** (mặc định) hoặc **Dùng luôn, không cần duyệt**; **✨ Nhờ Claude đề xuất ngay** (cho kênh đang xem) bất cứ lúc nào. Cần **Claude API
+  video vẫn tốn 20–30 lượt Muse, và kho có ít bài mới thì các video làm trước sẽ dùng lại nhiều bài cũ.
+- **Kênh cần thêm video mà kho sắp hết (kể cả kho trống) thì nhờ Claude nghĩ M ý tưởng mới** cho kênh đó (mặc định 10; nối số và series theo ý tưởng
+  của kênh, tránh trùng mọi kênh): “địa điểm / vùng đất có thật ở Mỹ + dịp lễ + năm 1950–1959” (vd. `Woodstock Vermont Christmas Eve 1952`,
+  `Rockefeller Center First Snow 1955`), mã chủ đề có trong thư viện (ưu tiên chủ đề ít dùng), dàn ý tiếng Việt **luôn là “Chỉ cảnh, không nhân vật
+  chính: …”** — các cảnh Giáng sinh của nơi đó (phố phường, nhà cửa, cảnh vật, phong tục, người thường). Vùng nắng ấm (California, Florida, New
+  Orleans) thì thể hiện Giáng sinh qua đèn, cây cọ, quà — không có tuyết.
+- **Dùng luôn, không cần duyệt** (mặc định) hoặc **Chờ tôi duyệt**; **✨ Nhờ Claude đề xuất ngay** (cho kênh đang xem) bất cứ lúc nào. Cần **Claude API
   key**; chế độ **Demo** cho ý tưởng mẫu để thử.
 - **Thư viện chủ đề** (`data/themes.json`): T01–T22 Giáng sinh, nhóm Lãng mạn · Gia đình · Trẻ thơ · Phố phường · Ấm cúng · Hoài niệm (mỗi mã có tên,
   không khí, nhịp, cảnh đặc trưng). Thư viện địa điểm (`data/locations.json`): 18 nơi mùa Giáng sinh thập niên 50 (Rockefeller Center, Fifth Avenue,

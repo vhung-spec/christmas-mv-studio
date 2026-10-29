@@ -24,14 +24,15 @@ export function FeedCard({ bank, busy, onConfig }: { bank: BankData | null; busy
       <div className="space-y-1.5 text-sm" data-testid="feed-card">
         <label className="flex flex-wrap items-center gap-2">
           <input type="checkbox" checked={c.feed} disabled={busy} onChange={(e) => onConfig({ feed: e.target.checked })} />
-          Dây chuyền tự lấy ý tưởng trong kho các kênh (lần lượt đều các kênh, theo thứ tự sản xuất của từng kênh), mỗi lúc
+          Dây chuyền tự làm video cho các kênh chưa đủ video làm sẵn (cột <b>Làm sẵn</b> ở trang Kênh): tự lấy ý tưởng trong kho các kênh — kho
+          sắp hết thì Claude tự nghĩ thêm — lần lượt đều các kênh, theo thứ tự sản xuất của từng kênh, mỗi lúc
           <NumberBox value={c.ahead} range={BANK_LIMITS.ahead} disabled={busy} onCommit={(ahead) => onConfig({ ahead })} />
           video (đang viết kịch bản hoặc chờ clip Muse)
         </label>
         <label className="flex flex-wrap items-center gap-2 pl-6">
           <input type="checkbox" checked={c.needSong} disabled={busy} onChange={(e) => onConfig({ needSong: e.target.checked })} />
           Chỉ làm video mới khi kho nhạc còn bài mới cho kênh đó (hết thì ý tưởng của kênh nằm chờ, thêm nhạc là tự chạy). Bỏ tick khi kho nhạc chưa xong:
-          cứ làm kịch bản + clip Muse trước, video chờ ở bước Nhạc, có nhạc là tự xếp bài và dựng (MV một bài vẫn chờ có bài mới viết kịch bản)
+          cứ làm kịch bản + clip Muse trước (cả MV lẫn playlist), video chờ ở bước Nhạc, có nhạc là tự xếp bài và dựng
         </label>
         {noMusic && c.needSong && (
           <p className="flex flex-wrap items-center gap-2 pl-6 text-xs text-cherry-dark">

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { addChannel, updateChannel } from "@/lib/channels";
+import { addChannel, setPosted, updateChannel } from "@/lib/channels";
 import { channelsView, usedSongsView } from "@/lib/channelsView";
 import { UserError } from "@/lib/errors";
 import { errorResponse, readJsonBody } from "@/lib/http";
@@ -19,10 +19,24 @@ export async function GET(req: Request) {
   }
 }
 
-/** { action: "add", name } · { action: "update", id, name?, active?, oldPercent?, newOrder?, mvPerRound? } */
+/**
+ * { action: "add", name } · { action: "update", id, name?, active?, oldPercent?, newOrder?, mvPerRound?, stock? }
+ * · { action: "posted", id, video, posted } — đánh dấu video của kênh đã đăng lên YouTube (hoặc bỏ đánh dấu).
+ */
 export async function POST(req: Request) {
   try {
-    const body = await readJsonBody<{ action: string; id?: unknown; name?: unknown; active?: unknown; oldPercent?: unknown; newOrder?: unknown; mvPerRound?: unknown }>(req);
+    const body = await readJsonBody<{
+      action: string;
+      id?: unknown;
+      name?: unknown;
+      active?: unknown;
+      oldPercent?: unknown;
+      newOrder?: unknown;
+      mvPerRound?: unknown;
+      stock?: unknown;
+      video?: unknown;
+      posted?: unknown;
+    }>(req);
     if (body.action === "add") {
       await addChannel(typeof body.name === "string" ? body.name : "");
     } else if (body.action === "update") {
@@ -32,11 +46,14 @@ export async function POST(req: Request) {
         ...(body.oldPercent !== undefined ? { oldPercent: Number(body.oldPercent) } : {}),
         ...(body.newOrder === "balanced" || body.newOrder === "best_first" ? { newOrder: body.newOrder } : {}),
         ...(body.mvPerRound !== undefined ? { mvPerRound: Number(body.mvPerRound) } : {}),
+        ...(body.stock !== undefined ? { stock: Number(body.stock) } : {}),
       });
+    } else if (body.action === "posted") {
+      await setPosted(String(body.id ?? ""), String(body.video ?? ""), body.posted !== false);
     } else {
       throw new UserError("action không hợp lệ.");
     }
-    // Bật lại một kênh / thêm kênh → dây chuyền có thể lấy thêm ý tưởng.
+    // Bật lại một kênh / thêm kênh / tăng số làm sẵn / vừa đăng một video → dây chuyền có thể lấy thêm ý tưởng.
     ensurePipelineWatch();
     return NextResponse.json(await channelsView());
   } catch (err) {

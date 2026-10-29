@@ -69,7 +69,7 @@ export function AssignCard({
     const c = channels.find((x) => x.id === target);
     if (!c) return "• Mỗi kênh làm theo thứ tự sản xuất riêng (MV một bài / playlist — xem bảng Các kênh).";
     return c.mvPerRound
-      ? `• Thứ tự của kênh: mỗi vòng ${c.mvPerRound} MV một bài rồi 1 playlist; video tiếp theo: ${c.next.kind === "mv" ? `MV ${c.next.index}/${c.mvPerRound}${c.next.song ? ` (bài “${c.next.song}”)` : ""}` : "playlist"}.`
+      ? `• Thứ tự của kênh: mỗi vòng ${c.mvPerRound} MV một bài rồi 1 playlist; video tiếp theo: ${c.next.kind === "mv" ? `MV ${c.next.index}/${c.mvPerRound}${c.next.song ? ` (bài dự kiến “${c.next.song}”)` : ""}` : "playlist"}.`
       : `• Kênh chỉ làm playlist ~${settings?.videoMinutes ?? 60} phút.`;
   })();
 
@@ -113,7 +113,7 @@ export function AssignCard({
       chosen.length ? `• ${chosen.length} video có sẵn: khoảng ${shots} cảnh thiếu clip = ${shots} lượt Muse.` : "",
       `• Kênh: ${target === "auto" ? "chia lần lượt các kênh đang bật (kênh ít video nhất trước; dòng có cột Kênh thì theo cột đó)" : channelName(target)}.`,
       ideas ? order : "",
-      `• Nhạc: MV một bài ghép đúng bài đã chọn; playlist tự xếp bài kiểu Bokin cho đủ khoảng ${settings?.videoMinutes ?? 60} phút. Đủ clip + có nhạc thì tự dựng MP4.`,
+      `• Nhạc: MV một bài lấy bài Giáng sinh hay nhất kênh chưa dùng lúc ghép nhạc; playlist tự xếp bài kiểu Bokin cho đủ khoảng ${settings?.videoMinutes ?? 60} phút. Đủ clip + có nhạc thì tự dựng MP4.`,
     ].filter(Boolean);
     const muse = settings?.museMode === "gateway" ? "Lượt Muse tính vào hạn mức tuần của tài khoản Meta." : "Đang dùng cách dán tay vào HaoHao: bước Clip Muse chờ bạn dán prompt ở trang Clip Muse.";
     if (!confirm(`Chạy tự động ${ideas + chosen.length} việc?\n\n${lines.join("\n")}\n\n${muse}`)) return;

@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Card, ErrorBox, Spinner } from "@/components/ui";
-import { MV_PER_ROUND_RANGE, NEW_ORDERS, OLD_PERCENT_RANGE, type ChannelSummary, type LibrarySummary, type NewOrder } from "@/lib/channelTypes";
+import { MV_PER_ROUND_RANGE, NEW_ORDERS, OLD_PERCENT_RANGE, STOCK_RANGE, type ChannelSummary, type LibrarySummary, type NewOrder } from "@/lib/channelTypes";
 import { api } from "@/lib/client";
 
 export interface ChannelsData {
@@ -110,7 +110,7 @@ export function ChannelsCard({
           Tự xếp bài như <b>Bokin Playlist Studio</b>: mỗi video gồm bài cũ (bài mức 2–3 kênh đã dùng, bài lâu chưa dùng trước) và bài mới (kênh chưa dùng
           lần nào), đủ khoảng <b>{data.videoMinutes} phút</b>; bài mức 1 chỉ dùng làm bài mới; danh sách xếp mức 3 → 2 → 1, bài mở đầu khác video trước. Các
           kênh dùng chung một kho nhạc, bài cũ / mới tính theo lịch sử riêng của từng kênh. Video mới tự chia lần lượt cho kênh đang có ít video nhất. Mỗi
-          kênh có thứ tự sản xuất riêng: mỗi vòng <b>N MV một bài</b> (bài mức hay cao nhất kênh chưa dùng, dài đúng bài) rồi <b>1 playlist</b> mở đầu bằng
+          kênh có thứ tự sản xuất riêng: mỗi vòng <b>N MV một bài</b> (cảnh Giáng sinh; bài Giáng sinh mức hay cao nhất kênh chưa dùng, chọn lúc ghép nhạc) rồi <b>1 playlist</b> mở đầu bằng
           N bài đó (cột MV mỗi vòng; 0 = chỉ playlist).
         </p>
 
@@ -166,6 +166,9 @@ export function ChannelsCard({
                   MV mỗi vòng
                 </th>
                 <th className="px-2 py-1.5">Tiếp theo</th>
+                <th className="px-2 py-1.5" title="Kênh luôn có chừng này video chưa đăng (đã làm + đang làm): bấm “Đã đăng” khi đăng lên YouTube thì app tự làm bù; 0 = không tự làm">
+                  Làm sẵn
+                </th>
                 <th className="px-2 py-1.5" title="Video của kênh (đã làm + đang làm): video mới vào kênh có ít video nhất">
                   Video
                 </th>
@@ -216,6 +219,20 @@ export function ChannelsCard({
                   <td className="px-2 py-1.5 text-xs" title={c.next.song ? `Bài: ${c.next.song}` : undefined}>
                     {c.next.kind === "mv" ? `🎬 MV ${c.next.index}/${c.mvPerRound}` : "📀 Playlist"}
                     {c.next.song && <div className="max-w-40 truncate text-muted">{c.next.song}</div>}
+                  </td>
+                  <td className="px-2 py-1.5 text-xs">
+                    <CommitInput
+                      type="number"
+                      min={STOCK_RANGE[0]}
+                      max={STOCK_RANGE[1]}
+                      value={String(c.stock)}
+                      disabled={busy}
+                      onCommit={(v) => update(c.id, { stock: Number(v) })}
+                      className="w-14 text-center"
+                    />
+                    <div className={c.unposted < c.stock ? "text-amber-800" : "text-muted"} title="Video chưa đăng: đã làm + đang làm">
+                      có {c.unposted} chưa đăng
+                    </div>
                   </td>
                   <td className="px-2 py-1.5 text-xs">
                     {c.videos} video{c.inProgress ? ` (${c.inProgress} đang làm)` : ""}

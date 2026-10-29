@@ -162,9 +162,9 @@ export function IdeaBankCard({
           </p>
           <label className="flex flex-wrap items-center gap-2">
             <input type="checkbox" checked={c.suggest} disabled={busy} onChange={(e) => setConfig({ suggest: e.target.checked })} />
-            Kho của kênh sắp hết thì nhờ Claude đề xuất
+            Kho của kênh sắp hết (kể cả kho trống) thì nhờ Claude nghĩ
             <NumberBox value={c.batch} range={BANK_LIMITS.batch} disabled={busy} onCommit={(batch) => setConfig({ batch })} />
-            ý tưởng mới
+            ý tưởng mới — chỉ cảnh (Giáng sinh ở một vùng đất), không nhân vật chính
           </label>
           <div className="flex flex-wrap gap-4 pl-6">
             <label className="flex items-center gap-2">

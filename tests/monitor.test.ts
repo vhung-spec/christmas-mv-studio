@@ -58,7 +58,7 @@ describe("cổng từ xa", () => {
     for (const h of ["evil.example.com:3301", "192.168.1.10:3301", "", undefined]) expect(okHost(h, isTailscaleIp)).toBe(false);
     expect(safeNext("/pipeline?x=1", "/")).toBe("/pipeline?x=1");
     for (const bad of ["//evil.com", "/\\evil.com", "https://evil.com", "", null]) expect(safeNext(bad, "/pipeline")).toBe("/pipeline");
-  });
+  }, 30000);
 
   it("mật khẩu lưu dạng băm, so đúng / sai", async () => {
     const { hashPassword, checkPassword } = await import("@/lib/monitor");

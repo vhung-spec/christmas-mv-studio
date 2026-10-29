@@ -15,6 +15,8 @@ export interface PipelineItem {
   id: string;
   title: string;
   added_at: string;
+  /** Thứ tự thêm việc (tăng dần, đặt lúc thêm) — thứ tự sản xuất không phụ thuộc giờ thêm trùng nhau tới mili-giây. */
+  seq?: number;
   /** Ý tưởng (khi bắt đầu từ ý tưởng, chưa có MV). */
   idea?: IdeaRow;
   mv_id?: string;
@@ -22,8 +24,6 @@ export interface PipelineItem {
   channel?: string;
   /** MV một bài hay playlist — đặt lúc thêm việc theo thứ tự sản xuất của kênh (không ghi = playlist). */
   kind?: "mv" | "playlist";
-  /** Playlist cuối vòng: mã các bài vừa có MV của kênh, xếp đầu playlist. */
-  opens_with?: string[];
   steps: Record<StepName, PipelineStep>;
   /** Đã gửi các cảnh thiếu clip sang Muse. */
   clips_sent?: boolean;
@@ -50,6 +50,8 @@ export interface AddResult {
 }
 
 export interface PipelineView {
+  /** Mã các video đã bấm "Đã đăng" (lịch sử kênh). */
+  posted?: string[];
   items: PipelineItem[];
   error: string | null;
   /** Đang viết kịch bản cho việc nào. */

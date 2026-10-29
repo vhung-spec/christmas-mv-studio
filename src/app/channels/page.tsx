@@ -66,6 +66,21 @@ export default function ChannelsPage() {
   };
   const busyMvs = useMemo(() => new Set((view?.items ?? []).filter((i) => !i.done_at && i.mv_id).map((i) => i.mv_id!)), [view]);
 
+  /** Đánh dấu video của kênh đang xem đã đăng (hoặc bỏ đánh dấu) — video làm sẵn giảm thì dây chuyền làm bù. */
+  async function setPosted(video: string, posted: boolean) {
+    if (!current) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api("/api/channels", { method: "POST", json: { action: "posted", id: current.id, video, posted } });
+      changed();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function postBank(json: Record<string, unknown>) {
     setBusy(true);
     setError(null);
@@ -105,7 +120,15 @@ export default function ChannelsPage() {
         onChanged={changed}
       />
 
-      {current && <ChannelPlanCard channel={current} items={(view?.items ?? []).filter((i) => itemChannelOf(i) === current.id)} videoMinutes={channels?.videoMinutes ?? 60} />}
+      {current && (
+        <ChannelPlanCard
+          channel={current}
+          items={(view?.items ?? []).filter((i) => itemChannelOf(i) === current.id)}
+          videoMinutes={channels?.videoMinutes ?? 60}
+          busy={busy}
+          onPosted={(video, posted) => void setPosted(video, posted)}
+        />
+      )}
 
       {/* Đọc lại khi kênh có thêm video được xếp nhạc / thêm, bớt việc đang làm (bài MV đang giữ). */}
       {current && <UsedSongsCard channelId={current.id} reload={`${current.recent[0]?.id ?? ""}|${current.inProgress}`} />}

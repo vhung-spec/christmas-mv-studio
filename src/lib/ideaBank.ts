@@ -9,6 +9,7 @@ import { channelStatus, newPerVideo, readChannels, resolveChannel } from "./chan
 import { UserError } from "./errors";
 import { generationMode } from "./generate";
 import {
+  BANK_CONFIG_VERSION,
   BANK_LIMITS,
   DEFAULT_BANK_CONFIG,
   type BankChannel,
@@ -45,7 +46,10 @@ export const ideaChannel = (x: Pick<BankIdea, "channel" | "idea">) => x.channel 
 
 export async function readBank(): Promise<IdeaBank> {
   const b = await readJson<Partial<IdeaBank>>(IDEAS_FILE(), {});
-  return { ideas: b.ideas ?? [], config: { ...DEFAULT_BANK_CONFIG, ...b.config } };
+  const config = { ...DEFAULT_BANK_CONFIG, ...b.config };
+  // Cài đặt từ trước khi có tự sản xuất: chuyển một lần sang đúng cách người dùng chọn (đổi lại được ở thẻ Kho ý tưởng / Tự lấy việc).
+  if ((b.config?.version ?? 1) < BANK_CONFIG_VERSION) Object.assign(config, { feed: true, suggest: true, autoApprove: true, needSong: false, version: BANK_CONFIG_VERSION });
+  return { ideas: b.ideas ?? [], config };
 }
 
 function updateBank<T>(fn: (b: IdeaBank) => T | Promise<T>): Promise<T> {
@@ -270,7 +274,11 @@ function pickExamples(ideas: IdeaRow[], n = 8): IdeaRow[] {
   return Array.from({ length: n }, (_, k) => good[Math.floor((k * good.length) / n)]);
 }
 
-/** Lọc ý tưởng Claude trả về: năm 1950–1959, mã chủ đề có thật, dàn ý đủ dài, địa điểm + thời điểm chưa có. */
+/** Ý tưởng tự nghĩ luôn là "chỉ cảnh" (các cảnh Giáng sinh nối tiếp nhau, không nhân vật chính — người dùng chọn 2026-10-29). */
+export const SCENES_ONLY = "Chỉ cảnh, không nhân vật chính:";
+const sceneOnly = (outline: string) => (/chỉ cảnh|không (có )?nhân vật/i.test(outline) ? outline : `${SCENES_ONLY} ${outline}`);
+
+/** Lọc ý tưởng Claude trả về: năm 1950–1959, mã chủ đề có thật, dàn ý đủ dài, địa điểm + thời điểm chưa có; dàn ý luôn "chỉ cảnh". */
 export function cleanSuggestions(raw: RawIdeaBatch["ideas"], known: IdeaRow[], themes: Set<string>) {
   const seen = new Set(known.map((i) => norm(i.world_location)));
   const ideas: RawIdeaBatch["ideas"] = [];
@@ -286,7 +294,7 @@ export function cleanSuggestions(raw: RawIdeaBatch["ideas"], known: IdeaRow[], t
     else if (seen.has(norm(world_location))) problems.push(`"${world_location}" already exists`);
     else {
       seen.add(norm(world_location));
-      ideas.push({ world_location, theme_code, outline });
+      ideas.push({ world_location, theme_code, outline: sceneOnly(outline) });
     }
   }
   return { ideas, problems };

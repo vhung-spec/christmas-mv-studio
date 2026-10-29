@@ -72,9 +72,10 @@ describe("kho ý tưởng", () => {
     expect((await bank.takeIdeas(5)).map((i) => i.id)).toEqual(["2"]);
   });
 
-  it("lọc ý tưởng Claude trả về: năm 1950–1959, mã chủ đề có thật, không trùng địa điểm", async () => {
+  it("lọc ý tưởng Claude trả về: năm 1950–1959, mã chủ đề có thật, không trùng địa điểm; dàn ý luôn là chỉ cảnh", async () => {
     const { cleanSuggestions } = await import("@/lib/ideaBank");
-    const outline = "Hai người lỡ chuyến xe cuối và cùng đi bộ về dưới mưa.";
+    const outline = "Phố phường tuyết rơi, đèn cửa hiệu và tiếng chuông nhà thờ.";
+    const scenes = `Chỉ cảnh, không nhân vật chính: ${outline}`;
     const r = cleanSuggestions(
       [
         { world_location: "Times Square Winter 1955", theme_code: "T03", outline },
@@ -83,19 +84,23 @@ describe("kho ý tưởng", () => {
         { world_location: "Paris Spring 1962", theme_code: "T01", outline },
         { world_location: "Miami Beach 1957", theme_code: "T99", outline },
         { world_location: "Chicago Navy Pier 1956", theme_code: "t1 Sét ái tình", outline },
+        { world_location: "Duluth Minnesota First Snow 1958", theme_code: "T03", outline: scenes },
       ],
       [idea("1", "Hollywood Boulevard Summer 1954")],
       new Set(["T01", "T03"]),
     );
+    // Dàn ý chưa ghi "chỉ cảnh" thì app thêm vào (kịch bản không có nhân vật chính); đã ghi thì giữ nguyên.
     expect(r.ideas).toEqual([
-      { world_location: "Times Square Winter 1955", theme_code: "T03", outline },
-      { world_location: "Chicago Navy Pier 1956", theme_code: "T01", outline },
+      { world_location: "Times Square Winter 1955", theme_code: "T03", outline: scenes },
+      { world_location: "Chicago Navy Pier 1956", theme_code: "T01", outline: scenes },
+      { world_location: "Duluth Minnesota First Snow 1958", theme_code: "T03", outline: scenes },
     ]);
     expect(r.problems).toHaveLength(4);
   });
 
   it("Demo: đề xuất nối tiếp số thứ tự, mở series mới theo khối 50, chờ duyệt", async () => {
     const bank = await import("@/lib/ideaBank");
+    await bank.setBankConfig({ autoApprove: false });
     await bank.addIdeas([idea("48", "Hollywood Boulevard Summer 1954"), idea("49", "Santa Monica Pier Summer 1954"), idea("50", "Las Vegas Strip 1955")]);
     const last = await bank.suggestIdeas(4);
     expect(last).toMatchObject({ added: 4, cost_usd: null });
@@ -121,28 +126,31 @@ describe("kho ý tưởng", () => {
     expect((await bank.bankView()).counts).toMatchObject({ new: 10, proposed: 0 });
   });
 
-  it("ý tưởng Giáng sinh: prompt dặn dịp lễ 1950–1959 và đa dạng nhân vật; Demo đề xuất đủ kiểu nhân vật", async () => {
-    const { buildIdeasPrompt } = await import("@/lib/prompts");
+  it("ý tưởng tự nghĩ: Giáng sinh ở một vùng đất, dịp lễ 1950–1959, chỉ cảnh — không nhân vật chính; dùng luôn, không chờ duyệt", async () => {
+    const { buildIdeasPrompt, IDEAS_SYSTEM } = await import("@/lib/prompts");
     const input = { count: 10, themes: [{ code: "T01", name: "Đêm Giáng sinh lãng mạn", used: 0 }], examples: [], existing: [], series: null };
     const p = buildIdeasPrompt(input);
     expect(p).toContain("Christmas-season moment");
-    expect(p).toContain("Chỉ cảnh, không nhân vật chính");
+    expect(p).toContain('starting with "Chỉ cảnh, không nhân vật chính:"');
+    expect(p).toContain("never a couple, a family or any main character");
+    expect(IDEAS_SYSTEM).toContain("without main characters");
     expect(p).not.toMatch(/autumn|summer/i);
 
     const bank = await import("@/lib/ideaBank");
     const { castKind } = await import("@/lib/mock");
     await bank.addIdeas([idea("1", "Rockefeller Center Christmas Eve 1954")]);
     await bank.suggestIdeas(10);
-    const proposals = (await bank.bankView()).proposals.map((x) => x.idea);
-    expect(proposals).toHaveLength(10);
-    for (const i of proposals) expect(i.world_location).toMatch(/(Christmas|Snow|Tree Lot|Carol|New Year's).* 195\d$/);
-    expect(new Set(proposals.map((i) => castKind(i.outline)))).toEqual(new Set(["couple", "family", "kids", "none", "grandparents"]));
+    const made = (await bank.readBank()).ideas.filter((x) => x.source === "claude");
+    expect(made).toHaveLength(10);
+    expect(new Set(made.map((x) => x.status))).toEqual(new Set(["new"]));
+    for (const x of made) expect(x.idea.world_location).toMatch(/(Christmas|Snow|Tree Lot|Carol|New Year's).* 195\d$/);
+    expect(new Set(made.map((x) => castKind(x.idea.outline)))).toEqual(new Set(["none"]));
   });
 
   it("dây chuyền tự lấy ý tưởng mỗi lúc `ahead` MV; kho sắp hết → tự đề xuất, chờ duyệt mới dùng", async () => {
     const bank = await import("@/lib/ideaBank");
     const pl = await import("@/lib/pipeline");
-    await bank.setBankConfig({ ahead: 2, batch: 3 });
+    await bank.setBankConfig({ ahead: 2, batch: 3, autoApprove: false });
     await bank.addIdeas([idea("1", "Hollywood Boulevard Summer 1954"), idea("2", "Santa Monica Pier Summer 1954"), idea("3", "Las Vegas Strip 1955")]);
 
     // Lượt 1: lấy 2 ý tưởng; còn 1 ≤ 2 → Claude (Demo) đề xuất 3 ý tưởng, chờ duyệt.
@@ -233,7 +241,7 @@ describe("kho ý tưởng", () => {
     const b = await ch.addChannel("Kênh B");
     // Test này về playlist: hai kênh chỉ làm playlist (MV mỗi vòng = 0).
     for (const c of await ch.readChannels()) await ch.updateChannel(c.id, { mvPerRound: 0 });
-    await bank.setBankConfig({ ahead: 2, suggest: false });
+    await bank.setBankConfig({ ahead: 2, suggest: false, needSong: true });
     // Cột Kênh (tên kênh) thắng; dòng không ghi kênh → chia lần lượt (kênh ít ý tưởng chưa dùng nhất).
     const rows = [{ ...idea("1", "Rockefeller Center Christmas Eve 1954"), channel: "kênh b" }, idea("2", "Woodstock Vermont First Snow 1952"), idea("3", "Beacon Hill Boston Carol Night 1953")];
     expect(await bank.addIdeas(rows)).toEqual({ added: 3, skipped: 0 });
@@ -301,4 +309,25 @@ describe("kho ý tưởng", () => {
     await bank.suggestIdle();
     expect((await bank.bankView()).error).toMatch(/API key/);
   });
+  it("cài đặt kho từ trước khi có tự sản xuất → chuyển một lần sang: tự lấy việc, Claude tự nghĩ, dùng luôn, làm video trước; sau đó giữ lựa chọn của bạn", async () => {
+    const bank = await import("@/lib/ideaBank");
+    writeFileSync(path.join(tmp, "ideas.json"), JSON.stringify({ ideas: [], config: { feed: false, ahead: 3, needSong: true, suggest: false, autoApprove: false, batch: 7 } }));
+    expect((await bank.readBank()).config).toMatchObject({ feed: true, suggest: true, autoApprove: true, needSong: false, ahead: 3, batch: 7, version: 2 });
+    await bank.setBankConfig({ autoApprove: false });
+    expect((await bank.readBank()).config).toMatchObject({ autoApprove: false, feed: true, version: 2 });
+    expect(JSON.parse(readFileSync(path.join(tmp, "ideas.json"), "utf8")).config).toMatchObject({ autoApprove: false, version: 2 });
+  });
+
+  it("tiêu đề MV một bài khi đã có bài: tên bài đứng đầu, tối đa 100 ký tự; đã có tên bài thì giữ nguyên", async () => {
+    const { mvTitle } = await import("@/lib/pipeline");
+    expect(mvTitle("Christmas in Woodstock Vermont, 1952 🎄 Vintage 1950s Christmas Music Video", "Silent Night")).toBe(
+      "Silent Night | Christmas in Woodstock Vermont, 1952 🎄 Vintage 1950s Christmas Music Video",
+    );
+    expect(mvTitle("Silent Night 🎄 Vintage 1950s Christmas Music Video", "Silent Night")).toBe("Silent Night 🎄 Vintage 1950s Christmas Music Video");
+    const long = mvTitle(`A Cozy Vintage Christmas in ${"Very Long Place Name ".repeat(5)}1952`, "O Come All Ye Faithful");
+    expect(long.length).toBeLessThanOrEqual(100);
+    expect(long).toMatch(/^O Come All Ye Faithful \| A Cozy Vintage Christmas in Very/);
+    expect(long).not.toMatch(/\s$/);
+  });
+
 });

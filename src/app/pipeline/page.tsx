@@ -97,7 +97,8 @@ export default function PipelinePage() {
         <h1 className="text-3xl uppercase">Dây chuyền sản xuất</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted">
           Mỗi việc là một video cho một <b>kênh</b> — <b>MV một bài</b> (~3–4 phút) hoặc <b>playlist ~1 tiếng</b>, theo thứ tự sản xuất của kênh — chạy qua 4
-          bước: <b>Kịch bản</b> → <b>Nhạc</b> (MV: đúng bài đã chọn; playlist: tự xếp bài như Bokin Playlist) → <b>Clip Muse</b> (tự gửi từng cảnh) →{" "}
+          bước: <b>Kịch bản</b> (các cảnh Giáng sinh) → <b>Nhạc</b> (MV: bài Giáng sinh hay nhất kênh chưa dùng; playlist: tự xếp bài như Bokin Playlist) →{" "}
+          <b>Clip Muse</b> (tự gửi từng cảnh) →{" "}
           <b>Dựng MP4</b>. Giao việc, kế hoạch và kho ý tưởng từng kênh ở trang{" "}
           <Link href="/channels" className="underline">
             Kênh
@@ -132,7 +133,7 @@ export default function PipelinePage() {
               <b>Nhạc:</b>{" "}
               {s.songDir ? (
                 <span>
-                  kho <code>{s.songDir}</code> (Kho bài hát.xlsx cho mức hay) — MV một bài dài đúng bài, playlist đủ khoảng <b>{s.videoMinutes} phút</b>
+                  kho <code>{s.songDir}</code> (Kho bài hát.xlsx cho mức hay) — MV một bài, playlist đủ khoảng <b>{s.videoMinutes} phút</b>
                 </span>
               ) : (
                 <span className="text-amber-800">
@@ -232,6 +233,24 @@ export default function PipelinePage() {
                           ⬇ Tải MP4
                         </a>
                       )}
+                      {it.mv_id && it.done_at &&
+                        (view.posted?.includes(it.mv_id) ? (
+                          <span className="badge border-mint-dark/60 bg-mint/30">✓ Đã đăng</span>
+                        ) : (
+                          <button
+                            className="btn-ghost btn-sm"
+                            disabled={busy}
+                            title="Đã đăng video này lên YouTube — kênh bớt một video làm sẵn, app làm bù"
+                            onClick={() =>
+                              void run(async () => {
+                                await api("/api/channels", { method: "POST", json: { action: "posted", id: itemChannelOf(it), video: it.mv_id, posted: true } });
+                                await reload();
+                              })
+                            }
+                          >
+                            ✓ Đã đăng
+                          </button>
+                        ))}
                       {hasError && (
                         <button className="btn-ghost btn-sm" disabled={busy} onClick={() => void post({ action: "retry", id: it.id })}>
                           ↻ Thử lại bước lỗi

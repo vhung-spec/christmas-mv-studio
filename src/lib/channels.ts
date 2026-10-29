@@ -18,9 +18,11 @@ import {
   DEFAULT_CHANNEL_NAME,
   DEFAULT_MV_PER_ROUND,
   DEFAULT_OLD_PERCENT,
+  DEFAULT_STOCK,
   MV_PER_ROUND_RANGE,
   NEW_ORDERS,
   OLD_PERCENT_RANGE,
+  STOCK_RANGE,
   type Channel,
   type ChannelVideo,
   type NewOrder,
@@ -287,13 +289,18 @@ export function nextVideo(seq: SeqEntry[], mvPerRound: number): NextVideo {
 }
 
 /**
- * Bài cho MV một bài: bài kênh chưa dùng lần nào (không trùng bài các MV đang làm của kênh), mức hay cao nhất trước, bài có lời trước
- * (kịch bản bám lời), rồi theo thứ tự trong kho. null = kho không còn bài nào như vậy.
+ * Bài cho MV một bài, theo thứ tự lấy: bài kênh chưa dùng lần nào (không trùng bài `reserved`), mức hay cao nhất trước, rồi bài có lời
+ * (nếu `hasLyrics`), rồi theo thứ tự trong kho. MV lấy bài lúc ghép nhạc: MV ghép nhạc trước lấy bài đầu danh sách.
  */
-export function pickMvSong(songs: LibSong[], history: ChannelVideo[], reserved: string[] = [], hasLyrics: (s: LibSong) => boolean = () => false): LibSong | null {
+export function mvSongCandidates(songs: LibSong[], history: ChannelVideo[], reserved: string[] = [], hasLyrics: (s: LibSong) => boolean = () => false): LibSong[] {
   const used = new Set([...history.flatMap((v) => v.codes), ...reserved].map(key));
   const list = songs.filter((s) => s.exists && !s.excluded && s.versions.length && !used.has(key(s.code)));
-  return list.sort((a, b) => b.level - a.level || Number(hasLyrics(b)) - Number(hasLyrics(a)))[0] ?? null;
+  return list.sort((a, b) => b.level - a.level || Number(hasLyrics(b)) - Number(hasLyrics(a)));
+}
+
+/** Bài cho MV một bài (bài đầu của mvSongCandidates). null = kho không còn bài kênh chưa dùng. */
+export function pickMvSong(songs: LibSong[], history: ChannelVideo[], reserved: string[] = [], hasLyrics: (s: LibSong) => boolean = () => false): LibSong | null {
+  return mvSongCandidates(songs, history, reserved, hasLyrics)[0] ?? null;
 }
 
 export interface SongUse {
@@ -344,6 +351,7 @@ const defaultChannel = (): Channel => ({
   oldPercent: DEFAULT_OLD_PERCENT,
   newOrder: "balanced",
   mvPerRound: DEFAULT_MV_PER_ROUND,
+  stock: DEFAULT_STOCK,
   created_at: new Date(0).toISOString(),
   history: [],
 });
@@ -356,6 +364,10 @@ const clampMvs = (v: unknown, fallback: number) => {
   const x = Math.round(Number(v));
   return v !== undefined && v !== null && Number.isFinite(x) ? Math.min(MV_PER_ROUND_RANGE[1], Math.max(MV_PER_ROUND_RANGE[0], x)) : fallback;
 };
+const clampStock = (v: unknown, fallback: number) => {
+  const x = Math.round(Number(v));
+  return v !== undefined && v !== null && Number.isFinite(x) ? Math.min(STOCK_RANGE[1], Math.max(STOCK_RANGE[0], x)) : fallback;
+};
 
 function normalize(c: Partial<Channel>): Channel {
   const d = defaultChannel();
@@ -366,6 +378,7 @@ function normalize(c: Partial<Channel>): Channel {
     oldPercent: clampPercent(c.oldPercent, d.oldPercent),
     newOrder: c.newOrder && c.newOrder in NEW_ORDERS ? c.newOrder : d.newOrder,
     mvPerRound: clampMvs(c.mvPerRound, d.mvPerRound),
+    stock: clampStock(c.stock, d.stock),
     created_at: c.created_at ?? d.created_at,
     history: Array.isArray(c.history)
       ? c.history.filter((v) => v && typeof v.id === "string" && Array.isArray(v.codes)).map((v) => ({ ...v, files: v.files ?? [], ...(v.kind === "mv" ? { kind: "mv" as const } : { kind: undefined }) }))
@@ -404,8 +417,8 @@ export function addChannel(name: string): Promise<Channel> {
   });
 }
 
-/** Đổi tên / bật tắt / tỉ lệ bài cũ / cách chọn bài mới / số MV mỗi vòng của một kênh. */
-export function updateChannel(id: string, patch: Partial<Pick<Channel, "name" | "active" | "oldPercent" | "newOrder" | "mvPerRound">>): Promise<Channel> {
+/** Đổi tên / bật tắt / tỉ lệ bài cũ / cách chọn bài mới / số MV mỗi vòng / số video làm sẵn của một kênh. */
+export function updateChannel(id: string, patch: Partial<Pick<Channel, "name" | "active" | "oldPercent" | "newOrder" | "mvPerRound" | "stock">>): Promise<Channel> {
   return updateChannels((list) => {
     const c = list.find((x) => x.id === id);
     if (!c) throw new UserError("Không tìm thấy kênh.", 404);
@@ -417,16 +430,29 @@ export function updateChannel(id: string, patch: Partial<Pick<Channel, "name" | 
     if (patch.oldPercent !== undefined) c.oldPercent = clampPercent(patch.oldPercent, c.oldPercent);
     if (patch.newOrder && patch.newOrder in NEW_ORDERS) c.newOrder = patch.newOrder;
     if (patch.mvPerRound !== undefined) c.mvPerRound = clampMvs(patch.mvPerRound, c.mvPerRound);
+    if (patch.stock !== undefined) c.stock = clampStock(patch.stock, c.stock);
     return c;
   });
 }
 
-/** Ghi video vào lịch sử kênh (cùng mã MV thì thay bản cũ — vd. ghép lại danh sách nhạc). */
+/** Ghi video vào lịch sử kênh (cùng mã MV thì thay bản cũ — vd. ghép lại danh sách nhạc; video đã đăng thì vẫn là đã đăng). */
 export function recordChannelVideo(channelId: string, video: ChannelVideo): Promise<void> {
   return updateChannels((list) => {
+    const old = list.flatMap((c) => c.history).find((v) => v.id === video.id);
     for (const c of list) c.history = c.history.filter((v) => v.id !== video.id);
     const c = list.find((x) => x.id === channelId) ?? list[0];
-    c.history.push(video);
+    c.history.push(old?.posted ? { ...video, posted: true, posted_at: old.posted_at } : video);
+  });
+}
+
+/** Đánh dấu video của kênh đã đăng lên YouTube (hoặc bỏ đánh dấu): video làm sẵn giảm đi thì dây chuyền tự làm bù. */
+export function setPosted(channelId: string, videoId: string, posted: boolean): Promise<void> {
+  return updateChannels((list) => {
+    const v = list.find((c) => c.id === channelId)?.history.find((x) => x.id === videoId);
+    if (!v) throw new UserError("Video này chưa có trong lịch sử kênh (chưa xếp nhạc).", 404);
+    v.posted = posted;
+    if (posted) v.posted_at = new Date().toISOString();
+    else delete v.posted_at;
   });
 }
 

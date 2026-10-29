@@ -1,11 +1,11 @@
 // Kênh + kho nhạc cho giao diện (thẻ "Các kênh & kho nhạc chung" và "Nhạc đã dùng" ở trang Kênh, trang theo dõi). Chỉ dùng phía server.
 
 import type { ChannelSummary, LibrarySummary, UsedSongsView, UsedTrack, UsedVideo } from "./channelTypes";
-import { channelStatus, key, newPerVideo, readChannels, songUses } from "./channels";
+import { channelStatus, key, mvSongCandidates, newPerVideo, readChannels, songUses } from "./channels";
 import { UserError } from "./errors";
 import { loadProject } from "./media";
 import { loadMusicLibrary, type MusicLibrary } from "./musicLibrary";
-import { channelLoad, itemChannel, planner, readPipeline } from "./pipeline";
+import { channelLoad, channelStock, itemChannel, planner, readPipeline } from "./pipeline";
 import { loadMV, readSettings } from "./store";
 
 export interface ChannelsView {
@@ -37,10 +37,28 @@ export async function channelsView(): Promise<ChannelsView> {
   const target = settings.videoMinutes * 60;
   const list = await readChannels();
   const load = channelLoad(list, items);
-  const plans = await planner(list, items);
-  const channels = list.map((c): ChannelSummary => {
+  const stock = channelStock(list, items);
+  const plans = planner(list, items);
+  const channels = await Promise.all(list.map(async (c): Promise<ChannelSummary> => {
     const st = lib ? channelStatus(lib.songs, c.history, newPerVideo(lib.songs, target, c.oldPercent)) : null;
     const p = plans.plan(c.id);
+    // Bài dự kiến cho MV tiếp theo: bài lấy lúc ghép nhạc, các MV đang làm chưa có nhạc của kênh lấy trước các bài đầu danh sách.
+    const waitingMvs = items.filter((i) => !i.done_at && itemChannel(i) === c.id && (i.kind ?? i.idea?.video_kind) === "mv" && i.steps.song.status !== "done").length;
+    const song = p.kind === "mv" && lib ? (mvSongCandidates(lib.songs, c.history)[waitingMvs]?.title ?? null) : null;
+    // Video làm sẵn chưa đăng đã có nhạc: ghi "chưa đăng", hoặc từ trước khi có phần làm sẵn mà còn trong dây chuyền.
+    const inPipeline = new Set(items.flatMap((i) => (i.mv_id && itemChannel(i) === c.id ? [i.mv_id] : [])));
+    const ready = await Promise.all(
+      c.history
+        .filter((v) => v.posted === false || (v.posted === undefined && inPipeline.has(v.id)))
+        .reverse()
+        .map(async (v) => ({
+          id: v.id,
+          date: v.date,
+          title: v.title,
+          kind: v.kind ?? ("playlist" as const),
+          rendered: Boolean((await loadProject(v.id).catch(() => null))?.renders.length),
+        })),
+    );
     return {
       id: c.id,
       name: c.name,
@@ -48,7 +66,15 @@ export async function channelsView(): Promise<ChannelsView> {
       oldPercent: c.oldPercent,
       newOrder: c.newOrder,
       mvPerRound: c.mvPerRound,
-      next: p.kind === "mv" ? { kind: "mv", index: p.index, opensWith: [], song: p.song.title } : { kind: "playlist", index: 0, opensWith: p.opensWith, song: null },
+      next: { kind: p.kind, index: p.index, opensWith: [], song },
+      stock: c.stock,
+      unposted: stock.get(c.id) ?? 0,
+      ready,
+      postedRecent: c.history
+        .filter((v) => v.posted && v.posted_at)
+        .sort((a, b) => b.posted_at!.localeCompare(a.posted_at!))
+        .slice(0, 5)
+        .map((v) => ({ id: v.id, title: v.title, kind: v.kind ?? "playlist", posted_at: v.posted_at! })),
       recent: c.history
         .slice(-10)
         .reverse()
@@ -58,7 +84,7 @@ export async function channelsView(): Promise<ChannelsView> {
       unused: st?.unused ?? 0,
       videosLeft: st?.videosLeft ?? 0,
     };
-  });
+  }));
   return { channels, library: lib ? librarySummary(lib) : null, videoMinutes: settings.videoMinutes, songDir: settings.songDir };
 }
 

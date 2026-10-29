@@ -69,31 +69,35 @@ C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm 
      file nhạc còn thiếu về C:\Christmas-MV-Studio\KHO NHAC GIANG SINH (dòng "Lưu nhạc vào" trên thẻ cho biết chính xác thư mục),
      rồi tự đồng bộ mỗi 6 giờ. Xem lại ở thẻ "Các kênh & kho nhạc chung": số bài, số bài mức 3 / 2 / 1, các dòng trong tệp cần sửa.
 4. Độ dài video và cách xếp nhạc: Cài đặt → "Độ dài video (phút)", mặc định 60. Mỗi PLAYLIST app tự xếp danh sách nhạc GIỐNG BOKIN
-   PLAYLIST STUDIO cho đủ khoảng chừng ấy phút, rồi lặp 20–30 clip Muse cho hết nhạc (MV một bài thì dài đúng bài — mục 5):
+   PLAYLIST STUDIO cho đủ khoảng chừng ấy phút, rồi lặp 20–30 clip Muse cho hết nhạc (MV một bài: mục 5):
    - khoảng 46% là bài cũ (bài mức 2–3 kênh đã dùng, bài lâu chưa dùng nhất trước), còn lại là bài mới (kênh chưa dùng lần nào);
    - bài mức 1 chỉ dùng làm bài mới; danh sách xếp mức 3 → 2 → 1; bài mở đầu khác bài mở đầu video trước;
    - bài có 2 bản (12.wav, 12 (1).wav): lần dùng lại lấy bản kênh đó ít dùng hơn.
    Video đầu của mỗi kênh toàn bài mới. Thẻ "Các kênh & kho nhạc chung" cho biết mỗi kênh còn bao nhiêu bài mới, đủ cho khoảng mấy video;
    kênh hết bài mới thì ý tưởng của kênh nằm chờ cho tới khi bạn thêm bài vào kho trên Drive (app tự chạy tiếp).
-   KHO NHẠC CHƯA XONG mà muốn làm video trước: trang Dây chuyền → thẻ "Tự lấy việc" → bấm "Làm video trước, ghép nhạc sau" (hoặc bỏ tick
-   "Chỉ làm video mới khi kho nhạc còn bài mới"). App vẫn viết kịch bản và làm clip Muse; mỗi video dừng ở bước Nhạc ("chờ nhạc").
-   Khi kho nhạc có bài (đồng bộ Drive), app tự xếp bài cho từng video rồi dựng MP4 — không phải làm gì thêm. Kho đủ rồi thì tick lại ô đó.
+   KHO NHẠC CHƯA XONG: mặc định app làm video trước, ghép nhạc sau (cả MV lẫn playlist) — viết kịch bản và làm clip Muse; mỗi video dừng ở
+   bước Nhạc ("chờ nhạc"). Khi kho nhạc có bài (đồng bộ Drive), app tự xếp bài cho từng video rồi dựng MP4 — không phải làm gì thêm.
+   Muốn chỉ làm khi kho còn bài mới: trang Dây chuyền → thẻ "Tự lấy việc" → tick "Chỉ làm video mới khi kho nhạc còn bài mới".
    Lưu ý: mỗi video vẫn tốn 20–30 lượt Muse ngay lúc làm clip.
 5. Kênh: app có hai trang — "Kênh" (quản lý kênh, kế hoạch sản xuất, giao việc, kho ý tưởng) và "Dây chuyền" (theo dõi sản xuất).
    Trang Kênh → thẻ "Các kênh & kho nhạc chung". Ban đầu có một kênh "Kênh Giáng sinh" (đổi tên được). Làm cho nhiều kênh YouTube thì
    gõ tên kênh → "＋ Thêm kênh". Từ đó app TỰ CHIA: mỗi video mới vào kênh đang có ít video nhất, các kênh đều nhau.
    Các kênh dùng chung kho nhạc, nhưng bài cũ / bài mới tính riêng theo từng kênh. Bỏ tick "Bật" = tạm không làm video cho kênh đó.
    Video xong nằm trong thư mục con theo tên kênh, và tệp "Tiêu đề - mô tả.txt" ghi tên kênh ở dòng đầu.
-   THỨ TỰ SẢN XUẤT: cột "MV mỗi vòng" (mặc định 3). Mỗi vòng kênh làm 3 MV một bài (~3–4 phút: bài hay nhất kênh chưa dùng, kịch bản
-   bám lời bài, tiêu đề YouTube là tên bài) rồi 1 playlist 1 tiếng mở đầu bằng 3 bài đó, xong lại vòng mới. Đặt 0 = chỉ làm playlist.
-   Bấm "Xem kênh" để xem kế hoạch của kênh: video tiếp theo là MV mấy hay playlist, bài nào, các video đang làm / đã làm gần đây.
-   Kho chưa có bài nào cho MV thì app làm playlist trước; kho có bài là MV làm tiếp.
+   THỨ TỰ SẢN XUẤT: cột "MV mỗi vòng" (mặc định 3). Mỗi vòng kênh làm 3 MV một bài (~3–4 phút: các cảnh Giáng sinh nối tiếp nhau, không
+   nhân vật chính; lúc ghép nhạc app lấy bài Giáng sinh hay nhất kênh chưa dùng, tên bài làm tiêu đề YouTube) rồi 1 playlist 1 tiếng mở
+   đầu bằng 3 bài đó, xong lại vòng mới. Đặt 0 = chỉ làm playlist. Bấm "Xem kênh" để xem kế hoạch của kênh: video tiếp theo là MV mấy hay
+   playlist, bài dự kiến, các video đang làm / đã làm gần đây.
+   TỰ SẢN XUẤT: cột "Làm sẵn" (mặc định 4 = 1 vòng). Kênh luôn có chừng ấy video chưa đăng (đã làm + đang làm); thiếu thì app tự làm,
+   kho ý tưởng hết thì Claude tự nghĩ ý tưởng (Giáng sinh ở một vùng đất, chỉ cảnh) và dùng luôn. Đăng một video lên YouTube xong thì bấm
+   "✓ Đã đăng" (thẻ Kế hoạch sản xuất → Làm sẵn, hoặc ở video đã xong trên trang Dây chuyền): app làm bù một video. Đặt 0 = không tự làm.
    NHẠC ĐÃ DÙNG: thẻ "Nhạc đã dùng" (trang Kênh, kênh đang xem) — "Theo video": mỗi MV / playlist các bài theo thứ tự kèm giờ bắt đầu,
    nút "📋 Chép danh sách bài" chép các dòng "0:00 Tên bài" để dán vào mô tả YouTube; "Theo bài": bài nào đã dùng ở MV / playlist nào;
    "Chưa dùng": bài kênh chưa dùng. Ở trang Dây chuyền, video đã có nhạc có nút "🎵 Danh sách bài".
-6. Kho ý tưởng: MỖI KÊNH MỘT KHO (trang Kênh → "Xem kênh" → thẻ "Kho ý tưởng" của kênh đó). App mới bắt đầu với kho TRỐNG. Dán bảng
-   ý tưởng ở thẻ "Giao việc" → chọn ô "Kênh" (kênh đang xem, một kênh khác, hoặc Chia lần lượt các kênh) → "Đọc bảng" → "Đưa vào kho";
-   hoặc bấm "✨ Nhờ Claude đề xuất ngay" (cho kênh đang xem). Ý tưởng dùng cho cả MV lẫn playlist (bài của MV thì app tự chọn).
+6. Kho ý tưởng: MỖI KÊNH MỘT KHO (trang Kênh → "Xem kênh" → thẻ "Kho ý tưởng" của kênh đó). App mới bắt đầu với kho TRỐNG — không cần
+   dán gì: kênh cần video thì Claude tự nghĩ ý tưởng (cần Claude API key). Muốn tự đưa ý tưởng: dán bảng ở thẻ "Giao việc" → chọn ô "Kênh"
+   (kênh đang xem, một kênh khác, hoặc Chia lần lượt các kênh) → "Đọc bảng" → "Đưa vào kho"; hoặc bấm "✨ Nhờ Claude đề xuất ngay" (cho
+   kênh đang xem). Ý tưởng dùng cho cả MV lẫn playlist (bài của MV thì app tự chọn).
    Theo dõi từng video ở trang Dây chuyền. Mỗi dòng: số | địa điểm + dịp lễ + năm 1950–1959 | mã chủ đề | dàn ý, ví dụ
        1 | Rockefeller Center Christmas Eve 1954 | T01 | Cặp đôi trẻ hẹn nhau ở sân băng dưới cây thông khổng lồ.
        2 | Woodstock Vermont First Snow 1952 | T18 | Chỉ cảnh, không nhân vật chính: làng tuyết, xe trượt ngựa kéo.

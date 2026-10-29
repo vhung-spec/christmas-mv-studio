@@ -35,6 +35,8 @@ export interface BankConfig {
   autoApprove: boolean;
   /** Số ý tưởng mỗi lần đề xuất. */
   batch: number;
+  /** Bản cài đặt (2 = tự sản xuất: ý tưởng Claude dùng luôn, làm video trước rồi ghép nhạc sau). */
+  version?: number;
 }
 
 export interface IdeaBank {
@@ -42,7 +44,9 @@ export interface IdeaBank {
   config: BankConfig;
 }
 
-export const DEFAULT_BANK_CONFIG: BankConfig = { feed: true, ahead: 2, needSong: true, suggest: true, autoApprove: false, batch: 10 };
+/** 2026-10-29, người dùng chọn tự sản xuất: app tự nghĩ ý tưởng (dùng luôn), làm video trước, nhạc ghép sau. */
+export const BANK_CONFIG_VERSION = 2;
+export const DEFAULT_BANK_CONFIG: BankConfig = { feed: true, ahead: 2, needSong: false, suggest: true, autoApprove: true, batch: 10, version: BANK_CONFIG_VERSION };
 export const BANK_LIMITS = { ahead: [1, 10], batch: [3, 50] } as const;
 
 /** Kho nhạc cho một kênh: số bài dùng được, theo mức, bài kênh chưa dùng và đủ bài mới cho khoảng mấy video. */

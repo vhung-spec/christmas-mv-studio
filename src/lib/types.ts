@@ -20,11 +20,11 @@ export interface IdeaRow {
   /** Kênh làm video này (mã kênh, xem channels.ts); không có = kênh tự chia lần lượt. */
   channel?: string;
   /**
-   * Loại video — dây chuyền tự đặt theo thứ tự sản xuất của kênh (không nhận từ bảng dán vào): "mv" = MV một bài (~3–4 phút, kịch
-   * bản dài đúng bài, bám lời); không ghi = playlist ~1 tiếng.
+   * Loại video — dây chuyền tự đặt theo thứ tự sản xuất của kênh (không nhận từ bảng dán vào): "mv" = MV một bài (~3–4 phút: vòng cảnh
+   * Giáng sinh, bài chọn lúc ghép nhạc); không ghi = playlist ~1 tiếng.
    */
   video_kind?: "mv" | "playlist";
-  /** MV một bài: bài đã giữ cho MV (mã bài trong kho, file nhạc, mức hay). */
+  /** MV tạo trước 2026-10-29: bài đã giữ cho MV lúc thêm việc (mã bài trong kho, file nhạc, mức hay). MV mới chọn bài lúc ghép nhạc. */
   mv_song?: { code: string; file: string; level: number };
 }
 
