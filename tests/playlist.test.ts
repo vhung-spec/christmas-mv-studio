@@ -30,6 +30,8 @@ describe("mô tả YouTube có danh sách bài", () => {
     expect(withTracklist("Pull up a chair.\n\n#christmasmusic #1950s", tracks)).toBe("Pull up a chair.\n\nTracklist:\n0:00 Snow On Main Street\n3:05 Silent Snow\n\n#christmasmusic #1950s");
     expect(withTracklist("Pull up a chair.", tracks)).toBe("Pull up a chair.\n\nTracklist:\n0:00 Snow On Main Street\n3:05 Silent Snow");
     expect(withTracklist("Pull up a chair.", tracks.slice(0, 1))).toBe("Pull up a chair.");
+    // MV phát một bài nhiều lần: không có danh sách bài.
+    expect(withTracklist("Pull up a chair.", [tracks[0], { ...tracks[0], start: 185 }])).toBe("Pull up a chair.");
   });
 
   it("độ dài video cho tiêu đề", () => {

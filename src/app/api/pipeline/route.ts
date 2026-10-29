@@ -12,7 +12,7 @@ export async function GET() {
     const settings = await readSettings();
     return NextResponse.json({
       ...(await pipelineView()),
-      settings: { mode: generationMode(settings), songDir: settings.songDir, museMode: settings.museMode, minShots: settings.minShots, maxShots: settings.maxShots, videoMinutes: settings.videoMinutes },
+      settings: { mode: generationMode(settings), songDir: settings.songDir, museMode: settings.museMode, minShots: settings.minShots, maxShots: settings.maxShots, videoMinutes: settings.videoMinutes, mvPlays: settings.mvPlays },
     });
   } catch (err) {
     return errorResponse(err);

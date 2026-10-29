@@ -91,6 +91,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoUpdate: true,
   eraShare: 40,
   videoMinutes: 60,
+  mvPlays: 2,
   songSheet: "",
   resultsDir: "KET QUA GIANG SINH",
 };

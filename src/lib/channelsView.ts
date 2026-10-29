@@ -13,6 +13,8 @@ export interface ChannelsView {
   /** null = chưa đặt Thư mục nhạc. */
   library: LibrarySummary | null;
   videoMinutes: number;
+  /** MV một bài phát bài mấy lần liền nhau. */
+  mvPlays: number;
   songDir: string;
 }
 
@@ -85,7 +87,7 @@ export async function channelsView(): Promise<ChannelsView> {
       videosLeft: st?.videosLeft ?? 0,
     };
   }));
-  return { channels, library: lib ? librarySummary(lib) : null, videoMinutes: settings.videoMinutes, songDir: settings.songDir };
+  return { channels, library: lib ? librarySummary(lib) : null, videoMinutes: settings.videoMinutes, mvPlays: settings.mvPlays, songDir: settings.songDir };
 }
 
 /**
@@ -107,7 +109,10 @@ export async function usedSongsView(id: string): Promise<UsedSongsView> {
       // Giờ bắt đầu: theo nhạc đã ghép của video, khi nhạc đó vẫn đúng các bài trong lịch sử (chưa bị thay bằng nhạc khác).
       const list = audio?.tracks ?? [];
       const sameList = list.length === v.codes.length && list.every((t, k) => !t.code || key(t.code) === key(v.codes[k]));
-      const sameSingle = v.codes.length === 1 && !list.length && audio?.name === v.files[0];
+      // MV một bài: nhạc của video là bài đó, phát một lần (không có danh sách) hoặc nhiều lần liền nhau (danh sách toàn bài đó).
+      const sameSingle =
+        v.codes.length === 1 && !sameList && Boolean(audio) && (list.length ? list.every((t) => !t.code || key(t.code) === key(v.codes[0])) : audio!.name === v.files[0]);
+      const plays = sameSingle ? Math.max(1, list.length) : 1;
       const tracks = v.codes.map((code, k): UsedTrack => {
         const t = sameList ? list[k] : undefined;
         const version = byCode.get(key(code))?.versions.find((x) => x.name === v.files[k]);
@@ -117,7 +122,8 @@ export async function usedSongsView(id: string): Promise<UsedSongsView> {
           file: v.files[k] ?? "",
           level: byCode.get(key(code))?.level ?? null,
           start: t ? t.start : sameSingle ? 0 : null,
-          duration: t?.duration ?? (sameSingle ? audio!.duration : (version?.duration ?? null)),
+          duration: t?.duration ?? (sameSingle ? (list[0]?.duration ?? audio!.duration) : (version?.duration ?? null)),
+          ...(plays > 1 ? { plays } : {}),
         };
       });
       const total = sameList || sameSingle ? audio!.duration : tracks.every((t) => t.duration !== null) ? tracks.reduce((a, t) => a + t.duration!, 0) : null;

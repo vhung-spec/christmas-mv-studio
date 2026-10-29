@@ -63,10 +63,10 @@ export function trackTitle(file: string, hooks: Map<number, string>): string {
 // Mốc thời gian + dòng danh sách bài nằm ở chapters.ts (trình duyệt cũng dùng).
 export { chapterTime, tracklistLines };
 
-/** Mô tả YouTube kèm danh sách bài (nếu video dùng nhiều bài) ở cuối, trước dòng hashtag. */
+/** Mô tả YouTube kèm danh sách bài (nếu video dùng nhiều bài khác nhau — MV phát một bài nhiều lần thì không) ở cuối, trước dòng hashtag. */
 export function withTracklist(description: string, tracks: Pick<PlaylistTrack, "title" | "start">[] | undefined): string {
   const text = description.trim();
-  if (!tracks || tracks.length < 2) return text;
+  if (!tracks || new Set(tracks.map((t) => t.title)).size < 2) return text;
   const list = ["Tracklist:", ...tracklistLines(tracks)].join("\n");
   const parts = text.split(/\n\s*\n/);
   const last = parts.at(-1) ?? "";

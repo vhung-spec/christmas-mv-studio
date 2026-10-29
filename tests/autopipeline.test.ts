@@ -335,13 +335,20 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     await pl.pipelineTick();
     const mv1 = (await store.loadMV((await item("21")).mv_id!))!;
     expect(mv1.structure.duration_sec).toBe(180);
-    expect((await item("21")).steps.song).toMatchObject({ status: "done", message: "Kênh “Kênh MV”: MV bài “Silver Bells Waltz” (mức 3) · 0:25" });
+    // MV phát bài 2 lần liền nhau (Cài đặt → MV một bài: phát bài mấy lần, mặc định 2).
+    expect((await item("21")).steps.song).toMatchObject({ status: "done", message: "Kênh “Kênh MV”: MV bài “Silver Bells Waltz” (mức 3) · 0:25 × 2 = 0:50" });
     expect((await item("21")).title).toBe("Silver Bells Waltz");
     // Có bài rồi mới đặt tên: tên bài vào ý tưởng của MV và lên đầu các tiêu đề YouTube.
     expect(mv1.idea.song_title).toBe("Silver Bells Waltz");
     expect(mv1.youtube_titles.length).toBeGreaterThan(0);
     for (const t of mv1.youtube_titles) expect(t).toMatch(/^Silver Bells Waltz \| /);
-    expect((await media.loadProject(mv1.id)).audio).toMatchObject({ name: "1.mp3" });
+    const mvAudio = (await media.loadProject(mv1.id)).audio!;
+    expect(mvAudio.name).toBe("1 × 2.flac");
+    expect(mvAudio.duration).toBeCloseTo(50, 0);
+    expect(mvAudio.tracks!.map((t) => [t.code, t.name, Math.round(t.start)])).toEqual([
+      ["1", "1.mp3", 0],
+      ["1", "1.mp3", 25],
+    ]);
     expect((await item("22")).steps.song).toMatchObject({ status: "done", message: expect.stringMatching(/MV bài “Jingle Bell Jamboree”/) });
     expect((await item("23")).steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/^Chưa đủ nhạc cho kênh “Kênh MV”/) });
     expect((await item("24")).steps.song).toMatchObject({ status: "waiting", message: expect.stringMatching(/^Chờ playlist “Times Square Toy Shop 1954” \(vòng trước\)/) });
@@ -383,8 +390,9 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     expect(playlist.tracks[0].start).toBe(0);
     expect(playlist.tracks[1].start).toBeCloseTo(25, 0);
     expect(playlist.total).toBeCloseTo(tracks.reduce((a, t) => a + t.duration, 0), 0);
-    expect(used.videos[3].tracks).toMatchObject([{ code: "1", start: 0, level: 3 }]);
+    expect(used.videos[3].tracks).toMatchObject([{ code: "1", start: 0, level: 3, plays: 2 }]);
     expect(used.videos[3].tracks[0].duration).toBeCloseTo(25, 0);
+    expect(used.videos[3].total).toBeCloseTo(50, 0);
     const one = used.songs.find((x) => x.code === "1")!;
     expect(one.uses.map((u) => [u.kind, u.title, u.position])).toEqual([
       ["playlist", "#23 · Times Square Toy Shop 1954", 1],
@@ -400,7 +408,9 @@ describe("dây chuyền: ý tưởng → MP4 (video Giáng sinh, tự xếp bài
     const done = await item("21");
     expect(done.done_at).toBeTruthy();
     const rendered = (await media.loadProject(done.mv_id!)).renders[0];
-    expect(rendered.duration).toBeCloseTo(25, 0);
+    expect(rendered.duration).toBeCloseTo(50, 0);
+    // Một bài (dù phát 2 lần) → mô tả YouTube không có danh sách bài.
+    expect(rendered.tags!.description).not.toContain("Tracklist:");
     expect(rendered.result_dir).toBe(path.join(tmp, "ket-qua", "Kênh MV", "021 - MV Silver Bells Waltz - Chicago Union Station 1953"));
     expect(rendered.tags!.title).toMatch(/^Silver Bells Waltz \| /);
     for (const it of (await pl.readPipeline()).items) await pl.removeFromPipeline(it.id);

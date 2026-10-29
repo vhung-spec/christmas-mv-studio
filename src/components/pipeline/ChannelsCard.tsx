@@ -12,6 +12,7 @@ export interface ChannelsData {
   channels: ChannelSummary[];
   library: LibrarySummary | null;
   videoMinutes: number;
+  mvPlays: number;
   songDir: string;
 }
 

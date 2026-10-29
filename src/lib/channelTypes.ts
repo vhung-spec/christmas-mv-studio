@@ -114,6 +114,8 @@ export interface UsedTrack {
   /** Giây bắt đầu trong video (null = không còn biết: nhạc của video đã bị thay). */
   start: number | null;
   duration: number | null;
+  /** MV một bài: số lần bài phát liền nhau trong video. */
+  plays?: number;
 }
 
 /** Một video đã xếp nhạc của kênh, kèm danh sách bài. */

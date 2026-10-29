@@ -125,6 +125,7 @@ export default function ChannelsPage() {
           channel={current}
           items={(view?.items ?? []).filter((i) => itemChannelOf(i) === current.id)}
           videoMinutes={channels?.videoMinutes ?? 60}
+          mvPlays={channels?.mvPlays ?? 2}
           busy={busy}
           onPosted={(video, posted) => void setPosted(video, posted)}
         />

@@ -23,7 +23,7 @@ nhạc và kho ý tưởng riêng.
 | | MV Prompt Studio (cũ) | Christmas MV Studio (mới) |
 |---|---|---|
 | Nội dung | MV tình yêu rock'n'roll 1950s, luôn có cặp đôi | Giáng sinh 1950s; nhân vật theo ý tưởng (cặp đôi / gia đình / trẻ em / ông bà / chỉ cảnh) |
-| Độ dài video | 1 bài ≈ 3 phút | mỗi vòng **N MV một bài** (~3–4 phút) rồi **1 playlist ~1 tiếng** (Cài đặt → *Độ dài video*, mặc định 60 phút); N riêng từng kênh |
+| Độ dài video | 1 bài ≈ 3 phút | mỗi vòng **N MV một bài** (bài phát 2 lần liền nhau, ~6–8 phút) rồi **1 playlist ~1 tiếng** (Cài đặt → *Độ dài video*, mặc định 60 phút); N riêng từng kênh |
 | Nhạc | 1 bài theo số ý tưởng (ý tưởng 12 → `12.wav`) | MV: bài hay nhất kênh chưa dùng; playlist: **tự xếp ~1 tiếng như Bokin Playlist Studio** — bài cũ hay + bài mới theo `Kho bài hát.xlsx` (mức hay 1–3) và lịch sử của kênh, mở đầu bằng các bài vừa có MV; không cần ghi “đã dùng” |
 | Kênh | một kênh | **nhiều kênh, tự phân luồng** (video mới vào kênh ít video nhất); chung kho nhạc, lịch sử nhạc + kho ý tưởng riêng; kết quả để theo thư mục kênh |
 | Số cảnh | 15–20 | 20–30 (một vòng, khi dựng lặp lại — các vòng sau xáo thứ tự) |
@@ -297,9 +297,10 @@ Mỗi việc là một video **cho một kênh** (mục *Kênh* bên dưới) ch
    không theo bài nào — nên làm ngay, không chờ nhạc. Nhân vật theo dàn ý; ý tưởng app tự nghĩ luôn là “**Chỉ cảnh, không nhân vật chính**”
    (Character Bible trống, mọi cảnh là phố phường, làng tuyết, người thường — các cảnh Giáng sinh nối tiếp nhau). Viết lần lượt từng video, việc
    giao trước viết trước.
-2. **Nhạc** — MV: lấy bài lúc này — **bài Giáng sinh mức hay cao nhất kênh chưa dùng**; tên bài đứng đầu các tiêu đề YouTube (vd. `Silent Night |
-   Christmas in Woodstock Vermont, 1952 🎄 …`), lên ảnh bìa và tên thư mục kết quả; ô Nhạc ghi vd. `Kênh “Kênh Giáng sinh”: MV bài “Silver Bells
-   Waltz” (mức 3) · 3:24`. Kho chưa có bài kênh chưa dùng thì MV chờ ở bước Nhạc (clip vẫn làm). Playlist: app
+2. **Nhạc** — MV: lấy bài lúc này — **bài Giáng sinh mức hay cao nhất kênh chưa dùng** — và **phát bài 2 lần liền nhau** (Cài đặt → *MV một bài:
+   phát bài mấy lần*, 1–4; cảnh lặp lại theo nhạc, lượt sau xáo thứ tự, không tốn thêm lượt Muse; mô tả YouTube không có danh sách bài vì chỉ có
+   một bài); tên bài đứng đầu các tiêu đề YouTube (vd. `Silent Night | Christmas in Woodstock Vermont, 1952 🎄 …`), lên ảnh bìa và tên thư mục kết
+   quả; ô Nhạc ghi vd. `Kênh “Kênh Giáng sinh”: MV bài “Silver Bells Waltz” (mức 3) · 3:24 × 2 = 6:48`. Kho chưa có bài kênh chưa dùng thì MV chờ ở bước Nhạc (clip vẫn làm). Playlist: app
    **tự xếp danh sách nhạc như Bokin Playlist Studio** cho kênh của video (mục *Kho nhạc & cách xếp bài* bên dưới) cho đủ **Độ dài video** (Cài đặt,
    mặc định 60 phút), rồi nối thành một file (FLAC, không mất chất lượng). Ô Nhạc ghi rõ, vd. `Kênh “Kênh Giáng sinh”: tự xếp 19 bài (9 cũ + 10 mới) ·
    60 phút · mở đầu bằng 3 bài vừa có MV`, kèm cảnh báo của Bokin khi kho sắp hết bài mới cho kênh. Kho không đủ khoảng 90% độ dài video → việc chờ,

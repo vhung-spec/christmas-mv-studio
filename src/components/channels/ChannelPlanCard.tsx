@@ -55,12 +55,15 @@ export function ChannelPlanCard({
   channel: c,
   items,
   videoMinutes,
+  mvPlays,
   busy,
   onPosted,
 }: {
   channel: ChannelSummary;
   items: PipelineItem[];
   videoMinutes: number;
+  /** MV một bài phát bài mấy lần liền nhau. */
+  mvPlays: number;
   busy?: boolean;
   /** Đánh dấu video đã đăng lên YouTube (hoặc bỏ đánh dấu). */
   onPosted?: (video: string, posted: boolean) => void;
@@ -73,8 +76,9 @@ export function ChannelPlanCard({
         <p>
           {c.mvPerRound > 0 ? (
             <>
-              Mỗi vòng: <b>{c.mvPerRound} MV một bài</b> (các cảnh Giáng sinh; lúc ghép nhạc lấy bài Giáng sinh mức hay cao nhất kênh chưa dùng, tên bài
-              làm tiêu đề) rồi <b>1 playlist ~{videoMinutes} phút</b> mở đầu bằng {c.mvPerRound} bài vừa có MV; lặp lại.
+              Mỗi vòng: <b>{c.mvPerRound} MV một bài</b> (các cảnh Giáng sinh; lúc ghép nhạc lấy bài Giáng sinh mức hay cao nhất kênh chưa dùng
+              {mvPlays > 1 ? `, phát ${mvPlays} lần liền nhau` : ""}, tên bài làm tiêu đề) rồi <b>1 playlist ~{videoMinutes} phút</b> mở đầu bằng {c.mvPerRound} bài vừa
+              có MV; lặp lại.
             </>
           ) : (
             <>Chỉ làm playlist ~{videoMinutes} phút (MV mỗi vòng = 0).</>

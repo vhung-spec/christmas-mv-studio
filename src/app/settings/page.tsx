@@ -192,6 +192,9 @@ export default function SettingsPage() {
             <Field label="Độ dài video (phút)" hint="App ghép các bài nhạc chưa dùng trong Thư mục nhạc cho đủ khoảng chừng này phút (mỗi bài một bản), rồi lặp clip cho hết nhạc.">
               <input className="input" type="number" min={1} max={600} step={5} value={s.videoMinutes} onChange={(e) => set("videoMinutes", Number(e.target.value))} />
             </Field>
+            <Field label="MV một bài: phát bài mấy lần" hint="Bài hát của MV phát liền nhau chừng này lần (2 = video dài gấp đôi bài); cảnh lặp lại theo nhạc, không tốn thêm lượt Muse.">
+              <input className="input" type="number" min={1} max={4} value={s.mvPlays} onChange={(e) => set("mvPlays", Number(e.target.value))} />
+            </Field>
             <Field label="Style preset mặc định">
               <select className="input" value={s.stylePreset} onChange={(e) => set("stylePreset", e.target.value)}>
                 {Object.entries(styles).map(([k, st]) => (

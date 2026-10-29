@@ -174,6 +174,8 @@ export interface Settings {
   eraShare: number;
   /** Độ dài video (phút): app tự xếp bài (kiểu Bokin, theo lịch sử từng kênh) cho đủ khoảng chừng này, clip lặp lại cho hết nhạc. */
   videoMinutes: number;
+  /** MV một bài: phát bài chừng này lần liền nhau (video dài gấp chừng ấy lần bài; cảnh lặp lại theo nhạc). */
+  mvPlays: number;
   /** Tệp Kho bài hát (mẫu Bokin: mã bài, tên bài, mức hay); "" = tự tìm "Kho bài hát.xlsx" trong Thư mục nhạc. */
   songSheet: string;
   /** Thư mục kết quả: mỗi MV xong một thư mục con (video, ảnh bìa, tiêu đề). Không kèm ổ đĩa = cạnh thư mục app; "" = không tạo. */

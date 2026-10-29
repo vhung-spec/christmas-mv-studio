@@ -319,9 +319,9 @@ async function nameAfterSong(mvId: string, song: string): Promise<void> {
 
 /**
  * Bước Nhạc của MV một bài: lấy bài lúc này — bài Giáng sinh mức hay cao nhất kênh chưa dùng (không lấy bài `held`; MV tạo trước đây đã
- * giữ bài thì đúng bài đó); đặt tên MV theo bài, ghi vào lịch sử kênh là MV làm sẵn chưa đăng.
+ * giữ bài thì đúng bài đó), phát `plays` lần liền nhau; đặt tên MV theo bài, ghi vào lịch sử kênh là MV làm sẵn chưa đăng.
  */
-async function mvSongStep(mv: MVOf, ch: Channel, songs: LibSong[], history: Channel["history"], held: string[]): Promise<{ step: PipelineStep; song?: LibSong }> {
+async function mvSongStep(mv: MVOf, ch: Channel, songs: LibSong[], history: Channel["history"], held: string[], plays: number): Promise<{ step: PipelineStep; song?: LibSong }> {
   const wanted = mv.idea.mv_song;
   const song = wanted ? songs.find((s) => s.exists && songKey(s.code) === songKey(wanted.code)) : pickMvSong(songs, history, held);
   const version = song ? ((wanted && song.versions.find((v) => v.name === wanted.file)) || song.versions[0]) : undefined;
@@ -338,15 +338,17 @@ async function mvSongStep(mv: MVOf, ch: Channel, songs: LibSong[], history: Chan
   await fs.mkdir(mediaDir(mv.id), { recursive: true });
   const tmp = path.join(mediaDir(mv.id), `bai-${Date.now().toString(36)}.flac`);
   try {
-    await buildPlaylistAudio([{ ...version, title: song.title, code: song.code }], tmp);
-    await addPlaylistAudio(mv.id, tmp, version.name, []);
+    // Phát nhiều lần: nối bài liền nhau, ghi giờ bắt đầu từng lần (mô tả YouTube không thêm danh sách bài vì chỉ có một bài).
+    const tracks = await buildPlaylistAudio(Array.from({ length: plays }, () => ({ ...version, title: song.title, code: song.code })), tmp);
+    await addPlaylistAudio(mv.id, tmp, plays > 1 ? `${path.parse(version.name).name} × ${plays}.flac` : version.name, plays > 1 ? tracks : []);
   } finally {
     await fs.rm(tmp, { force: true }).catch(() => undefined);
   }
   await nameAfterSong(mv.id, song.title);
   const title = `${/^\d+$/.test(mv.idea.id) ? `#${mv.idea.id} · ` : ""}${song.title}`;
   await recordChannelVideo(ch.id, { id: mv.id, date: new Date().toISOString(), title, codes: [song.code], files: [version.name], kind: "mv", posted: false });
-  return { step: { status: "done", message: `Kênh “${ch.name}”: MV bài “${song.title}” (mức ${song.level}) · ${chapterTime(version.duration)}` }, song };
+  const length = plays > 1 ? `${chapterTime(version.duration)} × ${plays} = ${chapterTime(version.duration * plays)}` : chapterTime(version.duration);
+  return { step: { status: "done", message: `Kênh “${ch.name}”: MV bài “${song.title}” (mức ${song.level}) · ${length}` }, song };
 }
 
 /**
@@ -449,7 +451,7 @@ async function advance(item: PipelineItem): Promise<Partial<PipelineItem> | null
           o.id !== item.id && !finished(o) && itemChannel(o) === ch.id && o.steps.song.status !== "done" && o.idea?.mv_song ? [o.idea.mv_song.code] : [],
         );
         if (mv.idea.video_kind === "mv") {
-          const r = await mvSongStep(mv, ch, lib.songs, history, held);
+          const r = await mvSongStep(mv, ch, lib.songs, history, held, Math.min(4, Math.max(1, settings.mvPlays)));
           steps.song = r.step;
           if (r.song) out.title = r.song.title;
         } else {

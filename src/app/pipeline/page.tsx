@@ -16,7 +16,7 @@ import type { BankConfig } from "@/lib/ideaBankTypes";
 import { STEP_LABEL, itemChannelOf, type PipelineItem, type PipelineView, type StepName, type StepStatus } from "@/lib/pipelineSteps";
 
 type View = PipelineView & {
-  settings: { mode: "claude" | "mock" | "manual"; songDir: string; museMode: "gateway" | "haohao"; minShots: number; maxShots: number; videoMinutes: number };
+  settings: { mode: "claude" | "mock" | "manual"; songDir: string; museMode: "gateway" | "haohao"; minShots: number; maxShots: number; videoMinutes: number; mvPlays: number };
 };
 
 const CHIP: Record<StepStatus, string> = {
@@ -133,7 +133,8 @@ export default function PipelinePage() {
               <b>Nhạc:</b>{" "}
               {s.songDir ? (
                 <span>
-                  kho <code>{s.songDir}</code> (Kho bài hát.xlsx cho mức hay) — MV một bài, playlist đủ khoảng <b>{s.videoMinutes} phút</b>
+                  kho <code>{s.songDir}</code> (Kho bài hát.xlsx cho mức hay) — MV một bài{s.mvPlays > 1 ? ` phát ${s.mvPlays} lần` : ""}, playlist đủ khoảng{" "}
+                  <b>{s.videoMinutes} phút</b>
                 </span>
               ) : (
                 <span className="text-amber-800">

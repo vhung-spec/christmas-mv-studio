@@ -16,12 +16,21 @@ export interface TrackRow {
   duration?: number | null;
   file?: string;
   level?: number | null;
+  /** MV một bài: số lần bài phát liền nhau. */
+  plays?: number;
 }
 
-/** Các bài của nhạc đã ghép vào video (nhiều bài: theo danh sách đã ghép; một bài: chính file đó, tên bài = `title`). */
+/**
+ * Các bài của nhạc đã ghép vào video (nhiều bài: theo danh sách đã ghép; MV phát một bài nhiều lần: một dòng kèm số lần; một bài: chính
+ * file đó, tên bài = `title`).
+ */
 export function audioTracks(audio: VideoProject["audio"], title?: string): TrackRow[] {
   if (!audio) return [];
-  if (audio.tracks?.length) return audio.tracks.map((t) => ({ title: t.title, start: t.start, duration: t.duration, file: t.name }));
+  const list = audio.tracks ?? [];
+  if (list.length > 1 && new Set(list.map((t) => t.code ?? t.title)).size === 1) {
+    return [{ title: list[0].title, start: 0, duration: list[0].duration, file: list[0].name, plays: list.length }];
+  }
+  if (list.length) return list.map((t) => ({ title: t.title, start: t.start, duration: t.duration, file: t.name }));
   return [{ title: title || audio.name, start: 0, duration: audio.duration, file: audio.name }];
 }
 
@@ -35,7 +44,9 @@ export function TrackList({ tracks }: { tracks: TrackRow[] }) {
             <span className="w-14 shrink-0 text-right font-mono text-muted">{t.start !== null ? chapterTime(t.start) : `${i + 1}.`}</span>
             <span className="min-w-0">
               <b>{t.title}</b>{" "}
-              <span className="break-all text-muted">{[t.level ? `mức ${t.level}` : "", t.file ?? "", t.duration ? chapterTime(t.duration) : ""].filter(Boolean).join(" · ")}</span>
+              <span className="break-all text-muted">
+                {[t.level ? `mức ${t.level}` : "", t.file ?? "", t.duration ? chapterTime(t.duration) : "", t.plays && t.plays > 1 ? `phát ${t.plays} lần liền nhau` : ""].filter(Boolean).join(" · ")}
+              </span>
             </span>
           </li>
         ))}

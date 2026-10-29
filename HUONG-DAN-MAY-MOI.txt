@@ -85,7 +85,8 @@ C. CÀI ĐẶT TRONG APP (bạn tự làm — key và mật khẩu không nằm 
    Các kênh dùng chung kho nhạc, nhưng bài cũ / bài mới tính riêng theo từng kênh. Bỏ tick "Bật" = tạm không làm video cho kênh đó.
    Video xong nằm trong thư mục con theo tên kênh, và tệp "Tiêu đề - mô tả.txt" ghi tên kênh ở dòng đầu.
    THỨ TỰ SẢN XUẤT: cột "MV mỗi vòng" (mặc định 3). Mỗi vòng kênh làm 3 MV một bài (~3–4 phút: các cảnh Giáng sinh nối tiếp nhau, không
-   nhân vật chính; lúc ghép nhạc app lấy bài Giáng sinh hay nhất kênh chưa dùng, tên bài làm tiêu đề YouTube) rồi 1 playlist 1 tiếng mở
+   nhân vật chính; lúc ghép nhạc app lấy bài Giáng sinh hay nhất kênh chưa dùng và phát bài 2 lần liền nhau — đổi ở Cài đặt → "MV một
+   bài: phát bài mấy lần"; tên bài làm tiêu đề YouTube) rồi 1 playlist 1 tiếng mở
    đầu bằng 3 bài đó, xong lại vòng mới. Đặt 0 = chỉ làm playlist. Bấm "Xem kênh" để xem kế hoạch của kênh: video tiếp theo là MV mấy hay
    playlist, bài dự kiến, các video đang làm / đã làm gần đây.
    TỰ SẢN XUẤT: cột "Làm sẵn" (mặc định 4 = 1 vòng). Kênh luôn có chừng ấy video chưa đăng (đã làm + đang làm); thiếu thì app tự làm,
